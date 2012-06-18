@@ -37,7 +37,6 @@ extern "C" PLUGIN_API void saveastemplateplugin_freePlugin(ScPlugin* plugin);
 
 class SATDialog;
 
-
 class MenuSAT : public QObject
 {
 	Q_OBJECT

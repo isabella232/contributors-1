@@ -86,6 +86,7 @@ protected:
 	//void drawOverflowMarker(ScPainter *p);
 	void drawUnderflowMarker(ScPainter *p);
 	void drawColumnBorders(ScPainter *p);
+	QRegion availableRegion();
 
 #ifdef NLS_PROTO
 	void DrawLineItem(ScPainter *p, double width,
@@ -116,6 +117,14 @@ private:
 	QMap<QString,StoryText> shadows;
 	bool checkKeyIsShortcut(QKeyEvent *k);
 	
+	// set text frame height to last line of text
+	double maxY;
+	void setMaxY(double y);
+
+public:
+	void setTextFrameHeight();
+	void moveBottomToMargin();
+
 private slots:
 	void slotInvalidateLayout();
 };
