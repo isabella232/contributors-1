@@ -223,6 +223,9 @@ void CanvasMode_Normal::mouseDoubleClickEvent(QMouseEvent *m)
 		}
 		else if (currItem->itemType() == PageItem::TextFrame)
 		{
+			// See if double click was on a frame handle
+			FPoint p = m_canvas->globalToCanvas(m->globalPos());
+			Canvas::FrameHandle fh = m_canvas->frameHitTest(QPointF(p.x(),p.y()), currItem);
 			//CB old code
 			//emit currItem->isAnnotation() ? AnnotProps() : Amode(modeEdit);
 			//mousePressEvent(m);
@@ -232,6 +235,16 @@ void CanvasMode_Normal::mouseDoubleClickEvent(QMouseEvent *m)
 				qApp->changeOverrideCursor(QCursor(Qt::ArrowCursor));
 				m_view->requestMode(submodeAnnotProps);
 				//mousePressEvent(m);
+			}
+			else if (fh == Canvas::SOUTH)
+			{
+				currItem->invalidateLayout();
+				currItem->asTextFrame()->layout();
+				currItem->asTextFrame()->setTextFrameHeight();
+			}
+			else  if (fh == Canvas::NORTH)
+			{
+				currItem->asTextFrame()->moveBottomToMargin();
 			}
 			//else if not in mode edit, set mode edit
 			else if (m_doc->appMode != modeEdit)

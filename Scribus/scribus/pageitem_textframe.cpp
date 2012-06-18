@@ -1427,6 +1427,7 @@ void PageItem_TextFrame::layout()
 		current.mustLineEnd = current.colRight;
 		current.restartX = 0;
 		int lastStat = 0, curStat = 0;
+		setMaxY(-1);
 
 		for (int a = firstInFrame(); a < itemText.length(); ++a)
 		{
@@ -2563,6 +2564,7 @@ void PageItem_TextFrame::layout()
 						fillInTabLeaders(itemText, current.line);
 						//if right margin is set we temporally save line, not append it
 						itemText.appendLine(current.line);
+						setMaxY(current.yPos + current.getLineDescent(itemText));
 						current.restartIndex = current.line.lastItem +1;
 						a = current.restartIndex -1;
 						current.rowDesc = qMax(current.rowDesc,current.yPos + current.line.descent);
@@ -2749,6 +2751,7 @@ void PageItem_TextFrame::layout()
 			goNextColumn = false;
 
 			itemText.appendLine(current.line);
+			setMaxY(current.yPos + current.getLineDescent(itemText));
 			current.startOfCol = false;
 
 			if (moveLinesFromPreviousFrame ()) {
