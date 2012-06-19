@@ -122,7 +122,6 @@ private:
 
 public:
 	void setTextFrameHeight();
-	void moveBottomToMargin();
 
 private slots:
 	void slotInvalidateLayout();

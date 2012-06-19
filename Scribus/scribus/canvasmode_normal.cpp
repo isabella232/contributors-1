@@ -237,15 +237,7 @@ void CanvasMode_Normal::mouseDoubleClickEvent(QMouseEvent *m)
 				//mousePressEvent(m);
 			}
 			else if (fh == Canvas::SOUTH)
-			{
-				currItem->invalidateLayout();
-				currItem->asTextFrame()->layout();
 				currItem->asTextFrame()->setTextFrameHeight();
-			}
-			else  if (fh == Canvas::NORTH)
-			{
-				currItem->asTextFrame()->moveBottomToMargin();
-			}
 			//else if not in mode edit, set mode edit
 			else if (m_doc->appMode != modeEdit)
 			{

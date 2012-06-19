@@ -1047,48 +1047,6 @@ void PageItem::setReversed(bool newReversed)
 	Reverse = newReversed;
 }
 
-void PageItem_TextFrame::setMaxY(double y)
-{
-	if (y == -1)
-		maxY = 0;
-	else
-		maxY = qMax(y, maxY);
-}
-
-void PageItem_TextFrame::setTextFrameHeight()
-{
-	setHeight(ceil(maxY) + BExtra + 0.5);
-	updateClip();
-	invalidateLayout();
-}
-
-void PageItem_TextFrame::moveBottomToMargin()
-{
-	if (rotation() != 0)
-		return;
-	ScPage *currPage = m_Doc->Pages->at(OwnPage);
-	double bottom = currPage->height() - currPage->Margins.Bottom;
-	QMatrix ma;
-	ma.translate(xPos(), yPos());
-	double inX = ma.dx() - m_Doc->rulerXoffset;
-	double inY = ma.dy() - m_Doc->rulerYoffset;
-	if (m_Doc->guidesPrefs().rulerMode)
-	{
-		inX -= m_Doc->currentPage()->xOffset();
-		inY -= m_Doc->currentPage()->yOffset();
-	}
-	
-	setHeight(bottom - inY);
-	updateClip();
-	if (itemText.length() > 0)
-	{
-		invalidateLayout();
-		layout();
-		setTextFrameHeight();
-	}
-	m_Doc->regionsChanged()->update(QRect());
-}
-
 //return frame where is text end
 PageItem * PageItem::frameTextEnd()
 {
@@ -7511,4 +7469,53 @@ void PageItem::unWeld()
 		}
 	}
 	weldList.clear();
+}
+
+
+void PageItem::resizeToMargin(Canvas::FrameHandle direction)
+{
+	//FIX ME: for now avoid for rotated items
+	if (rotation() != 0)
+		return;
+	ScPage *currPage = m_Doc->Pages->at(OwnPage);
+	QMatrix ma;
+	ma.translate(xPos(), yPos());
+	double inX = ma.dx() - m_Doc->rulerXoffset;
+	double inY = ma.dy() - m_Doc->rulerYoffset;
+	if (m_Doc->guidesPrefs().rulerMode)
+	{
+		inX -= m_Doc->currentPage()->xOffset();
+		inY -= m_Doc->currentPage()->yOffset();
+	}
+	if (direction == Canvas::NORTH || direction == Canvas::NORTHWEST || direction == Canvas::NORTHEAST)
+	{
+		double top = currPage->topMargin();
+		double dY = inY - top;
+		moveBy(0, -dY);
+		setHeight(height() + dY);
+	}
+	if (direction == Canvas::SOUTH || direction == Canvas::SOUTHWEST || direction == Canvas::SOUTHEAST)
+	{
+		double bottom = currPage->height() - currPage->bottomMargin();
+		double dY = bottom - (inY + height());
+		setHeight(height() + dY);
+	}
+	if (direction == Canvas::EAST || direction == Canvas::NORTHEAST || direction == Canvas::SOUTHEAST)
+	{
+		double right = currPage->width() - currPage->rightMargin();
+		double dX = right - (inX + width());
+		setWidth(width() + dX);
+	}
+	if (direction == Canvas::WEST || direction == Canvas::NORTHWEST || direction == Canvas::SOUTHWEST)
+	{
+		double left = currPage->leftMargin();
+		double dX = inX - left;
+		moveBy(-dX,0);
+		setWidth(width() + dX);
+	}
+
+	updateClip();
+	invalid = true;
+	m_Doc->changed();
+	m_Doc->regionsChanged()->update(QRect());
 }

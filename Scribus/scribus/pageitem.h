@@ -38,6 +38,7 @@ for which a new license (GPL+exception) is in place.
 
 #include "scribusapi.h"
 #include "annotation.h"
+#include "canvas.h"
 #include "colormgmt/sccolormgmtstructs.h"
 #include "desaxe/saxio.h"
 #include "observable.h"
@@ -1574,8 +1575,11 @@ signals:
 	//void textToFrameDistances(double, double, double, double); //left, top, bottom, right: Extra, TExtra, BExtra, RExtra
 	//FIXME: columns, grid ?
 	
-	//items welding (item follows while item moves which they are connected with)
 public:
+	//resize item to margin in direction given from clicked handle
+	void resizeToMargin(Canvas::FrameHandle direction);
+
+	//items welding (item follows while item moves which they are connected with)
 	struct weldingInfo
 	{
 		PageItem *weldItem;

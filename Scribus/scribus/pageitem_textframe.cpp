@@ -4225,3 +4225,20 @@ void PageItem_TextFrame::slotInvalidateLayout()
 {
 	invalidateLayout();
 }
+
+void PageItem_TextFrame::setMaxY(double y)
+{
+	if (y == -1)
+		maxY = 0;
+	else
+		maxY = qMax(y, maxY);
+}
+
+void PageItem_TextFrame::setTextFrameHeight()
+{
+	setHeight(ceil(maxY) + BExtra + 0.5);
+	updateClip();
+	invalid = true;
+	m_Doc->changed();
+	m_Doc->regionsChanged()->update(QRect());
+}
