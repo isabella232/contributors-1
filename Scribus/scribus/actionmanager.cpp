@@ -1467,7 +1467,7 @@ void ActionManager::languageChange()
 	(*scrActions)["tableDistributeColumnsEvenly"]->setTexts(tr("Distribute Columns Evenly"));
 	(*scrActions)["tableAdjustFrameToTable"]->setTexts(tr("Adjust Frame to Table"));
 	(*scrActions)["tableAdjustTableToFrame"]->setTexts(tr("Adjust Table to Frame"));
-	(*scrActions)["itemAdjustFrameHeightToText"]->setTexts( tr("Adjust Frame to Image"));
+	(*scrActions)["itemAdjustFrameHeightToText"]->setTexts( tr("Adjust Frame Height to Text"));
 	(*scrActions)["itemAdjustFrameToImage"]->setTexts( tr("Adjust Frame to Image"));
 	(*scrActions)["itemAdjustImageToFrame"]->setTexts( tr("Adjust Image to Frame"));
 	(*scrActions)["itemToggleInlineImage"]->setTexts( tr("Embed Image"));
@@ -1945,6 +1945,7 @@ void ActionManager::createDefaultMenus()
 		<< "tableAdjustFrameToTable"
 		<< "itemAdjustFrameHeightToText"
 		<< "tableAdjustTableToFrame"
+		<< "itemAdjustFrameHeightToText"
 		<< "itemAdjustFrameToImage" 
 		<< "itemAdjustImageToFrame" 
 		<< "itemToggleInlineImage" 

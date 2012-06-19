@@ -86,7 +86,6 @@ protected:
 	//void drawOverflowMarker(ScPainter *p);
 	void drawUnderflowMarker(ScPainter *p);
 	void drawColumnBorders(ScPainter *p);
-	QRegion availableRegion();
 
 #ifdef NLS_PROTO
 	void DrawLineItem(ScPainter *p, double width,

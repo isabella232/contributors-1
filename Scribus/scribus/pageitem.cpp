@@ -1052,12 +1052,12 @@ void PageItem_TextFrame::setMaxY(double y)
 	if (y == -1)
 		maxY = 0;
 	else
-		maxY = qMax(y,maxY);
+		maxY = qMax(y, maxY);
 }
 
 void PageItem_TextFrame::setTextFrameHeight()
 {
-	setHeight(maxY+1);
+	setHeight(ceil(maxY) + BExtra + 0.5);
 	updateClip();
 	invalidateLayout();
 }
