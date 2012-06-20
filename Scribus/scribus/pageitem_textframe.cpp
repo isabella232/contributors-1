@@ -4247,7 +4247,7 @@ void PageItem_TextFrame::setTextFrameHeight()
 	//ugly hack increasing min frame`s haeight against strange glyph painting if it is too close of bottom
 	double hackValue = 0.5;
 
-	setHeight(maxY + BExtra + hackValue);
+	setHeight(ceil(maxY) + BExtra + hackValue);
 	updateClip();
 	invalid = true;
 	m_Doc->changed();
