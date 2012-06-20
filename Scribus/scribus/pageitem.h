@@ -1576,9 +1576,6 @@ signals:
 	//FIXME: columns, grid ?
 	
 public:
-	//resize item to margin in direction given from clicked handle
-	void resizeToMargin(Canvas::FrameHandle direction);
-
 	//items welding (item follows while item moves which they are connected with)
 	struct weldingInfo
 	{
