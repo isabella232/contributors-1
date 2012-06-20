@@ -1943,7 +1943,6 @@ void ActionManager::createDefaultMenus()
 		<< "tableDistributeRowsEvenly"
 		<< "tableDistributeColumnsEvenly"
 		<< "tableAdjustFrameToTable"
-		<< "itemAdjustFrameHeightToText"
 		<< "tableAdjustTableToFrame"
 		<< "itemAdjustFrameHeightToText"
 		<< "itemAdjustFrameToImage" 
