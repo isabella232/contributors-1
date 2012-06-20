@@ -33,7 +33,6 @@ CopyPageToMasterPageDialog::CopyPageToMasterPageDialog(int existingMasterNamesCo
 	{
 		foreach (QString untranslatedPageName, pageLocations)
 			pagePositionComboBox->addItem(CommonStrings::translatePageSetLocString(untranslatedPageName));
-		pagePositionComboBox->addItems(pageLocations);
 		pagePositionComboBox->setCurrentIndex(currentLocation);
 	}
 }

@@ -183,12 +183,6 @@ void ResizeGesture::mouseReleaseEvent(QMouseEvent *m)
 			if (currItem->asImageFrame())
 				currItem->AdjustPictScale();
 		}
-		else if (m->button() == Qt::RightButton)
-		{
-			const FPoint mousePointDoc = m_canvas->globalToCanvas(m->globalPos());
-			Canvas::FrameHandle fh = m_canvas->frameHitTest(QPointF(mousePointDoc.x(),mousePointDoc.y()), currItem);
-			currItem->resizeToMargin(fh);
-		}
 		m_view->resetMousePressed();
 		// necessary since mousebutton is still recorded pressed, and otherwise checkchanges() will do nothing
 		// we must check changes on whole selection otherwise resize operation won't undo correctly on groups
