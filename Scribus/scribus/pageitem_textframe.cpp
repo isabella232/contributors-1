@@ -1828,8 +1828,11 @@ void PageItem_TextFrame::layout()
 			maxYAsc = 0.0, maxYDesc = 0.0;
 			if (current.startOfCol)
 			{
-				//qMax is used for glyphs shifted or vertically scalled above ascent or below descent
-				double addAsce = asce;
+				double addAsce;
+				if (DropCmode)
+					addAsce = qMax(realAsce, asce + offset);
+				else
+					addAsce = asce + offset;
 				if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
 				{
 					if (firstLineOffset() == FLOPRealGlyphHeight)
@@ -1914,8 +1917,11 @@ void PageItem_TextFrame::layout()
 						lastLineY = maxYAsc;
 						if (current.startOfCol)
 						{
-							//qMax is used for glyphs shifted or vertically scalled above ascent or below descent
-							double addAsce = asce + offset;
+							double addAsce;
+							if (DropCmode)
+								addAsce = qMax(realAsce, asce + offset);
+							else
+								addAsce = asce + offset;
 							if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
 							{
 								if (firstLineOffset() == FLOPRealGlyphHeight)
@@ -2701,9 +2707,11 @@ void PageItem_TextFrame::layout()
 
 			if (current.startOfCol)
 			{
-				//qMax is used for glyphs shifted or vertically scalled above ascent or below descent
-				double addAsce = asce + offset;
-				if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
+				double addAsce;
+				if (DropCmode)
+					addAsce = qMax(realAsce, asce + offset);
+				else
+					addAsce = asce + offset;				if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
 				{
 					if (firstLineOffset() == FLOPRealGlyphHeight)
 						addAsce = realAsce;
