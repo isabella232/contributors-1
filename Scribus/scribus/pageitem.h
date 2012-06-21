@@ -38,7 +38,6 @@ for which a new license (GPL+exception) is in place.
 
 #include "scribusapi.h"
 #include "annotation.h"
-#include "canvas.h"
 #include "colormgmt/sccolormgmtstructs.h"
 #include "desaxe/saxio.h"
 #include "observable.h"
