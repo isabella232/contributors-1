@@ -22,5 +22,6 @@ ADD_SUBDIRECTORY(short-words)
 ADD_SUBDIRECTORY(svgexplugin)
 ADD_SUBDIRECTORY(tools)
 ADD_SUBDIRECTORY(picbrowser)
+ADD_SUBDIRECTORY(statusbar)
 
 # ADD_SUBDIRECTORY(myplugin)
