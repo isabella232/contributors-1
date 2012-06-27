@@ -1291,7 +1291,7 @@ void PageItem_TextFrame::layout()
 	QPoint pt1, pt2;
 	QRect pt;
 	double chs, chsd = 0;
-	double oldCurY, EndX, OFs, wide, kernVal;
+	double EndX, OFs, wide, kernVal;
 	QString chstr;
 	ScText *hl;
 	ParagraphStyle style;
@@ -1311,7 +1311,7 @@ void PageItem_TextFrame::layout()
 	tTabValues.clear();
 	
 	bool DropCmode = false;
-	double desc=0, asce=0, realAsce=0, realDesc = 0;
+	double desc=0, asce=0, realAsce=0, realDesc = 0, offset = 0;
 	double maxDY=0, maxDX=0;
 	double DropCapDrop = 0;
 	int    DropLines = 0;
@@ -1427,6 +1427,8 @@ void PageItem_TextFrame::layout()
 		current.mustLineEnd = current.colRight;
 		current.restartX = 0;
 		int lastStat = 0, curStat = 0;
+		setMaxY(-1);
+		double maxYAsc = 0.0, maxYDesc = 0.0;
 
 		for (int a = firstInFrame(); a < itemText.length(); ++a)
 		{
@@ -1442,7 +1444,7 @@ void PageItem_TextFrame::layout()
 			double hlcsize10 = charStyle.fontSize() / 10.0;
 			double scaleV = charStyle.scaleV() / 1000.0;
 			double scaleH = charStyle.scaleH() / 1000.0;
-			double offset = hlcsize10 * (charStyle.baselineOffset() / 1000.0);
+			offset = hlcsize10 * (charStyle.baselineOffset() / 1000.0);
 
 			if (chstr.isEmpty())
 				chstr = SpecialChars::ZWNBSPACE;
@@ -1601,7 +1603,7 @@ void PageItem_TextFrame::layout()
 				itemText.item(a)->setEffects(itemText.item(a)->effects() & ~ScStyle_StartOfLine);
 			}
 			hl->glyph.yadvance = 0;
-			oldCurY = layoutGlyphs(*hl, chstr, hl->glyph);
+			layoutGlyphs(*hl, chstr, hl->glyph);
 			// find out width, ascent and descent of char
 			if ((hl->ch == SpecialChars::OBJECT) && (hl->hasObject(m_Doc)))
 			{
@@ -1823,11 +1825,14 @@ void PageItem_TextFrame::layout()
 				}
 			}
 			current.recalculateY = true;
-			int maxYAsc = 0, maxYDesc = 0;
+			maxYAsc = 0.0, maxYDesc = 0.0;
 			if (current.startOfCol)
 			{
-				//qMax is used for glyphs shifted or vertically scalled above ascent or below descent
-				double addAsce = qMax(realAsce, asce);
+				double addAsce;
+				if (DropCmode)
+					addAsce = qMax(realAsce, asce + offset);
+				else
+					addAsce = asce + offset;
 				if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
 				{
 					if (firstLineOffset() == FLOPRealGlyphHeight)
@@ -1835,13 +1840,13 @@ void PageItem_TextFrame::layout()
 					else if (firstLineOffset() == FLOPLineSpacing)
 						addAsce = style.lineSpacing();
 				}
-				maxYAsc = static_cast<int>(floor(current.yPos - addAsce));
+				maxYAsc = current.yPos - addAsce;
 			}
 			else
-				maxYAsc = static_cast<int>(floor(current.yPos - qMax(realAsce, asce)));
+				maxYAsc = current.yPos - realAsce;
 			//fix for glyphs with negative realAsce value
-			maxYAsc = qMax(maxYAsc, 0);
-			maxYDesc = static_cast<int>(ceil(current.yPos + qMax(realDesc, desc)));
+			maxYAsc = qMax(maxYAsc, 0.0);
+			maxYDesc = current.yPos + realDesc;
 
 			if (current.itemsInLine == 0 && !current.afterOverflow)
 			{
@@ -1849,8 +1854,8 @@ void PageItem_TextFrame::layout()
 				goNoRoom = false;
 
 				// find line`s start
-				pt1 = QPoint(static_cast<int>(floor(current.xPos)), maxYAsc);
-				pt2 = QPoint(static_cast<int>(ceil(current.xPos + (style.minGlyphExtension() * wide))),maxYDesc);
+				pt1 = QPoint(static_cast<int>(floor(current.xPos)), static_cast<int>(floor(maxYAsc)));
+				pt2 = QPoint(static_cast<int>(floor(current.xPos + (style.minGlyphExtension() * wide))), static_cast<int>(floor(maxYDesc)) -1);
 				pt = QRect(pt1, pt2);
 				realEnd = 0;
 				//check if there is overflow at start of line, if so jump behind it and check again
@@ -1877,7 +1882,7 @@ void PageItem_TextFrame::layout()
 					//check if in indent any overflow occurs
 					while (Xpos <= Xend && Xpos < current.colRight)
 					{
-						pt.moveTopLeft(QPoint(static_cast<int>(floor(Xpos)),maxYAsc));
+						pt.moveTopLeft(QPoint(static_cast<int>(floor(Xpos)), static_cast<int>(floor(maxYAsc))));
 						if (!regionContainsRect(m_availableRegion, pt))
 						{
 							Xpos = current.xPos = realEnd = findRealOverflowEnd(m_availableRegion, pt, current.colRight);
@@ -1909,25 +1914,28 @@ void PageItem_TextFrame::layout()
 							current.yPos += (current.startOfCol ? 1 : style.lineSpacing());
 						else
 							current.yPos++;
-						lastLineY = maxYAsc +1;
+						lastLineY = maxYAsc;
 						if (current.startOfCol)
 						{
-							//qMax is used for glyphs shifted or vertically scalled above ascent or below descent
-							double addAsce = qMax(realAsce, asce);
+							double addAsce;
+							if (DropCmode)
+								addAsce = qMax(realAsce, asce + offset);
+							else
+								addAsce = asce + offset;
 							if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
 							{
 								if (firstLineOffset() == FLOPRealGlyphHeight)
 									addAsce = realAsce;
 								else if (firstLineOffset() == FLOPLineSpacing)
-									addAsce = style.lineSpacing();
+									addAsce = style.lineSpacing() + offset;
 							}
-							maxYAsc = static_cast<int>(floor(current.yPos - addAsce));
+							maxYAsc = current.yPos - addAsce;
 						}
 						else
-							maxYAsc = static_cast<int>(floor(current.yPos - qMax(realAsce, asce)));
-						maxYDesc = static_cast<int>(ceil(current.yPos + qMax(realDesc, desc)));
+							maxYAsc = current.yPos - realAsce;
+						maxYDesc = current.yPos + realDesc;
 
-						pt.moveTopLeft(QPoint(static_cast<int>(floor(current.xPos)),maxYAsc));
+						pt.moveTopLeft(QPoint(static_cast<int>(floor(current.xPos)), static_cast<int>(floor(maxYAsc))));
 						done = false;
 					}
 					if (current.isEndOfCol(realDesc))
@@ -2212,7 +2220,7 @@ void PageItem_TextFrame::layout()
 				else
 				{
 					charStart = static_cast<int>(qMax(floor(current.xPos - current.maxShrink - (style.minGlyphExtension() * wide)),0.0));
-					charEnd = static_cast<int>(ceil(current.xPos - current.maxShrink) + hyphWidth);
+					charEnd = static_cast<int>(ceil(current.xPos - current.maxShrink));
 				}
 				if (legacy &&
 						(((hl->ch == '-' || (hl->effects() & ScStyle_HyphenationPossible)) && (current.hyphenCount < m_Doc->hyphConsecutiveLines() || m_Doc->hyphConsecutiveLines() == 0))
@@ -2220,24 +2228,24 @@ void PageItem_TextFrame::layout()
 				{
 					if (hl->effects() & ScStyle_HyphenationPossible || hl->ch == SpecialChars::SHYPHEN)
 					{
-						pt1 = QPoint(charStart, maxYAsc);
-						pt2 = QPoint(static_cast<int>(charEnd + hyphWidth), maxYDesc);
+						pt1 = QPoint(charStart,  static_cast<int>(floor(maxYAsc)));
+						pt2 = QPoint(static_cast<int>(charEnd + hyphWidth), static_cast<int>(floor(maxYDesc)) -1);
 					}
 					else
 					{
-						pt1 = QPoint(charStart, maxYAsc);
-						pt2 = QPoint(charEnd, maxYDesc);
+						pt1 = QPoint(charStart, static_cast<int>(floor(maxYAsc)));
+						pt2 = QPoint(charEnd, static_cast<int>(floor(maxYDesc)) -1);
 					}
 				}
 				else if (!legacy && SpecialChars::isBreakingSpace(hl->ch))
 				{
-					pt1 = QPoint(static_cast<int>(qMax(floor(breakPos - current.maxShrink - (style.minGlyphExtension() * wide)),0.0)), maxYAsc);
-					pt2 = QPoint(charEnd, maxYDesc);
+					pt1 = QPoint(static_cast<int>(qMax(floor(breakPos - current.maxShrink - (style.minGlyphExtension() * wide)),0.0)), static_cast<int>(floor(maxYAsc)));
+					pt2 = QPoint(charEnd, static_cast<int>(floor(maxYDesc)) -1);
 				}
 				else
 				{
-					pt1 = QPoint(charStart, maxYAsc);
-					pt2 = QPoint(charEnd, maxYDesc);
+					pt1 = QPoint(charStart, static_cast<int>(floor(maxYAsc)));
+					pt2 = QPoint(charEnd, static_cast<int>(floor(maxYDesc)) -1);
 				}
 				pt = QRect(pt1, pt2);
 				if (!regionContainsRect(m_availableRegion, pt))
@@ -2323,6 +2331,8 @@ void PageItem_TextFrame::layout()
 					else
 						inOverflow = true;
 				}
+				else
+					setMaxY(maxYDesc);
 			}
 
 			// hyphenation
@@ -2399,7 +2409,7 @@ void PageItem_TextFrame::layout()
 				{
 					// find end of line
 					current.breakLine(itemText, style, firstLineOffset(), a);
-					EndX = current.endOfLine(m_availableRegion, style.rightMargin(), maxYAsc, maxYDesc);
+					EndX = current.endOfLine(m_availableRegion, style.rightMargin(), static_cast<int>(floor(maxYAsc)), static_cast<int>(floor(maxYDesc)));
 					current.finishLine(EndX);
 					//addLine = true;
 					assert(current.addLine);
@@ -2476,7 +2486,7 @@ void PageItem_TextFrame::layout()
 						current.updateHeightMetrics(itemText);
 						//current.updateLineOffset(itemText, style, firstLineOffset());
 						//current.xPos = current.breakXPos;
-						EndX = current.endOfLine(m_availableRegion, current.rightMargin, maxYAsc, maxYDesc);
+						EndX = current.endOfLine(m_availableRegion, current.rightMargin, static_cast<int>(floor(maxYAsc)), static_cast<int>(floor(maxYDesc)));
 						current.finishLine(EndX);
 						
 						hyphWidth = 0.0;
@@ -2549,7 +2559,11 @@ void PageItem_TextFrame::layout()
 						}
 						goNextColumn = true;
 					}
+					else
+						setMaxY(maxYDesc);
 				}
+				else
+					setMaxY(maxYDesc);
 				if (current.line.firstItem <= current.line.lastItem && current.itemsInLine > 0)
 				{
 					if (current.addLine && current.breakIndex >= 0)
@@ -2563,6 +2577,7 @@ void PageItem_TextFrame::layout()
 						fillInTabLeaders(itemText, current.line);
 						//if right margin is set we temporally save line, not append it
 						itemText.appendLine(current.line);
+						setMaxY(maxYDesc);
 						current.restartIndex = current.line.lastItem +1;
 						a = current.restartIndex -1;
 						current.rowDesc = qMax(current.rowDesc,current.yPos + current.line.descent);
@@ -2606,7 +2621,6 @@ void PageItem_TextFrame::layout()
 							maxDX = 0;
 						}
 					}
-					lastLineY = current.rowDesc;
 					current.mustLineEnd = current.colRight;
 					current.restartRowIndex = current.restartIndex;
 				}
@@ -2691,26 +2705,27 @@ void PageItem_TextFrame::layout()
 			hl = (a >= 0) ? itemText.item(a) : NULL;
 			current.breakLine(itemText, style, firstLineOffset(), a);
 
-			int maxYAsc = 0, maxYDesc = 0;
 			if (current.startOfCol)
 			{
-				//qMax is used for glyphs shifted or vertically scalled above ascent or below descent
-				double addAsce = qMax(realAsce, asce);
-				if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
+				double addAsce;
+				if (DropCmode)
+					addAsce = qMax(realAsce, asce + offset);
+				else
+					addAsce = asce + offset;				if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
 				{
 					if (firstLineOffset() == FLOPRealGlyphHeight)
 						addAsce = realAsce;
 					else if (firstLineOffset() == FLOPLineSpacing)
-						addAsce = style.lineSpacing();
+						addAsce = style.lineSpacing() + offset;
 				}
-				maxYAsc = static_cast<int>(floor(current.yPos - addAsce));
+				maxYAsc = current.yPos - addAsce;
 			}
 			else
-				maxYAsc = static_cast<int>(floor(current.yPos - qMax(realAsce, asce)));
-			maxYAsc = qMax(maxYAsc, 0);
-			maxYDesc = static_cast<int>(ceil(current.yPos + qMax(realDesc, desc)));
+				maxYAsc = current.yPos - realAsce;
+			maxYAsc = qMax(maxYAsc, 0.0);
+			maxYDesc = current.yPos + realDesc;
 
-			EndX = current.endOfLine(m_availableRegion, style.rightMargin(), maxYAsc, maxYDesc);
+			EndX = current.endOfLine(m_availableRegion, style.rightMargin(), static_cast<int>(floor(maxYAsc)), static_cast<int>(floor(maxYDesc)));
 			current.finishLine(EndX);
 
 			if (opticalMargins & ParagraphStyle::OM_RightHangingPunct)
@@ -2749,6 +2764,7 @@ void PageItem_TextFrame::layout()
 			goNextColumn = false;
 
 			itemText.appendLine(current.line);
+			setMaxY(maxYDesc);
 			current.startOfCol = false;
 
 			if (moveLinesFromPreviousFrame ()) {
@@ -2831,8 +2847,7 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 		return;
 	QTransform pf2;
 	QPoint pt1, pt2;
-	double wide, lineCorr;
-	QChar chstr0;
+	double wide;
 	QString cachedStroke = "";
 	QString cachedFill = "";
 	double cachedFillShade = -1;
@@ -2844,7 +2859,7 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 	QColor cachedFillQ;
 	QColor cachedStrokeQ;
 	//	QValueList<ParagraphStyle::TabRecord> tTabValues;
-	double desc, asce, tabDist;
+	double desc, asce;
 	//	tTabValues.clear();
 	p->save(); //SA1
 	//	QRect e2;
@@ -2868,10 +2883,6 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 			p->fillPath();
 		}
 	}
-	if ((lineColor() != CommonStrings::None) || (!patternStrokeVal.isEmpty()) || (GrTypeStroke > 0))
-		lineCorr = m_lineWidth / 2.0;
-	else
-		lineCorr = 0;
 	if ((isAnnotation()) && (annotation().Type() == 2) && (!Pfile.isEmpty()) && (PictureIsAvailable) && (PicArt) && (annotation().UseIcons()))
 	{
 		p->save();//SA2
@@ -2932,14 +2943,12 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 			pf2.translate(0, Height);
 			pf2.scale(1, -1);
 		}
-		uint tabCc = 0;
 		assert( firstInFrame() >= 0 );
 		assert( lastInFrame() < itemText.length() );
 		LineSpec ls;
 		for (uint ll=0; ll < itemText.lines(); ++ll)
 		{
 			ls = itemText.line(ll);
-			tabDist = ls.x;
 			double CurX = ls.x;
 
 			// Draw text selection rectangles
@@ -3023,11 +3032,8 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 			{
 				hl = itemText.item(a);
 				const CharStyle& charStyle(itemText.charStyle(a));
-				double chs = charStyle.fontSize() * hl->glyph.scaleV;
 				bool selected = itemText.selected(a);
-				if (charStyle.effects() & ScStyle_StartOfLine)
-					tabCc = 0;
-				chstr0 = hl->ch;
+
 				actFill = charStyle.fillColor();
 				actFillShade = charStyle.fillShade();
 				if (actFill != CommonStrings::None)
@@ -3046,14 +3052,6 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 				}
 				else
 					p->setFillMode(ScPainter::None);
-				if (charStyle.effects() & ScStyle_DropCap)
-				{
-					const ParagraphStyle& style(itemText.paragraphStyle(a));
-					double spacing = calculateLineSpacing (style, this);
-					chs = qRound(10 * ((spacing * (style.dropCapLines()-1) + (charStyle.font().ascent(style.charStyle().fontSize() / 10.0))) / charStyle.font().realCharHeight(chstr0, 10)));
-				}
-				if (chstr0 == SpecialChars::TAB)
-					tabCc++;
 
 				if (!m_Doc->RePos)
 				{
@@ -3097,7 +3095,6 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 					else*/
 					CurX += hl->glyph.wide();
 				}
-				tabDist = CurX;
 			}
 		}
 	//	else {
@@ -3304,7 +3301,10 @@ void PageItem_TextFrame::clearContents()
 		nextItem = nextItem->prevInChain();
 
 	ParagraphStyle defaultStyle = nextItem->itemText.defaultStyle();
-	nextItem->itemText.clear();
+	nextItem->itemText.selectAll();
+	nextItem->asTextFrame()->deleteSelectedTextFromFrame();
+	if(UndoManager::undoEnabled())
+		undoManager->getLastUndo()->setName(Um::ClearText);
 	nextItem->itemText.setDefaultStyle(defaultStyle);
 
 	while (nextItem != 0)
@@ -3390,6 +3390,12 @@ void PageItem_TextFrame::handleModeEditKey(QKeyEvent *k, bool& keyRepeat)
 	case Qt::Key_Down:
 		if ( (buttonModifiers & Qt::ShiftModifier) == 0 )
 			deselectAll();
+		if (UndoManager::undoEnabled())
+		{
+			SimpleState *ss = dynamic_cast<SimpleState*>(undoManager->getLastUndo());
+			if(ss)
+				ss->set("ETEA",QString(""));
+		}
 	}
 
 	if (unicodeTextEditMode)
@@ -3783,6 +3789,7 @@ void PageItem_TextFrame::handleModeEditKey(QKeyEvent *k, bool& keyRepeat)
 		break;
 	default:
 		bool doUpdate = false;
+		UndoTransaction* activeTransaction = NULL;
 		if (itemText.lengthOfSelection() > 0) //(kk < 0x1000)
 		{
 			bool x11Hack=false;
@@ -3798,6 +3805,9 @@ void PageItem_TextFrame::handleModeEditKey(QKeyEvent *k, bool& keyRepeat)
 #endif
 			if (!controlCharHack && !x11Hack && !k->text().isEmpty())
 			{
+				if (UndoManager::undoEnabled())
+					activeTransaction = new UndoTransaction(undoManager->beginTransaction(Um::Selection, Um::IGroup, Um::ReplaceText, "", Um::IDelete));
+
 				deleteSelectedTextFromFrame();
 				doUpdate = true;
 			}
@@ -3814,6 +3824,20 @@ void PageItem_TextFrame::handleModeEditKey(QKeyEvent *k, bool& keyRepeat)
 		//if ((kk == Qt::Key_Tab) || ((kk == Qt::Key_Return) && (buttonState & Qt::ShiftButton)))
 		if (kk == Qt::Key_Tab)
 		{
+			if (UndoManager::undoEnabled())
+			{
+				SimpleState *ss = dynamic_cast<SimpleState*>(undoManager->getLastUndo());
+				if(ss && ss->get("ETEA") == "insert_frametext")
+						ss->set("TEXT_STR",ss->get("TEXT_STR") + QString(SpecialChars::TAB));
+				else {
+					ss = new SimpleState(Um::InsertText,"",Um::ICreate);
+					ss->set("INSERT_FRAMETEXT", "insert_frametext");
+					ss->set("ETEA", QString("insert_frametext"));
+					ss->set("TEXT_STR", QString(SpecialChars::TAB));
+					ss->set("START", itemText.cursorPosition());
+					undoManager->action(this, ss);
+				}
+			}
 			itemText.insertChars(QString(SpecialChars::TAB), true);
 //			Tinput = true;
 //			view->RefreshItem(this);
@@ -3821,6 +3845,20 @@ void PageItem_TextFrame::handleModeEditKey(QKeyEvent *k, bool& keyRepeat)
 		}
 		else if ((uc[0] > QChar(31) && m_Doc->currentStyle.charStyle().font().canRender(uc[0])) || (as == 13) || (as == 30))
 		{
+			if (UndoManager::undoEnabled())
+			{
+				SimpleState *ss = dynamic_cast<SimpleState*>(undoManager->getLastUndo());
+				if(ss && ss->get("ETEA") == "insert_frametext")
+						ss->set("TEXT_STR",ss->get("TEXT_STR") + uc);
+				else {
+					ss = new SimpleState(Um::InsertText,"",Um::ICreate);
+					ss->set("INSERT_FRAMETEXT", "insert_frametext");
+					ss->set("ETEA", QString("insert_frametext"));
+					ss->set("TEXT_STR",uc);
+					ss->set("START", itemText.cursorPosition());
+					undoManager->action(this, ss);
+				}
+			}
 			itemText.insertChars(uc, true);
 			if ((m_Doc->docHyphenator->AutoCheck) && (itemText.cursorPosition() > 1))
 			{
@@ -3848,6 +3886,12 @@ void PageItem_TextFrame::handleModeEditKey(QKeyEvent *k, bool& keyRepeat)
 		}
 		if (doUpdate)
 		{
+			if (activeTransaction)
+			{
+				activeTransaction->commit();
+				delete activeTransaction;
+				activeTransaction = NULL;
+			}
 			// update layout immediately, we need MaxChars to be correct to detect 
 			// if we need to move to next frame or not
 			updateLayout();
@@ -3876,6 +3920,24 @@ void PageItem_TextFrame::handleModeEditKey(QKeyEvent *k, bool& keyRepeat)
 void PageItem_TextFrame::deleteSelectedTextFromFrame()
 {
 	if (itemText.lengthOfSelection() > 0) {
+		if (UndoManager::undoEnabled())
+		{
+			SimpleState *ss = dynamic_cast<SimpleState*>(undoManager->getLastUndo());
+			if(ss && ss->get("ETEA") == "delete_frametext"){
+				if(itemText.startOfSelection()<ss->getInt("START")){
+					ss->set("START",itemText.startOfSelection());
+					ss->set("TEXT_STR",itemText.text(itemText.startOfSelection(),itemText.lengthOfSelection()) + ss->get("TEXT_STR"));
+				} else
+					ss->set("TEXT_STR",ss->get("TEXT_STR") + itemText.text(itemText.startOfSelection(),itemText.lengthOfSelection()));
+			}else {
+				ss = new SimpleState(Um::DeleteText,"",Um::IDelete);
+				ss->set("DELETE_FRAMETEXT", "delete_frametext");
+				ss->set("ETEA", QString("delete_frametext"));
+				ss->set("TEXT_STR",itemText.text(itemText.startOfSelection(),itemText.lengthOfSelection()));
+				ss->set("START", itemText.startOfSelection());
+				undoManager->action(this, ss);
+			}
+		}
 		itemText.setCursorPosition( itemText.startOfSelection() );
 		itemText.removeSelection();
 		HasSel = false;
@@ -4107,7 +4169,6 @@ void PageItem_TextFrame::drawColumnBorders(ScPainter *p)
 		p->drawLine(FPoint(0, TExtra + lineCorr), FPoint(Width, TExtra + lineCorr));
 	if (BExtra + lineCorr!=0.0)
 		p->drawLine(FPoint(0, Height - BExtra - lineCorr), FPoint(Width, Height - BExtra - lineCorr));
-	double oldColRightX = Extra + lineCorr;
 	while(curCol < Cols)
 	{
 		colLeft=(colWidth + ColGap) * curCol + Extra + lineCorr;
@@ -4115,7 +4176,6 @@ void PageItem_TextFrame::drawColumnBorders(ScPainter *p)
 			p->drawLine(FPoint(colLeft, 0), FPoint(colLeft, 0+Height));
 		if (colLeft + colWidth != Width)
 			p->drawLine(FPoint(colLeft+colWidth, 0), FPoint(colLeft+colWidth, 0+Height));
-		oldColRightX=colLeft+colWidth;
 		++curCol;
 	}
 	
@@ -4202,7 +4262,10 @@ void PageItem_TextFrame::applicableActions(QStringList & actionList)
 	}
 	actionList << "itemConvertToOutlines";
 	if (itemText.lines() != 0)
+	{
 		actionList << "editClearContents";
+		actionList << "itemAdjustFrameHeightToText";
+	}
 }
 
 QString PageItem_TextFrame::infoDescription()
@@ -4213,4 +4276,24 @@ QString PageItem_TextFrame::infoDescription()
 void PageItem_TextFrame::slotInvalidateLayout()
 {
 	invalidateLayout();
+}
+
+void PageItem_TextFrame::setMaxY(double y)
+{
+	if (y == -1)
+		maxY = 0;
+	else
+		maxY = qMax(y, maxY);
+}
+
+void PageItem_TextFrame::setTextFrameHeight()
+{
+	//ugly hack increasing min frame`s haeight against strange glyph painting if it is too close of bottom
+	double hackValue = 0.5;
+
+	setHeight(ceil(maxY) + BExtra + hackValue);
+	updateClip();
+	invalid = true;
+	m_Doc->changed();
+	m_Doc->regionsChanged()->update(QRect());
 }

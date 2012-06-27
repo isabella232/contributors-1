@@ -799,6 +799,7 @@ void ScribusMainWindow::initMenuBar()
 	scrMenuMgr->addMenuSeparator("Item");
 	// End Table submenu.
 	scrMenuMgr->addMenuSeparator("Item");
+	scrMenuMgr->addMenuItem(scrActions["itemAdjustFrameHeightToText"], "Item", false);
 	scrMenuMgr->addMenuItem(scrActions["itemAdjustFrameToImage"], "Item", false);
 	scrMenuMgr->addMenuItem(scrActions["itemAdjustImageToFrame"], "Item", false);
 	scrMenuMgr->addMenuItem(scrActions["itemUpdateImage"], "Item", false);
@@ -1172,9 +1173,33 @@ void ScribusMainWindow::specialActionKeyEvent(const QString& actionName, int uni
 				{
 					if (unicodevalue!=-1)
 					{
-						if (currItem->HasSel)
+						UndoTransaction* activeTransaction = NULL;
+						if (currItem->HasSel){
+							if (UndoManager::undoEnabled())
+								activeTransaction = new UndoTransaction(undoManager->beginTransaction(Um::Selection, Um::IGroup, Um::ReplaceText, "", Um::IDelete));
 							currItem->deleteSelectedTextFromFrame();
+						}
+						if (UndoManager::undoEnabled())
+						{
+							SimpleState *ss = dynamic_cast<SimpleState*>(undoManager->getLastUndo());
+							if(ss && ss->get("ETEA") == "insert_frametext")
+									ss->set("TEXT_STR",ss->get("TEXT_STR") + QString(QChar(unicodevalue)));
+							else {
+								ss = new SimpleState(Um::InsertText,"",Um::ICreate);
+								ss->set("INSERT_FRAMETEXT", "insert_frametext");
+								ss->set("ETEA", QString("insert_frametext"));
+								ss->set("TEXT_STR", QString(QChar(unicodevalue)));
+								ss->set("START", currItem->itemText.cursorPosition());
+								undoManager->action(currItem, ss);
+							}
+						}
 						currItem->itemText.insertChars(QString(QChar(unicodevalue)), true);
+						if (activeTransaction)
+						{
+							activeTransaction->commit();
+							delete activeTransaction;
+							activeTransaction = NULL;
+						}
 					}
 					else if (actionName=="unicodeSoftHyphen") //ignore the char as we use an attribute if the text item, for now.
 					{
@@ -1187,6 +1212,20 @@ void ScribusMainWindow::specialActionKeyEvent(const QString& actionName, int uni
 							fl |= ScStyle_HyphenationPossible;
 							currItem->itemText.item(qMax(currItem->CPos-1,0))->setEffects(fl);
 #else
+							if (UndoManager::undoEnabled())
+							{
+								SimpleState *ss = dynamic_cast<SimpleState*>(undoManager->getLastUndo());
+								if(ss && ss->get("ETEA") == "insert_frametext")
+										ss->set("TEXT_STR",ss->get("TEXT_STR") + QString(SpecialChars::SHYPHEN));
+								else {
+									ss = new SimpleState(Um::InsertText,"",Um::ICreate);
+									ss->set("INSERT_FRAMETEXT", "insert_frametext");
+									ss->set("ETEA", QString("insert_frametext"));
+									ss->set("TEXT_STR", QString(SpecialChars::SHYPHEN));
+									ss->set("START", currItem->itemText.cursorPosition());
+									undoManager->action(currItem, ss);
+								}
+							}
 							currItem->itemText.insertChars(QString(SpecialChars::SHYPHEN), true);
 #endif
 						}
@@ -2644,6 +2683,7 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 #else
 	scrActions["editEditRenderSource"]->setEnabled(SelectedType==PageItem::ImageFrame && currItem && (currItem->asLatexFrame()));
 #endif
+	scrActions["itemAdjustFrameHeightToText"]->setEnabled(SelectedType==PageItem::TextFrame && currItem->itemText.length() >0);
 	if (SelectedType!=PageItem::ImageFrame)
 	{
 		scrActions["itemImageIsVisible"]->setChecked(false);
@@ -2797,15 +2837,15 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 //		scrActions["itemSendToScrapbook"]->setEnabled(true);
 		scrMenuMgr->setMenuEnabled("itemSendToScrapbook", true);
 		scrActions["itemSendToPattern"]->setEnabled(true);
-		scrActions["itemAdjustFrameToImage"]->setEnabled(true);
-		scrActions["itemAdjustImageToFrame"]->setEnabled(true);
-		scrActions["itemExtendedImageProperties"]->setEnabled(true);
-		scrActions["itemUpdateImage"]->setEnabled(true);
-		scrActions["itemPreviewLow"]->setEnabled(true);
-		scrActions["itemPreviewNormal"]->setEnabled(true);
-		scrActions["itemPreviewFull"]->setEnabled(true);
+		scrActions["itemAdjustFrameToImage"]->setEnabled(false);
+		scrActions["itemAdjustImageToFrame"]->setEnabled(false);
+		scrActions["itemExtendedImageProperties"]->setEnabled(false);
+		scrActions["itemUpdateImage"]->setEnabled(false);
+		scrActions["itemPreviewLow"]->setEnabled(false);
+		scrActions["itemPreviewNormal"]->setEnabled(false);
+		scrActions["itemPreviewFull"]->setEnabled(false);
 		scrActions["itemAttributes"]->setEnabled(true);
-		scrActions["itemPreviewLow"]->setEnabled(true);
+		scrActions["itemPreviewLow"]->setEnabled(false);
 		//scrMenuMgr->setMenuEnabled("ItemShapes", !(currItem->isTableItem && currItem->isSingleSel));
 //		scrMenuMgr->setMenuEnabled("ItemConvertTo", true);
 		scrActions["itemConvertToBezierCurve"]->setEnabled(false);
@@ -2908,15 +2948,15 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 //		scrActions["itemSendToScrapbook"]->setEnabled(true);
 		scrMenuMgr->setMenuEnabled("itemSendToScrapbook", true);
 		scrActions["itemSendToPattern"]->setEnabled(true);
-		scrActions["itemAdjustFrameToImage"]->setEnabled(true);
-		scrActions["itemAdjustImageToFrame"]->setEnabled(true);
-		scrActions["itemExtendedImageProperties"]->setEnabled(true);
-		scrActions["itemUpdateImage"]->setEnabled(true);
-		scrActions["itemPreviewLow"]->setEnabled(true);
-		scrActions["itemPreviewNormal"]->setEnabled(true);
-		scrActions["itemPreviewFull"]->setEnabled(true);
+		scrActions["itemAdjustFrameToImage"]->setEnabled(false);
+		scrActions["itemAdjustImageToFrame"]->setEnabled(false);
+		scrActions["itemExtendedImageProperties"]->setEnabled(false);
+		scrActions["itemUpdateImage"]->setEnabled(false);
+		scrActions["itemPreviewLow"]->setEnabled(false);
+		scrActions["itemPreviewNormal"]->setEnabled(false);
+		scrActions["itemPreviewFull"]->setEnabled(false);
 		scrActions["itemAttributes"]->setEnabled(true);
-		scrActions["itemPreviewLow"]->setEnabled(true);
+		scrActions["itemPreviewLow"]->setEnabled(false);
 		//scrMenuMgr->setMenuEnabled("ItemShapes", false);
 		scrActions["itemDetachTextFromPath"]->setEnabled(true);
 //		scrMenuMgr->setMenuEnabled("ItemConvertTo", true);
@@ -3595,6 +3635,10 @@ bool ScribusMainWindow::slotPageImport()
 	Q_ASSERT(!doc->masterPageMode());
 	bool ret = false;
 	MergeDoc *dia = new MergeDoc(this, false, doc->DocPages.count(), doc->currentPage()->pageNr() + 1);
+	UndoTransaction* activeTransaction = NULL;
+	if(UndoManager::undoEnabled())
+		activeTransaction = new UndoTransaction(undoManager->beginTransaction(Um::ImportPage, Um::IGroup, Um::ImportPage, 0, Um::ILock));
+
 	if (dia->exec())
 	{
 		mainWindowStatusLabel->setText( tr("Importing Pages..."));
@@ -3678,6 +3722,12 @@ bool ScribusMainWindow::slotPageImport()
 		}
 		qApp->changeOverrideCursor(QCursor(Qt::ArrowCursor));
 		ret = doIt;
+	}
+	if (activeTransaction)
+	{
+		activeTransaction->commit();
+		delete activeTransaction;
+		activeTransaction = NULL;
 	}
 	delete dia;
 	return ret;
@@ -5099,7 +5149,14 @@ void ScribusMainWindow::slotEditPaste()
 				dig.parseMemory(xml, xml.length());
 
 				StoryText* story = dig.result<StoryText>();
-
+				if (UndoManager::undoEnabled())
+				{
+					ScItemState<StoryText> *is = new ScItemState<StoryText>(Um::Paste);
+					is->set("PASTE_TEXT", "paste_text");
+					is->set("START",currItem->itemText.cursorPosition());
+					is->setItem(*story);
+					undoManager->action(currItem, is);
+				}
 				currItem->itemText.insert(*story);
 
 				delete story;
@@ -5166,8 +5223,16 @@ void ScribusMainWindow::slotEditPaste()
 				doc->maxCanvasCoordinate = maxSize;
 				if (outlinePalette->isVisible())
 					outlinePalette->BuildTree();
-				currItem->itemText.insertObject(fIndex);
 				undoManager->setUndoEnabled(true);
+				if (UndoManager::undoEnabled())
+				{
+					SimpleState *is = new SimpleState(Um::Paste,"",Um::IPaste);
+					is->set("PASTE_INLINE", "paste_inline");
+					is->set("START",currItem->itemText.cursorPosition());
+					is->set("INDEX",fIndex);
+					undoManager->action(currItem, is);
+				}
+				currItem->itemText.insertObject(fIndex);
 				doc->m_Selection->delaySignalsOff();
 				inlinePalette->unsetDoc();
 				inlinePalette->setDoc(doc);

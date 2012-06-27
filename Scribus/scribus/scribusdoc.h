@@ -734,11 +734,17 @@ public:
 	void restoreMasterPageApplying(SimpleState *state, bool isUndo);
 	void restoreCopyPage(SimpleState *state, bool isUndo);
 	void restoreMovePage(SimpleState *state, bool isUndo);
+	void restoreAddMasterPage(SimpleState *state, bool isUndo);
 	/**
 	 * @brief Undo function for grouping/ungrouping
 	 */
 	void restoreGrouping(SimpleState *state, bool isUndo);
 	void restoreUngrouping(SimpleState *state, bool isUndo);
+	/**
+	 * @brief Undo function for level
+	 */
+	void restoreLevelDown(SimpleState *state, bool isUndo);
+	void restoreLevelBottom(SimpleState *state, bool isUndo);
 	/**
 	 * @brief Save function
 	 */
@@ -1328,6 +1334,8 @@ public:
 	FPointArray symNewFrame;
 	
 	Hyphenator * docHyphenator;
+	void itemResizeToMargin(PageItem* item, int direction); //direction reflect enum numbers from Canvas::FrameHandle
+
 private:
 	UndoTransaction* m_itemCreationTransaction;
 	UndoTransaction* m_alignTransaction;
@@ -1452,6 +1460,7 @@ public slots:
 	 * Adjust an image size to fit the size of the frame
 	 */
 	void itemSelection_AdjustImagetoFrameSize(Selection* customSelection=0);
+	void itemSelection_AdjustFrameHeightToText( Selection *customSelection=0);
 	//! @brief startArrowID or endArrowID of -1 mean not applying a selection at this point.
 	void itemSelection_ApplyArrowHead(int startArrowID=-1, int endArrowID=-1, Selection* customSelection=0);
 	void itemSelection_ApplyArrowScale(int startArrowSc, int endArrowSc, Selection* customSelection);

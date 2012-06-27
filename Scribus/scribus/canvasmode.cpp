@@ -76,7 +76,8 @@ CanvasMode::CanvasMode (ScribusView* view) :
 	m_view(view),
 	m_canvas(view->m_canvas),
 	m_doc(view->Doc),
-	m_panGesture(NULL)
+	m_panGesture(NULL),
+	undoManager(UndoManager::instance())
 {
 	m_pen["outline"]	= QPen(Qt::gray, 1.0 , Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
 	m_pen["outline"].setCosmetic(true);
@@ -789,7 +790,6 @@ void CanvasMode::setResizeCursor(int how, double rot)
 
 bool CanvasMode::commonMouseMove(QMouseEvent *m)
 {
-	const FPoint mousePointDoc = m_canvas->globalToCanvas(m->globalPos());
 	if ((m_canvas->m_viewMode.m_MouseButtonPressed && (m->buttons() & Qt::RightButton) && (m->modifiers() & Qt::ControlModifier)) || ((!(m->modifiers() & Qt::ControlModifier)) && (m->buttons() & Qt::MidButton)))
 	{
 		if (!m_panGesture)
