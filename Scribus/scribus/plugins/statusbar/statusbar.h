@@ -13,10 +13,15 @@
 #include <QObject>
 #include <QDebug>
 
+#include "scdockpalette.h"
+
 // class QString;
-// class ScribusDoc;
+class Toolbar;
+class Statusbar;
+class ScribusDoc;
 // class ScPage;
 // class ScLayer;
+class Ui_Toolbar;
 
 
 // class PageItem;
@@ -30,13 +35,13 @@ struct StatusbarOptions
     */
 };
 
-class Statusbar : public QObject
+class Statusbar : public ScDockPalette
 {
     Q_OBJECT
 
 public:
-	EPUBexport( ScribusDoc* doc );
-	~EPUBexport();
+	Statusbar( ScribusDoc* doc );
+	~Statusbar();
 
 	/*!
 	\author Ale Rimoldi
@@ -45,6 +50,9 @@ public:
 	 */
 
 private:
+    QDockWidget *statusbar;
+    Toolbar *toolbar;
+
 	ScribusDoc* m_Doc;
 };
 #endif // STATUSBAR_H

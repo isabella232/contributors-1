@@ -4,18 +4,18 @@ ${CMAKE_SOURCE_DIR}/scribus
 )
 
 SET(SCRIBUS_STATUSBAR_PLUGIN_UI_SRC
-  statusbardialog.ui
+  toolbar.ui
 )
 
 SET(SCRIBUS_STATUSBAR_PLUGIN_MOC_CLASSES
   statusbarplugin.h
-  statusbardialog.h
+  toolbar.h
   statusbar.h
 )
 
 SET(SCRIBUS_STATUSBAR_PLUGIN_SOURCES
   statusbarplugin.cpp
-  statusbardialog.cpp
+  toolbar.cpp
   statusbar.cpp
 )
 

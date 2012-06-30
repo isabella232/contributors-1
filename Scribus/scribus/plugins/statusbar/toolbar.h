@@ -7,26 +7,32 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef STATUSBARDIALOG_H
-#define STATUSBARDIALOG_H
+#ifndef STATUSBAR_TOOLBAR_H 
+#define STATUSBAR_TOOLBAR_H
 
-#include "ui_statusbardialog.h"
+#include <QWidget>
 
 class ScribusDoc;
 
-class StatusbarDialog : public QWidget, Ui::StatusbarDialog
+namespace Ui {
+class Statusbar;
+}
+
+class Toolbar : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
+
 	public:
-		StatusbarDialog( QWidget* parent = 0, ScribusDoc* doc = 0, const char* name = 0, bool modal = FALSE, Qt::WFlags fl = 0 );
-		~StatusbarDialog();
+		explicit Toolbar( QWidget* parent = 0);
+		~Toolbar();
 	private:
 		//! \brief a parent doc reference
 		ScribusDoc* m_Doc;
-	private slots:
-		void cancelButton_clicked();
-		void exportButton_clicked();
+        Ui::Statusbar *ui;
+	// private slots:
+		// void cancelButton_clicked();
+		// void exportButton_clicked();
 
 };
 
-#endif // STATUSBARDIALOG_H
+#endif // STATUSBAR_TOOLBAR_H

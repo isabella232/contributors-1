@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "statusbarplugin.h"
-#include "statusbardialog.h"
 #include "scribuscore.h"
 #include "scribusdoc.h"
 
@@ -95,6 +94,7 @@ bool StatusbarPlugin::run(ScribusDoc* doc, QString target)
 		currDoc=ScCore->primaryMainWindow()->doc;
 	if (currDoc==0)
 		return false;
+    /*
 	StatusbarDialog *dlg = new StatusbarDialog(currDoc->scMW(), currDoc, "dlg", true, 0);
 	if (dlg)
 	{
@@ -104,4 +104,5 @@ bool StatusbarPlugin::run(ScribusDoc* doc, QString target)
 	}
 	else
 		return false;
+    */
 }

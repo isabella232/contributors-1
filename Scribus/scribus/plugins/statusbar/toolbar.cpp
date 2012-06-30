@@ -7,28 +7,29 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "statusbardialog.h"
-#include "statusbarport.h"
+#include "toolbar.h"
+#include "ui_toolbar.h"
 
-StatusbarDialog::StatusbarDialog(QWidget* parent, ScribusDoc* doc, const char* name, bool modal, Qt::WFlags fl)
-	: QDialog (parent, fl),
-	  m_Doc(doc)
+Toolbar::Toolbar(QWidget* parent) :
+    QWidget(parent),
+    ui(new Ui::Statusbar)
 {
-	setupUi(this);
-	setObjectName(name);
-	setModal(modal);
-	connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancelButton_clicked()));
-	connect(exportButton, SIGNAL(clicked()), this, SLOT(exportButton_clicked()));
+	ui->setupUi(this);
+	// setObjectName(name);
+	// setModal(modal);
+	// connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancelButton_clicked()));
+	// connect(exportButton, SIGNAL(clicked()), this, SLOT(exportButton_clicked()));
 }
 
-StatusbarDialog::~StatusbarDialog() {};
+Toolbar::~Toolbar() {};
 
-void StatusbarDialog::cancelButton_clicked()
+/*
+void Toolbar::cancelButton_clicked()
 {
 	reject();
 }
 
-void StatusbarDialog::exportButton_clicked()
+void Toolbar::exportButton_clicked()
 {
     // see gtfiledialog.ui for a way to integrate a file manager
     Statusbar *action = new Statusbar(m_Doc);
@@ -38,4 +39,5 @@ void StatusbarDialog::exportButton_clicked()
     delete action;
 	reject();
 }
+*/
 

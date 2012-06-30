@@ -1074,45 +1074,132 @@ void ScribusMainWindow::addDefaultWindowMenuItems()
 
 void ScribusMainWindow::initStatusBar()
 {
+	QComboBox *mainWindowUnitSwitcher = new QComboBox();
+	QComboBox *mainWindowImagePreviewQualitySwitcher = new QComboBox();
+
+	QComboBox *mainWindowPreviewQualitySwitcher = new QComboBox();
+	mainWindowPreviewQualitySwitcher->setFocusPolicy(Qt::NoFocus);
+	// mainWindowPreviewQualitySwitcher->setFont(fo);
+	mainWindowPreviewQualitySwitcher->addItem(tr("High"));
+	mainWindowPreviewQualitySwitcher->addItem(tr("Normal"));
+	mainWindowPreviewQualitySwitcher->addItem(tr("Low"));
+	// mainWindowPreviewQualitySwitcher->setCurrentIndex(Prefs->itemToolPrefs.imageLowResType);
+
+	ScrSpinBox *mainWindowZoomSpinBox = new ScrSpinBox( 1, 3200, this, 6 );
+	mainWindowZoomSpinBox->setTabAdvance(false);
+	// mainWindowZoomSpinBox->setFont(fo);
+	mainWindowZoomSpinBox->setValue( 100 );
+	mainWindowZoomSpinBox->setSingleStep(10);
+	mainWindowZoomSpinBox->setFocusPolicy(Qt::ClickFocus);
+	mainWindowZoomSpinBox->setSuffix( tr( " %" ) );
+
+#if OPTION_USE_QTOOLBUTTON
+	QToolButton *mainWindowZoomOutToolbarButton = new QToolButton();
+	QToolButton *mainWindowZoomDefaultToolbarButton = new QToolButton();
+	QToolButton *mainWindowZoomInToolbarButton = new QToolButton();
+	QToolButton *mainWindowCmsToolbarButton = new QToolButton();
+	QToolButton *mainWindowPreviewToolbarButton = new QToolButton();
+	mainWindowZoomDefaultToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
+	mainWindowZoomOutToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
+	mainWindowZoomInToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
+	// mainWindowZoomInToolbarButton->setDefaultAction(m_ScMW->scrActions["toolsZoomIn"]);
+	// mainWindowZoomOutToolbarButton->setDefaultAction(m_ScMW->scrActions["toolsZoomOut"]);
+	mainWindowCmsToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
+	mainWindowCmsToolbarButton->setCheckable(true);
+	QIcon ic2;
+	ic2.addPixmap(loadIcon("cmsOff.png"), QIcon::Normal, QIcon::Off);
+	ic2.addPixmap(loadIcon("cmsOn.png"), QIcon::Normal, QIcon::On);
+	mainWindowCmsToolbarButton->setIcon(ic2);
+	mainWindowPreviewToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
+	mainWindowPreviewToolbarButton->setCheckable(true);
+	QIcon ic;
+	ic.addPixmap(loadIcon("previewOff.png"), QIcon::Normal, QIcon::Off);
+	ic.addPixmap(loadIcon("previewOn.png"), QIcon::Normal, QIcon::On);
+	mainWindowPreviewToolbarButton->setIcon(ic);
+#endif
+
+	mainWindowZoomDefaultToolbarButton->setIcon(QIcon(loadIcon("16/zoom-original.png")));
+	mainWindowZoomOutToolbarButton->setIcon(QIcon(loadIcon("16/zoom-out.png")));
+	mainWindowZoomInToolbarButton->setIcon(QIcon(loadIcon("16/zoom-in.png")));
+
+	// PageSelector *mainWindowPageSelector = new PageSelector(view, view->Doc->Pages->count());
+	PageSelector *mainWindowPageSelector = new PageSelector(view, 0); // FIXME: when set and clear it?
+	// PageSelector *mainWindowPageSelector = new PageSelector();
+	// mainWindowPageSelector->setFont(fo);
+	mainWindowPageSelector->setFocusPolicy(Qt::ClickFocus);
+	QComboBox *mainWindowLayerMenu = new QComboBox( view );
+	mainWindowLayerMenu->setEditable(false);
+	// mainWindowLayerMenu->setFont(fo);
+	mainWindowLayerMenu->setFocusPolicy(Qt::NoFocus);
+	// QComboBox *mainWindowVisualMenu = new QComboBox( this ); FIXME: dropdown like cms
+	// mainWindowVisualMenu->setFocusPolicy(Qt::NoFocus);
+	// mainWindowVisualMenu->setFont(fo);
+	// mainWindowVisualMenu->setEnabled(false);
+
 	mainWindowStatusLabel = new QLabel( "           ", statusBar());
 	mainWindowProgressBar = new QProgressBar(statusBar());
 	mainWindowProgressBar->setAlignment(Qt::AlignHCenter);
 	mainWindowProgressBar->setFixedWidth( 100 );
 	mainWindowProgressBar->reset();
-	mainWindowXPosLabel = new QLabel( tr("X-Pos:"), statusBar());
-	mainWindowYPosLabel = new QLabel( tr("Y-Pos:"), statusBar());
-	mainWindowXPosDataLabel = new QLabel( "        ", statusBar());
-	mainWindowYPosDataLabel = new QLabel( "        ", statusBar());
+	// mainWindowXPosLabel = new QLabel( tr("X-Pos:"), statusBar());
+	// mainWindowYPosLabel = new QLabel( tr("Y-Pos:"), statusBar());
+	// mainWindowXPosDataLabel = new QLabel( "        ", statusBar());
+	// mainWindowYPosDataLabel = new QLabel( "        ", statusBar());
+
+	statusBar()->addPermanentWidget(mainWindowUnitSwitcher, 1);
+	statusBar()->addPermanentWidget(mainWindowImagePreviewQualitySwitcher, 1);
+	statusBar()->addPermanentWidget(mainWindowZoomSpinBox, 0);
+	statusBar()->addPermanentWidget(mainWindowZoomInToolbarButton, 0);
+	statusBar()->addPermanentWidget(mainWindowZoomDefaultToolbarButton, 1);
+	statusBar()->addPermanentWidget(mainWindowZoomOutToolbarButton, 0);
+	statusBar()->addPermanentWidget(mainWindowPageSelector, 0);
+	statusBar()->addPermanentWidget(mainWindowLayerMenu, 0);
+	statusBar()->addPermanentWidget(mainWindowCmsToolbarButton, 0);
+	statusBar()->addPermanentWidget(mainWindowPreviewToolbarButton, 0);
+	// statusBar()->addPermanentWidget(mainWindowVisualMenu, 0);
 
 	statusBar()->addPermanentWidget(mainWindowStatusLabel, 6);
 	statusBar()->addPermanentWidget(mainWindowProgressBar, 0);
-	statusBar()->addPermanentWidget(mainWindowXPosLabel, 0);
-	statusBar()->addPermanentWidget(mainWindowXPosDataLabel, 1);
-	statusBar()->addPermanentWidget(mainWindowYPosLabel, 0);
-	statusBar()->addPermanentWidget(mainWindowYPosDataLabel, 1);
+
+    mainWindowXPosDataLabel = 0;
+    mainWindowYPosDataLabel = 0;
+    qDebug() << "FIXME: Remove the the fields for the mouse position in the status bar";
+
+	// statusBar()->addPermanentWidget(mainWindowXPosLabel, 0);
+	// statusBar()->addPermanentWidget(mainWindowXPosDataLabel, 1);
+	// statusBar()->addPermanentWidget(mainWindowYPosLabel, 0);
+	// statusBar()->addPermanentWidget(mainWindowYPosDataLabel, 1);
 	connect(statusBar(), SIGNAL(messageChanged(const QString &)), this, SLOT(setTempStatusBarText(const QString &)));
 }
 
 
 void ScribusMainWindow::setStatusBarMousePosition(double xp, double yp)
 {
-	double xn = xp;
-	double yn = yp;
-	if (doc->guidesPrefs().rulerMode)
-	{
-		xn -= doc->currentPage()->xOffset();
-		yn -= doc->currentPage()->yOffset();
-	}
-	xn -= doc->rulerXoffset;
-	yn -= doc->rulerYoffset;
-	mainWindowXPosDataLabel->setText(value2String(xn, doc->unitIndex(), true, true));
-	mainWindowYPosDataLabel->setText(value2String(yn, doc->unitIndex(), true, true));
+    if (mainWindowXPosDataLabel) {
+        double xn = xp;
+        double yn = yp;
+        if (doc->guidesPrefs().rulerMode)
+        {
+            xn -= doc->currentPage()->xOffset();
+            yn -= doc->currentPage()->yOffset();
+        }
+        xn -= doc->rulerXoffset;
+        yn -= doc->rulerYoffset;
+        mainWindowXPosDataLabel->setText(value2String(xn, doc->unitIndex(), true, true));
+        mainWindowYPosDataLabel->setText(value2String(yn, doc->unitIndex(), true, true));
+    } else {
+        qDebug() << "FIXME: mouse position display should use a signal/stol and where?";
+    }
 }
 
 void ScribusMainWindow::setStatusBarTextPosition(double base, double xp)
 {
-	mainWindowXPosDataLabel->setText(base + xp >= 0? value2String(xp, doc->unitIndex(), true, true): QString("-"));
-	mainWindowYPosDataLabel->setText("-");
+    if (mainWindowXPosDataLabel) {
+        mainWindowXPosDataLabel->setText(base + xp >= 0? value2String(xp, doc->unitIndex(), true, true): QString("-"));
+        mainWindowYPosDataLabel->setText("-");
+    } else {
+        qDebug() << "FIXME: mouse position display should use a signal/stol and where?";
+    }
 }
 
 void ScribusMainWindow::setTempStatusBarText(const QString &text)
