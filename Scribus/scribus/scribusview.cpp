@@ -2377,12 +2377,16 @@ void ScribusView::setMenTxt(int Seite)
 
 void ScribusView::setZoom()
 {
+    setZoom(zoomSpinBox->value());
+}
+
+void ScribusView::setZoom(double z) {
 	int x = qRound(qMax(contentsX() / m_canvas->scale(), 0.0));
 	int y = qRound(qMax(contentsY() / m_canvas->scale(), 0.0));
 	int w = qRound(qMin(visibleWidth() / m_canvas->scale(), Doc->currentPage()->width()));
 	int h = qRound(qMin(visibleHeight() / m_canvas->scale(), Doc->currentPage()->height()));
 	rememberOldZoomLocation(w / 2 + x,h / 2 + y);
-	zoom(oldX, oldY, zoomSpinBox->value() / 100.0 * Prefs->displayPrefs.displayScale, false);
+	zoom(oldX, oldY, z / 100.0 * Prefs->displayPrefs.displayScale, false);
 	setFocus();
 }
 
@@ -2501,9 +2505,8 @@ void ScribusView::DrawNew()
 	updateContents();
 	setRulerPos(contentsX(), contentsY());
 	setMenTxt(Doc->currentPage()->pageNr());
-	disconnect(zoomSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setZoom()));
-	zoomSpinBox->setValue(m_canvas->scale()/Prefs->displayPrefs.displayScale*100);
-	connect(zoomSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setZoom()));
+
+    m_ScMW->setStatusBarZoom(m_canvas->scale()/Prefs->displayPrefs.displayScale*100);
 }
 
 void ScribusView::SetCCPo(double x, double y)
@@ -4177,9 +4180,8 @@ void ScribusView::setScale(const double newScale)
 
 	m_canvas->setScale(Scale);
 
-	zoomSpinBox->blockSignals(true);
-	zoomSpinBox->setValue(m_canvas->scale()/Prefs->displayPrefs.displayScale*100);
-	zoomSpinBox->blockSignals(false);
+    // TODO: define "x/ and x* Prefs->displayPrefs.displayScale*100" as a function call with a name that explains what it does (ale/20120701)
+    m_ScMW->setStatusBarZoom(m_canvas->scale()/Prefs->displayPrefs.displayScale*100);
 
 	unitChange();
 }

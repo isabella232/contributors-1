@@ -389,7 +389,7 @@ public slots:
 	Take the ScMW zoom actions and pass the view a %. Actions have whole number values like 20.0, 100.0, etc. Zoom to Fit uses -100 as a marker.
 	\param zoomFactor Value stored in the ScrAction.
 	 */
-	void slotZoom(double zoomFactor); // 20, 50, 100, or -100 for Fit
+	void slotZoom(double zoomFactor); // 20, 50, 100, or -100 for Fit TODO: check if this is still needed (ale/20120701)
 	/** \brief Schaltet Raender ein/aus */
 	void ToggleMarks();
 	void ToggleBleeds();
@@ -517,6 +517,11 @@ public slots:
 	 */
 	void updateTableMenuActions();
 
+    /**
+     * updating the status bar
+     */
+    void setStatusBarZoom(double z);
+
 signals:
 	void AppModeChanged(int oldMode, int newMode);
 	void TextStyle(const ParagraphStyle&);
@@ -546,11 +551,28 @@ private:
 	void initPalettes();
 	void initScrapbook();
 
+	void connectViewToStatusBar(); // connect view's slot to status bar
+	void disconnectViewToStatusBar(); // connect view's slot to status bar
+
 	void updateColorMenu(QProgressBar* progressBar=NULL);
 	void ToggleFrameEdit();
 	void NoFrameEdit();
 
 	int ScriptRunning;
+
+	QComboBox *mainWindowUnitSwitcher;
+	QComboBox *mainWindowImagePreviewQualitySwitcher;
+	QComboBox *mainWindowPreviewQualitySwitcher;
+	ScrSpinBox *mainWindowZoomSpinBox;
+#if OPTION_USE_QTOOLBUTTON
+	QToolButton *mainWindowZoomOutToolbarButton;
+	QToolButton *mainWindowZoomDefaultToolbarButton;
+	QToolButton *mainWindowZoomInToolbarButton;
+	QToolButton *mainWindowCmsToolbarButton;
+	QToolButton *mainWindowPreviewToolbarButton;
+#endif
+	PageSelector *mainWindowPageSelector;
+	QComboBox *mainWindowLayerMenu;
 
 	QLabel* mainWindowStatusLabel;
 	QString statusLabelText;

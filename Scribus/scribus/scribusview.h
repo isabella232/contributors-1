@@ -324,6 +324,7 @@ private: // Private attributes
 
 private slots:
 	void setZoom();
+	void setZoom(double z);
 	/**
 	 * Called to update the GUI when the canvas(view) scrollbars are moved
 	 * @param x 

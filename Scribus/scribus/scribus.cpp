@@ -1072,12 +1072,17 @@ void ScribusMainWindow::addDefaultWindowMenuItems()
 }
 
 
+/**
+ * Here you can find the workin in progress for the new single statusbar
+ * For now, the buttons are copieds from the toolbar in scribusview.cpp
+ */
 void ScribusMainWindow::initStatusBar()
 {
-	QComboBox *mainWindowUnitSwitcher = new QComboBox();
-	QComboBox *mainWindowImagePreviewQualitySwitcher = new QComboBox();
+	mainWindowUnitSwitcher = new QComboBox();
 
-	QComboBox *mainWindowPreviewQualitySwitcher = new QComboBox();
+	mainWindowImagePreviewQualitySwitcher = new QComboBox();
+
+	mainWindowPreviewQualitySwitcher = new QComboBox();
 	mainWindowPreviewQualitySwitcher->setFocusPolicy(Qt::NoFocus);
 	// mainWindowPreviewQualitySwitcher->setFont(fo);
 	mainWindowPreviewQualitySwitcher->addItem(tr("High"));
@@ -1085,7 +1090,7 @@ void ScribusMainWindow::initStatusBar()
 	mainWindowPreviewQualitySwitcher->addItem(tr("Low"));
 	// mainWindowPreviewQualitySwitcher->setCurrentIndex(Prefs->itemToolPrefs.imageLowResType);
 
-	ScrSpinBox *mainWindowZoomSpinBox = new ScrSpinBox( 1, 3200, this, 6 );
+	mainWindowZoomSpinBox = new ScrSpinBox( 1, 3200, this, 6 );
 	mainWindowZoomSpinBox->setTabAdvance(false);
 	// mainWindowZoomSpinBox->setFont(fo);
 	mainWindowZoomSpinBox->setValue( 100 );
@@ -1093,12 +1098,13 @@ void ScribusMainWindow::initStatusBar()
 	mainWindowZoomSpinBox->setFocusPolicy(Qt::ClickFocus);
 	mainWindowZoomSpinBox->setSuffix( tr( " %" ) );
 
+// TODO: is this needed? if yes, we need to also copy the else from scribusview; also in scribus.h! (ale/20120630)
 #if OPTION_USE_QTOOLBUTTON
-	QToolButton *mainWindowZoomOutToolbarButton = new QToolButton();
-	QToolButton *mainWindowZoomDefaultToolbarButton = new QToolButton();
-	QToolButton *mainWindowZoomInToolbarButton = new QToolButton();
-	QToolButton *mainWindowCmsToolbarButton = new QToolButton();
-	QToolButton *mainWindowPreviewToolbarButton = new QToolButton();
+	mainWindowZoomOutToolbarButton = new QToolButton();
+	mainWindowZoomDefaultToolbarButton = new QToolButton();
+	mainWindowZoomInToolbarButton = new QToolButton();
+	mainWindowCmsToolbarButton = new QToolButton();
+	mainWindowPreviewToolbarButton = new QToolButton();
 	mainWindowZoomDefaultToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
 	mainWindowZoomOutToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
 	mainWindowZoomInToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
@@ -1123,7 +1129,7 @@ void ScribusMainWindow::initStatusBar()
 	mainWindowZoomInToolbarButton->setIcon(QIcon(loadIcon("16/zoom-in.png")));
 
 	// PageSelector *mainWindowPageSelector = new PageSelector(view, view->Doc->Pages->count());
-	PageSelector *mainWindowPageSelector = new PageSelector(view, 0); // FIXME: when set and clear it?
+	PageSelector *mainWindowPageSelector = new PageSelector(view, 0); // FIXME: when set and clear it? ... probablyin the updateStatusBar()? (ale(20120630)
 	// PageSelector *mainWindowPageSelector = new PageSelector();
 	// mainWindowPageSelector->setFont(fo);
 	mainWindowPageSelector->setFocusPolicy(Qt::ClickFocus);
@@ -1149,9 +1155,9 @@ void ScribusMainWindow::initStatusBar()
 	statusBar()->addPermanentWidget(mainWindowUnitSwitcher, 1);
 	statusBar()->addPermanentWidget(mainWindowImagePreviewQualitySwitcher, 1);
 	statusBar()->addPermanentWidget(mainWindowZoomSpinBox, 0);
-	statusBar()->addPermanentWidget(mainWindowZoomInToolbarButton, 0);
-	statusBar()->addPermanentWidget(mainWindowZoomDefaultToolbarButton, 1);
 	statusBar()->addPermanentWidget(mainWindowZoomOutToolbarButton, 0);
+	statusBar()->addPermanentWidget(mainWindowZoomDefaultToolbarButton, 1);
+	statusBar()->addPermanentWidget(mainWindowZoomInToolbarButton, 0);
 	statusBar()->addPermanentWidget(mainWindowPageSelector, 0);
 	statusBar()->addPermanentWidget(mainWindowLayerMenu, 0);
 	statusBar()->addPermanentWidget(mainWindowCmsToolbarButton, 0);
@@ -1163,15 +1169,44 @@ void ScribusMainWindow::initStatusBar()
 
     mainWindowXPosDataLabel = 0;
     mainWindowYPosDataLabel = 0;
-    qDebug() << "FIXME: Remove the the fields for the mouse position in the status bar";
+    qDebug() << "FIXME: Remove the fields for the mouse position in the status bar";
 
 	// statusBar()->addPermanentWidget(mainWindowXPosLabel, 0);
 	// statusBar()->addPermanentWidget(mainWindowXPosDataLabel, 1);
 	// statusBar()->addPermanentWidget(mainWindowYPosLabel, 0);
 	// statusBar()->addPermanentWidget(mainWindowYPosDataLabel, 1);
+
 	connect(statusBar(), SIGNAL(messageChanged(const QString &)), this, SLOT(setTempStatusBarText(const QString &)));
+
 }
 
+/**
+ * connect the document related slots to the status bar
+ * must be called when a document gets activated
+ * TODO: rename it to reflect its task (ale/20120701)
+ */
+void ScribusMainWindow::connectViewToStatusBar()
+{
+	if (view != NULL)
+	{
+		connect(mainWindowZoomDefaultToolbarButton, SIGNAL(clicked()), view, SLOT(slotZoom100()));
+		connect(mainWindowZoomOutToolbarButton, SIGNAL(clicked()), view, SLOT(slotZoomOut()));
+		connect(mainWindowZoomInToolbarButton, SIGNAL(clicked()), view, SLOT(slotZoomIn()));
+		connect(mainWindowZoomSpinBox, SIGNAL(valueChanged(double)), view, SLOT(setZoom(double)));
+	}
+}
+
+void ScribusMainWindow::disconnectViewToStatusBar()
+{
+	// disconnect(mainWindowZoomSpinBox, SIGNAL(valueChanged(double)), view, SLOT(setZoom()));
+}
+
+void ScribusMainWindow::setStatusBarZoom(double z)
+{
+	mainWindowZoomSpinBox->blockSignals(true);
+	mainWindowZoomSpinBox->setValue(z);
+	mainWindowZoomSpinBox->blockSignals(false);
+}
 
 void ScribusMainWindow::setStatusBarMousePosition(double xp, double yp)
 {
@@ -2327,6 +2362,7 @@ void ScribusMainWindow::newActWin(QMdiSubWindow *w)
 		Q_ASSERT(plugin); // all the returned names should represent loaded plugins
 		plugin->setDoc(doc);
 	}
+	connectViewToStatusBar(); // TODO: check if its always needed or it could use some ifs (ale/20120630)
 }
 
 void ScribusMainWindow::windowsMenuActivated( int id )
@@ -5856,8 +5892,10 @@ void ScribusMainWindow::duplicateToMasterPage()
 	}
 }
 
+// FIXME: does this get called at some time?
 void ScribusMainWindow::slotZoom(double zoomFactor)
 {
+	qDebug() << "ScribusMainWindow::slotZoom() gets called! No need to remove it!";
 	double finalZoomFactor;
 	//Zoom to Fit
 	if (zoomFactor == -100.0)
