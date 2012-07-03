@@ -182,6 +182,7 @@ ScribusView::ScribusView(QWidget* win, ScribusMainWindow* mw, ScribusDoc *doc) :
 	installEventFilter(this); // FIXME:av
 //	viewport()->setBackgroundMode(Qt::PaletteBackground);
 	setFocusPolicy(Qt::ClickFocus);
+    // FIXME: give fo a better name and make it accessible from ScribusMainWindow (ale/20120701)
 	QFont fo = QFont(font());
 	// #8058: Better not use too small font size on Windows
 	// in case ClearType is not enabled

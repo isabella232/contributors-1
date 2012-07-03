@@ -1078,13 +1078,16 @@ void ScribusMainWindow::addDefaultWindowMenuItems()
  */
 void ScribusMainWindow::initStatusBar()
 {
+	QFont inputFont = QFont(font());
+	inputFont.setPointSize(inputFont.pointSize() - (ScCore->isWinGUI() ? 1 : 2));
+
 	mainWindowUnitSwitcher = new QComboBox();
 
 	mainWindowImagePreviewQualitySwitcher = new QComboBox();
 
 	mainWindowPreviewQualitySwitcher = new QComboBox();
 	mainWindowPreviewQualitySwitcher->setFocusPolicy(Qt::NoFocus);
-	// mainWindowPreviewQualitySwitcher->setFont(fo);
+	mainWindowPreviewQualitySwitcher->setFont(inputFont);
 	mainWindowPreviewQualitySwitcher->addItem(tr("High"));
 	mainWindowPreviewQualitySwitcher->addItem(tr("Normal"));
 	mainWindowPreviewQualitySwitcher->addItem(tr("Low"));
@@ -1092,7 +1095,8 @@ void ScribusMainWindow::initStatusBar()
 
 	mainWindowZoomSpinBox = new ScrSpinBox( 1, 3200, this, 6 );
 	mainWindowZoomSpinBox->setTabAdvance(false);
-	// mainWindowZoomSpinBox->setFont(fo);
+	mainWindowZoomSpinBox->setFont(inputFont);
+	mainWindowZoomSpinBox->setDecimals(0);
 	mainWindowZoomSpinBox->setValue( 100 );
 	mainWindowZoomSpinBox->setSingleStep(10);
 	mainWindowZoomSpinBox->setFocusPolicy(Qt::ClickFocus);
@@ -6566,6 +6570,7 @@ void ScribusMainWindow::setAppMode(int mode)
 		}
 		if (oldMode == modeEdit)
 		{
+			// TODO: check what it is doing here... (ale/20120701)
 			view->zoomSpinBox->setFocusPolicy(Qt::ClickFocus);
 			view->pageSelector->setFocusPolicy(Qt::ClickFocus);
 			scrActions["editClearContents"]->setEnabled(false);

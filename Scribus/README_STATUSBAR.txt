@@ -35,6 +35,7 @@ Tasks
 - If possible, switch to a signal / slot model for updating all content of the status bar (the slots are probably already available! we only have to create the good connections).
 - We will need to update the content of the new statusbar content when switching document.
 - create an info toolbar
+- make a dropdown button out of the preview button
 
 Todo
 ===
@@ -52,6 +53,7 @@ What did I do?
 - Addded the signal/slots connection from ScribusView::ScribusView() to ScribusMainWindow::updateStatusBar()
 - Added the signal/slots disconnection to ScribusMainWindow::???()
 - ScribusView::setZoom(), called by the zoomSpinBox signal, gets its value directly from the zoomSpinBox widget, instead of taking the value from the valueChanged signal: iv'e created a ScribusView::setZoom(double) to avoid this too close relationship.
+- a new ScribusMainWindow::setStatusBarZoom(double) method lets scribusview set the zoom level in the status bar
 
 Further work
 ===
