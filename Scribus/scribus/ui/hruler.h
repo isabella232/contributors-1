@@ -33,6 +33,7 @@ class PageItem;
 
 class QPaintEvent;
 class QMouseEvent;
+class QSignalMapper;
 class PrefsManager;
 class RulerGesture;
 class ScribusView;
@@ -67,6 +68,10 @@ private:
 	double ItemEndPos;
 	double offs;
 	double itemScale;
+	QAction * leftTabAct;
+	QAction * rightTabAct;
+	QSignalMapper * signalMapper;
+
 public:
 	double ruleSpacing();
 	void setItem(PageItem * item);
@@ -79,6 +84,9 @@ public:
 	void shift(double pos); // using canvas coord
 	void shiftRel(double dist); // using canvas coord
 	double offset() const { return offs; }
+protected:
+	void contextMenuEvent(QContextMenuEvent *event);
+
 	
 private:
 	int findRulerHandle(QPoint mp, double grabRadius);
@@ -113,6 +121,9 @@ public slots: // Public slots
 	\param where where to draw */
 	void Draw(int where);
 	void unitChange();
+	void setTabType();
+	void setTabType(int type);
+
 
 signals:
 	void DocChanged(bool);

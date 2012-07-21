@@ -32,6 +32,9 @@ for which a new license (GPL+exception) is in place.
 #include <QPixmap>
 #include <QPolygon>
 #include <QRect>
+#include <QAction>
+#include <QSignalMapper>
+#include <QDebug>
 
 #include "canvasgesture_rulermove.h"
 #include "hruler.h"
@@ -96,6 +99,8 @@ Hruler::Hruler(ScribusView *pa, ScribusDoc *doc) : QWidget(pa)
 	setMouseTracking(true);
 	rulerGesture = new RulerGesture(currView, RulerGesture::HORIZONTAL);
 	unitChange();
+	leftTabAct = 0;
+	rightTabAct = 0;
 }
 
 
@@ -133,6 +138,34 @@ void Hruler::shift(double pos)
 void Hruler::shiftRel(double dist)
 {
 	offs += dist;
+}
+
+void Hruler::setTabType(int type)
+{
+	qDebug() << "type: " << type;
+}
+void Hruler::setTabType()
+{
+	QAction *tsender = (QAction *) sender();
+	// qDebug() << "sender: " << sender;
+	int i = 0;
+}
+
+void Hruler::contextMenuEvent(QContextMenuEvent *event)
+{
+	leftTabAct = new QAction(tr("Left tab"), this);
+	rightTabAct = new QAction(tr("Right tab"), this);
+	// newAct->setStatusTip(tr("Create a new file"));
+	signalMapper = new QSignalMapper(this);
+	connect(leftTabAct, SIGNAL(triggered()), signalMapper, SLOT(map()));
+	connect(rightTabAct, SIGNAL(triggered()), signalMapper, SLOT(map()));
+	signalMapper->setMapping(leftTabAct, 0);
+	signalMapper->setMapping(rightTabAct, 1);
+	connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(setTabType(int)));
+	QMenu menu(this);
+	menu.addAction(leftTabAct);
+	menu.addAction(rightTabAct);
+	menu.exec(event->globalPos());
 }
 
 
