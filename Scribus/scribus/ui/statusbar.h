@@ -2,6 +2,7 @@
 #define STATUSBAR_H
 
 #include <QWidget>
+class QIntValidator;
 
 class ApplicationPrefs;
 class ScribusView;
@@ -32,7 +33,15 @@ public:
 
 private:
 	Ui::Statusbar *ui;
+	void setDocumentButtonsEnabled();
+	void setDocumentButtonsEnabled(bool enabled);
+
 	void fillPreviewQuality();
+
+	int pageN;
+	int pageI;
+	QIntValidator *pageValidator;
+	QString pageNPattern;
 
 public slots:
 

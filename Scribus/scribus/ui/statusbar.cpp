@@ -1,4 +1,5 @@
 #include <QFont>
+#include <QValidator>
 #include <QDebug>
 
 #include "scribuscore.h"
@@ -36,7 +37,6 @@ Statusbar::Statusbar(QWidget *parent) :
 	ui->imagePreviewQuality->setFocusPolicy(Qt::NoFocus);
 	ui->imagePreviewQuality->setFont(inputFont);
 
-	// zoom = new ScrSpinBox( 1, 3200, this, 6 );
 	ui->zoom->setMinimum(1);
 	ui->zoom->setMaximum(3200);
 	ui->zoom->init(6);
@@ -54,6 +54,41 @@ Statusbar::Statusbar(QWidget *parent) :
 	ui->zoomOut->setAutoRaise(OPTION_FLAT_BUTTON);
 	ui->zoomIn->setIcon(QIcon(loadIcon("16/zoom-in.png")));
 	ui->zoomIn->setAutoRaise(OPTION_FLAT_BUTTON);
+
+	pageN = 0;
+	pageI = 0;
+	pageValidator = new QIntValidator(pageI, pageN, this);
+	pageNPattern = "%1" ;
+    // TODO: remove pageN and pageI from here and make all the buttons inactive by
+    // default, since there is no document open! (ale/20120729)
+	// pageN = view->Doc->Pages->count();
+	// pageI = 1;
+
+    ui->pageStart->setAutoRaise(OPTION_FLAT_BUTTON);
+	ui->pageStart->setIcon(QIcon(loadIcon("16/go-first.png")));
+	ui->pageStart->setFocusPolicy(Qt::NoFocus);
+	ui->pageBack->setAutoRaise(OPTION_FLAT_BUTTON);
+	ui->pageBack->setIcon(QIcon(loadIcon("16/go-previous.png")));
+	ui->pageBack->setFocusPolicy(Qt::NoFocus);
+	ui->pageBack->setAutoRepeat(true);
+	ui->page->setEditable(true);
+	ui->page->setDuplicatesEnabled( false );
+	ui->page->lineEdit()->setAlignment(Qt::AlignHCenter);
+	for (int i = 0; i < pageN; ++i)
+		ui->page->addItem(QString::number(i + 1));
+	ui->page->setValidator(pageValidator);
+	ui->page->setMinimumSize(fontMetrics().width( "999" )+20, 20);
+	ui->page->setFocusPolicy(Qt::ClickFocus);
+	ui->pageForward->setAutoRaise(OPTION_FLAT_BUTTON);
+	ui->pageForward->setIcon(QIcon(loadIcon("16/go-next.png")));
+	ui->pageForward->setFocusPolicy(Qt::NoFocus);
+	ui->pageForward->setAutoRepeat(true);
+	ui->pageLast->setAutoRaise(OPTION_FLAT_BUTTON);
+	ui->pageLast->setIcon(QIcon(loadIcon("16/go-last.png")));
+	ui->pageLast->setFocusPolicy(Qt::NoFocus);
+
+	languageChange();
+    setDocumentButtonsEnabled(false);
 }
 
 Statusbar::~Statusbar()
@@ -65,13 +100,97 @@ void Statusbar::languageChange()
 {
 	fillPreviewQuality();
 	ui->imagePreviewQuality->setToolTip( tr("Select the image preview quality"));
+
 	ui->unit->setToolTip( tr("Select the current unit"));
+
 	ui->zoom->setToolTip( tr("Current zoom level"));
 	ui->zoomDefault->setToolTip( tr("Zoom to 100%"));
 	ui->zoomOut->setToolTip( tr("Zoom out by the stepping value in Tools preferences"));
 	ui->zoomIn->setToolTip( tr("Zoom in by the stepping value in Tools preferences"));
+
+	ui->pageStart->setToolTip( tr("Go to the first page") );
+	ui->pageBack->setToolTip( tr("Go to the previous page") );
+	ui->pageForward->setToolTip( tr("Go to the next page") );
+	ui->pageLast->setToolTip( tr("Go to the last page") );
+	ui->page->setToolTip( tr("Select the current page") );
+    pageNPattern = tr(" of %1", "number of pages in document");
+	ui->pageN->setText(pageNPattern.arg(pageN));
+    // TODO: check if the three next lines are needed (ale/20120729)
+	// disconnect( PageCombo, SIGNAL( activated(int) ), this, SLOT( GotoPgE(int) ) );
+	// setCurrentComboItem(PageCombo, QString::number(APage));
+	// connect( PageCombo, SIGNAL( activated(int) ), this, SLOT( GotoPgE(int) ) );
 }
 
+void Statusbar::setView(ScribusView * view)
+{
+	// qDebug() << "set view";
+	if (this->view)
+	{
+		unsetView();
+	}
+	this->view = view;
+
+    setDocumentButtonsEnabled();
+
+	bool c = true;
+	c &= connect(ui->imagePreviewQuality, SIGNAL(activated(int)), view, SLOT(changePreviewQuality(int)));
+	c &= connect(ui->unit, SIGNAL(activated(int)), view, SLOT(ChgUnit(int)));
+	c &= connect(ui->zoomDefault, SIGNAL(clicked()), view, SLOT(slotZoom100()));
+	c &= connect(ui->zoomOut, SIGNAL(clicked()), view, SLOT(slotZoomOut()));
+	c &= connect(ui->zoomIn, SIGNAL(clicked()), view, SLOT(slotZoomIn()));
+	c &= connect(ui->zoom, SIGNAL(valueChanged(double)), view, SLOT(setZoom()));
+	Q_ASSERT(c);
+}
+
+void Statusbar::unsetView()
+{
+	// qDebug() << "unset view";
+    setDocumentButtonsEnabled(false);
+	if (this->view)
+	{
+		bool b = true;
+		b &= disconnect(ui->imagePreviewQuality, SIGNAL(activated(int)), view, SLOT(changePreviewQuality(int)));
+		b &= disconnect(ui->unit, SIGNAL(activated(int)), view, SLOT(ChgUnit(int)));
+		Q_ASSERT(b);
+	}
+
+	view = 0;
+
+}
+
+void Statusbar::setDocumentButtonsEnabled()
+{
+    setDocumentButtonsEnabled(true);
+}
+
+void Statusbar::setDocumentButtonsEnabled(bool enabled)
+{
+    if (enabled)
+        ui->unit->setCurrentIndex(view->Doc->unitIndex());
+	// setCurrentComboItem(view->unitSwitcher, unitGetStrFromIndex(doc->unitIndex()));
+	ui->unit->setEnabled(enabled);
+
+    if (enabled)
+        fillPreviewQuality();
+    else
+        ui->imagePreviewQuality->clear();
+	ui->imagePreviewQuality->setEnabled(enabled);
+	ui->zoom->setEnabled(enabled);
+	ui->zoomDefault->setEnabled(enabled);
+	ui->zoomOut->setEnabled(enabled);
+	ui->zoomIn->setEnabled(enabled);
+
+	ui->pageStart->setEnabled(enabled);
+	ui->pageBack->setEnabled(enabled);
+	ui->pageForward->setEnabled(enabled && (pageI == pageN));
+	ui->pageLast->setEnabled(enabled && (pageI == pageN));
+	ui->page->setEnabled(enabled);
+	ui->pageN->setEnabled(enabled);
+}
+
+/**
+ * Preview quality
+ */
 void Statusbar::fillPreviewQuality()
 {
 	ui->imagePreviewQuality->addItem(tr("High"));
@@ -80,6 +199,9 @@ void Statusbar::fillPreviewQuality()
 	ui->imagePreviewQuality->setCurrentIndex(Prefs->itemToolPrefs.imageLowResType);
 }
 
+/**
+ * Zoom
+ */
 void Statusbar::setZoom(double z)
 {
 	ui->zoom->blockSignals(true);
@@ -117,48 +239,6 @@ void Statusbar::pageClearFocus()
 	ui->page->clearFocus();
 }
 
-void Statusbar::setView(ScribusView * view)
-{
-	// qDebug() << "set view";
-	if (this->view)
-	{
-		unsetView();
-	}
-	this->view = view;
-
-	// setCurrentComboItem(view->unitSwitcher, unitGetStrFromIndex(doc->unitIndex()));
-	ui->unit->setCurrentIndex(view->Doc->unitIndex());
-	ui->unit->setEnabled(true);
-
-	fillPreviewQuality();
-	ui->imagePreviewQuality->setEnabled(true);
-
-	bool c = true;
-	c &= connect(ui->imagePreviewQuality, SIGNAL(activated(int)), view, SLOT(changePreviewQuality(int)));
-	c &= connect(ui->unit, SIGNAL(activated(int)), view, SLOT(ChgUnit(int)));
-	c &= connect(ui->zoomDefault, SIGNAL(clicked()), view, SLOT(slotZoom100()));
-	c &= connect(ui->zoomOut, SIGNAL(clicked()), view, SLOT(slotZoomOut()));
-	c &= connect(ui->zoomIn, SIGNAL(clicked()), view, SLOT(slotZoomIn()));
-	c &= connect(ui->zoom, SIGNAL(valueChanged(double)), view, SLOT(setZoom()));
-	Q_ASSERT(c);
-}
-
-void Statusbar::unsetView()
-{
-	// qDebug() << "unset view";
-	ui->unit->setEnabled(false);
-
-	ui->imagePreviewQuality->clear();
-	ui->imagePreviewQuality->setEnabled(false);
-
-	if (this->view)
-	{
-		bool b = true;
-		b &= disconnect(ui->imagePreviewQuality, SIGNAL(activated(int)), view, SLOT(changePreviewQuality(int)));
-		b &= disconnect(ui->unit, SIGNAL(activated(int)), view, SLOT(ChgUnit(int)));
-		Q_ASSERT(b);
-	}
-
-	view = 0;
-
-}
+/**
+ * Page
+ */

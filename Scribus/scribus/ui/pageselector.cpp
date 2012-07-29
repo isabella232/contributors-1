@@ -23,6 +23,40 @@ for which a new license (GPL+exception) is in place.
 #include "util_icon.h"
 #include "util.h"
 
+// QIntValidator does it better for us... PV
+// class PageValidator : public QValidator
+// {
+// public:
+// 	PageValidator(int min, int max, QObject * parent);
+// 	void fixup(QString & input) const;
+// 	State validate(QString & input, int & pos) const;
+// private:
+// 	QRegExp rx;
+// 	QRegExp rx2;
+// 	PageSelector * pageSelector;
+// };
+// 
+// PageValidator::PageValidator(int /* min */, int /* max */, QObject * parent) : QValidator
+// (parent), rx("^([0-9]+).*"), rx2("^[0-9]+$") 
+// {
+// 	pageSelector = static_cast<PageSelector*>(parent);
+// }
+// 
+// QValidator::State PageValidator::validate(QString & input, int & /* pos */) const
+// {
+// 	if (rx2.indexIn(input) == 0 && pageSelector->PageCombo->itemText(input.toInt()-1) == input)
+// 		return Acceptable;
+// 	else
+// 		return Intermediate;
+// }
+// 
+// void PageValidator::fixup(QString & input) const
+// {
+// 	if (rx.indexIn(input) == 0)
+// 		input = const_cast<QRegExp &>(rx).cap(1);
+// }
+// 	
+
 PageSelector::PageSelector( QWidget* parent, int maxPg ) : QWidget( parent, 0 )
 {
 	PageCountString = "%1" ;
@@ -32,6 +66,7 @@ PageSelector::PageSelector( QWidget* parent, int maxPg ) : QWidget( parent, 0 )
 	PageSelectorLayout->setMargin(0);
 	PageSelectorLayout->setSpacing(1);
 
+#if OPTION_USE_QTOOLBUTTON
 	Start = new QToolButton( this );
 	Start->setAutoRaise(OPTION_FLAT_BUTTON);
 	Back = new QToolButton( this );
@@ -40,7 +75,24 @@ PageSelector::PageSelector( QWidget* parent, int maxPg ) : QWidget( parent, 0 )
 	Forward->setAutoRaise(OPTION_FLAT_BUTTON);
 	Last = new QToolButton( this );
 	Last->setAutoRaise(OPTION_FLAT_BUTTON);
-
+#else
+	Start = new QPushButton( this );
+	Start->setDefault( false );
+	Start->setAutoDefault( false );
+	Start->setFlat(OPTION_FLAT_BUTTON);
+	Back = new QPushButton( this );
+	Back->setDefault( false );
+	Back->setAutoDefault( false );
+	Back->setFlat(OPTION_FLAT_BUTTON);
+	Forward = new QPushButton( this );
+	Forward->setDefault( false );
+	Forward->setAutoDefault( false );
+	Forward->setFlat(OPTION_FLAT_BUTTON);
+	Last = new QPushButton( this );
+	Last->setDefault( false );
+	Last->setAutoDefault( false );
+	Last->setFlat(OPTION_FLAT_BUTTON);
+#endif
 	Start->setIcon(QIcon(loadIcon("16/go-first.png")));
 	Start->setFocusPolicy(Qt::NoFocus);
 	PageSelectorLayout->addWidget( Start );
@@ -50,6 +102,7 @@ PageSelector::PageSelector( QWidget* parent, int maxPg ) : QWidget( parent, 0 )
 	Back->setAutoRepeat(true);
 	PageSelectorLayout->addWidget( Back );
 
+// 	v = new PageValidator(1, LastPG, this);
 	m_validator = new QIntValidator(1, LastPG, this);
 	PageCombo = new ScComboBox( this );
 	PageCombo->setEditable(true);
