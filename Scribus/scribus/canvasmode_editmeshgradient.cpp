@@ -45,6 +45,7 @@
 #include "hyphenator.h"
 #include "pageitem_textframe.h"
 #include "ui/pageselector.h"
+#include "ui/statusbar.h"
 #include "prefscontext.h"
 #include "prefsfile.h"
 #include "prefsmanager.h"
@@ -389,7 +390,7 @@ void CanvasMode_EditMeshGradient::keyPressEvent(QKeyEvent *e)
 	m_keyRepeat = true;
 	e->accept();
 	Qt::KeyboardModifiers buttonModifiers = e->modifiers();
-	if ((!m_view->zoomSpinBox->hasFocus()) && (!m_view->pageSelector->hasFocus()))
+    if ((!m_view->m_ScMW->statusbar->zoomHasFocus()) && (!m_view->m_ScMW->statusbar->zoomHasFocus()))
 	{
 		if (m_doc->m_Selection->count() != 0)
 		{

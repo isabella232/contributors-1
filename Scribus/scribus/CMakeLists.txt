@@ -80,6 +80,7 @@ SET(SCRIBUS_UI_SRC
   ui/gradientvectorbase.ui
   ui/gtfiledialog.ui
   ui/guidemanager.ui
+  ui/info.ui
   ui/insertaframe.ui
   ui/inserttablecolumnsdialog.ui
   ui/inserttablerowsdialog.ui
@@ -167,6 +168,7 @@ SET(SCRIBUS_UI_SRC
   ui/unicodesearch.ui
   ui/useprintermarginsdialog.ui
   ui/weldeditbase.ui
+  ui/statusbar.ui
 #  ${SCRIBUS_ITEMSETTERS_UI_SRC}
   ${SCRIBUS_OSG_UI_SRC}
 )
@@ -306,6 +308,7 @@ SET(SCRIBUS_MOC_CLASSES
   ui/hruler.h
   ui/hyask.h
   ui/imageinfodialog.h
+  ui/info.h
   ui/inlinepalette.h
   ui/insertTable.h
   ui/insertaframe.h
@@ -469,6 +472,7 @@ SET(SCRIBUS_MOC_CLASSES
   ui/useprintermarginsdialog.h
   ui/vruler.h
   ui/weldedit.h
+  ui/statusbar.h
 #  ${SCRIBUS_ITEMSETTERS_CLASS}
   ${SCRIBUS_OSG_CLASS}
 )
@@ -735,6 +739,7 @@ SET(SCRIBUS_SOURCES
   ui/hruler.cpp
   ui/hyask.cpp
   ui/imageinfodialog.cpp
+  ui/info.cpp
   ui/inlinepalette.cpp
   ui/insertTable.cpp
   ui/insertaframe.cpp
@@ -906,6 +911,7 @@ SET(SCRIBUS_SOURCES
   ui/vruler.cpp
   ui/useprintermarginsdialog.cpp
   ui/weldedit.cpp
+  ui/statusbar.cpp
 #  ${SCRIBUS_ITEMSETTERS_SRC}
   ${SCRIBUS_OSG_SRC}
   ${SCRIBUS_GMAGICK_SRC}

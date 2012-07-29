@@ -32,9 +32,9 @@ for which a new license (GPL+exception) is in place.
 #include <QLineEdit>
 #include <QScrollBar>
 #if OPTION_USE_QTOOLBUTTON
-    #include <QToolButton>
+	#include <QToolButton>
 #else
-    #include <QPushButton>
+	#include <QPushButton>
 #endif
 #include <QMap>
 #include <QMenu>
@@ -94,8 +94,8 @@ class SCRIBUS_API ScribusView : public QScrollArea, public Observer<QRectF>
 	Q_OBJECT
 
 public:
-    ScribusView(QWidget* win=0, ScribusMainWindow* mw=0, ScribusDoc* doc=0);
-    ~ScribusView();
+	ScribusView(QWidget* win=0, ScribusMainWindow* mw=0, ScribusDoc* doc=0);
+	~ScribusView();
 	
 	friend class CanvasMode_CopyProperties;
 	friend class CanvasMode_Edit;
@@ -118,7 +118,6 @@ public:
 	void stopGesture();
 	
   /** Vergroesserungseingabefeld */
-	ScrSpinBox* zoomSpinBox; //zoom spinbox at bottom of view
 	PageSelector* pageSelector; //Page selector at bottom of view
 	RulerMover *rulerMover; //Widget between the two rulers for dragging the ruler origin
 	Hruler *horizRuler;
@@ -257,9 +256,8 @@ public slots: // Public slots
 	void setRulersShown(bool isShown);
 	void slotUpdateContents();
 	void slotUpdateContents(const QRect &r);
-  /** Zooms in or out */
+	/** Zooms in */
 	void slotZoom100();
-  /** Zooms in */
 	void slotZoomIn(int mx=0,int my=0);
 	void slotZoomOut(int mx=0,int my=0);
   /** Redraws everything */
@@ -324,7 +322,6 @@ private: // Private attributes
 
 private slots:
 	void setZoom();
-	void setZoom(double z);
 	/**
 	 * Called to update the GUI when the canvas(view) scrollbars are moved
 	 * @param x 

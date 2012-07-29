@@ -1005,7 +1005,7 @@ void CanvasMode::commonkeyPressEvent_NormalNodeEdit(QKeyEvent *e)
 	}
 	Qt::KeyboardModifiers buttonModifiers = e->modifiers();
 	/**If we have a doc and we are not changing the page or zoom level in the status bar */
-	if ((!m_view->zoomSpinBox->hasFocus()) && (!m_view->pageSelector->hasFocus()))
+	if ((!m_view->m_ScMW->statusbar->zoomHasFocus()) && (!m_view->m_ScMW->statusbar->pageHasFocus()))
 	{
 		//Show our context menu
 		QKeySequence currKeySeq = QKeySequence(kk | keyMod);
@@ -1536,7 +1536,7 @@ void CanvasMode::commonkeyReleaseEvent(QKeyEvent *e)
 		case Qt::Key_Up:
 		case Qt::Key_Down:
 			m_arrowKeyDown = false;
-			if ((!m_view->zoomSpinBox->hasFocus()) && (!m_view->pageSelector->hasFocus()))
+            if ((!m_view->m_ScMW->statusbar->zoomHasFocus()) && (!m_view->m_ScMW->statusbar->pageHasFocus()))
 			{
 				int docSelectionCount=m_doc->m_Selection->count();
 				if ((docSelectionCount != 0) && (m_doc->appMode == modeEditClip) && (m_doc->nodeEdit.hasNodeSelected()))

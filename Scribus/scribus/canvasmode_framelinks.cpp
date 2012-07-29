@@ -36,6 +36,7 @@
 #include "fpointarray.h"
 #include "pageitem_textframe.h"
 #include "ui/pageselector.h"
+#include "ui/statusbar.h"
 #include "prefscontext.h"
 #include "prefsfile.h"
 #include "prefsmanager.h"
@@ -274,8 +275,8 @@ void CanvasMode_FrameLinks::mouseReleaseEvent(QMouseEvent *m)
 	for (int i = 0; i < m_doc->m_Selection->count(); ++i)
 		m_doc->m_Selection->itemAt(i)->checkChanges(true);
 	//Make sure the Zoom spinbox and page selector dont have focus if we click on the canvas
-	m_view->zoomSpinBox->clearFocus();
-	m_view->pageSelector->clearFocus();
+	m_view->m_ScMW->statusbar->zoomClearFocus();
+	m_view->m_ScMW->statusbar->pageClearFocus();
 }
 
 void CanvasMode_FrameLinks::selectPage(QMouseEvent *m)

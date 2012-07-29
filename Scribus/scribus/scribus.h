@@ -54,6 +54,7 @@ class QProgressBar;
 class QToolButton;
 
 // application specific includes
+#include "ui/statusbar.h"
 #include "scribusapi.h"
 #include "scribusview.h"
 #include "scribusdoc.h"
@@ -61,6 +62,7 @@ class QToolButton;
 
 class ActionManager;
 class AlignDistributePalette;
+class InfoPalette;
 class Autoforms;
 class Biblio;
 class BookPalette;
@@ -202,10 +204,13 @@ public:
 
 
 	QProgressBar* mainWindowProgressBar;
-	QLabel* mainWindowXPosLabel;
+	QLabel* mainWindowXPosLabel; // TODO: when removing this, check that they are not used anymore anywhere (ale20120727)
 	QLabel* mainWindowXPosDataLabel;
 	QLabel* mainWindowYPosLabel;
 	QLabel* mainWindowYPosDataLabel;
+
+    Statusbar *statusbar;
+
 	GuideManager *guidePalette;
 	CharSelect *charPalette;
 	PropertiesPalette *propertiesPalette;
@@ -221,6 +226,7 @@ public:
 	CheckDocument * docCheckerPalette;
 	UndoPalette* undoPalette;
 	AlignDistributePalette *alignDistributePalette;
+	InfoPalette *infoPalette;
 	StoryEditor* storyEditor;
 	StoryEditor* CurrStED;
 	QMdiArea *mdiArea;
@@ -517,11 +523,6 @@ public slots:
 	 */
 	void updateTableMenuActions();
 
-    /**
-     * updating the status bar
-     */
-    void setStatusBarZoom(double z);
-
 signals:
 	void AppModeChanged(int oldMode, int newMode);
 	void TextStyle(const ParagraphStyle&);
@@ -551,9 +552,6 @@ private:
 	void initPalettes();
 	void initScrapbook();
 
-	void connectViewToStatusBar(); // connect view's slot to status bar
-	void disconnectViewToStatusBar(); // connect view's slot to status bar
-
 	void updateColorMenu(QProgressBar* progressBar=NULL);
 	void ToggleFrameEdit();
 	void NoFrameEdit();
@@ -562,13 +560,13 @@ private:
 
 	QComboBox *mainWindowUnitSwitcher;
 	QComboBox *mainWindowImagePreviewQualitySwitcher;
-	QComboBox *mainWindowPreviewQualitySwitcher;
+	QComboBox *mainWindowPreviewQualitySwitcher; // TODO: not used!
 	ScrSpinBox *mainWindowZoomSpinBox;
 #if OPTION_USE_QTOOLBUTTON
 	QToolButton *mainWindowZoomOutToolbarButton;
 	QToolButton *mainWindowZoomDefaultToolbarButton;
 	QToolButton *mainWindowZoomInToolbarButton;
-	QToolButton *mainWindowCmsToolbarButton;
+	// QToolButton *mainWindowCmsToolbarButton;
 	QToolButton *mainWindowPreviewToolbarButton;
 #endif
 	PageSelector *mainWindowPageSelector;

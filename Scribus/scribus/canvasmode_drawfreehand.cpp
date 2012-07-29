@@ -26,6 +26,7 @@
 #include "fpoint.h"
 #include "KarbonCurveFit.h"
 #include "ui/pageselector.h"
+#include "ui/statusbar.h"
 #include "prefsmanager.h"
 #include "scribus.h"
 #include "scribusdoc.h"
@@ -309,8 +310,9 @@ void FreehandMode::mouseReleaseEvent(QMouseEvent *m)
 		m_doc->itemAddCommit(m_doc->m_Selection->itemAt(0));
 	}
 	//Make sure the Zoom spinbox and page selector dont have focus if we click on the canvas
-	m_view->zoomSpinBox->clearFocus();
-	m_view->pageSelector->clearFocus();
+	m_view->m_ScMW->statusbar->zoomClearFocus();
+
+	m_view->m_ScMW->statusbar->pageClearFocus();
 	if (m_doc->m_Selection->itemAt(0) != 0) // is there the old clip stored for the undo action
 	{
 		currItem = m_doc->m_Selection->itemAt(0);

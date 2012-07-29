@@ -155,6 +155,7 @@ for which a new license (GPL+exception) is in place.
 #include "ui/helpbrowser.h"
 #include "ui/hruler.h"
 #include "ui/imageinfodialog.h"
+#include "ui/info.h"
 #include "ui/inlinepalette.h"
 #include "ui/insertaframe.h"
 #include "ui/inspage.h"
@@ -234,6 +235,7 @@ for which a new license (GPL+exception) is in place.
 #include "loadsaveplugin.h"
 #include "plugins/formatidlist.h"
 #include "scimagecachemanager.h"
+#include "ui/statusbar.h"
 
 #if defined(_WIN32)
 #include "scdocoutput_ps2.h"
@@ -495,17 +497,19 @@ void ScribusMainWindow::initKeyboardShortcuts()
 
 void ScribusMainWindow::initPalettes()
 {
+	bool c = true;
+
 	//CB TODO hide the publicly available members of some palettes
 	// these must be filtered too as they take control of the palettes events
 	outlinePalette = new OutlinePalette(this);
 	outlinePalette->setMainWindow(this);
-	connect( scrActions["toolsOutline"], SIGNAL(toggled(bool)) , outlinePalette, SLOT(setPaletteShown(bool)) );
-	connect( outlinePalette, SIGNAL(paletteShown(bool)), scrActions["toolsOutline"], SLOT(setChecked(bool)));
+	c &= connect( scrActions["toolsOutline"], SIGNAL(toggled(bool)) , outlinePalette, SLOT(setPaletteShown(bool)) );
+	c &= connect( outlinePalette, SIGNAL(paletteShown(bool)), scrActions["toolsOutline"], SLOT(setChecked(bool)));
 
 	propertiesPalette = new PropertiesPalette(this);
 	propertiesPalette->setMainWindow(this);
-	connect( scrActions["toolsProperties"], SIGNAL(toggled(bool)) , propertiesPalette, SLOT(setPaletteShown(bool)) );
-	connect( propertiesPalette, SIGNAL(paletteShown(bool)), scrActions["toolsProperties"], SLOT(setChecked(bool)));
+	c &= connect( scrActions["toolsProperties"], SIGNAL(toggled(bool)) , propertiesPalette, SLOT(setPaletteShown(bool)) );
+	c &= connect( propertiesPalette, SIGNAL(paletteShown(bool)), scrActions["toolsProperties"], SLOT(setChecked(bool)));
 	//CB dont need this until we have a doc...
 	//propertiesPalette->Cpal->setColors(prefsManager->colorSet());
 	emit UpdateRequest(reqDefFontListUpdate);
@@ -515,58 +519,63 @@ void ScribusMainWindow::initPalettes()
 	layerPalette = new LayerPalette(this);
 	guidePalette = new GuideManager(this);
 	charPalette = new CharSelect(this);
-	connect( scrActions["toolsLayers"], SIGNAL(toggled(bool)) , layerPalette, SLOT(setPaletteShown(bool)) );
-	connect( layerPalette, SIGNAL(paletteShown(bool)), scrActions["toolsLayers"], SLOT(setChecked(bool)));
+	c &= connect( scrActions["toolsLayers"], SIGNAL(toggled(bool)) , layerPalette, SLOT(setPaletteShown(bool)) );
+	c &= connect( layerPalette, SIGNAL(paletteShown(bool)), scrActions["toolsLayers"], SLOT(setChecked(bool)));
 	layerPalette->installEventFilter(this);
 	layerPalette->Table->installEventFilter(this);
 	scrapbookPalette = new Biblio(this);
-	connect( scrActions["toolsScrapbook"], SIGNAL(toggled(bool)) , scrapbookPalette, SLOT(setPaletteShown(bool)) );
-	connect( scrapbookPalette, SIGNAL(paletteShown(bool)), scrActions["toolsScrapbook"], SLOT(setChecked(bool)));
-	connect( scrapbookPalette, SIGNAL(pasteToActualPage(QString)), this, SLOT(pasteFromScrapbook(QString)));
+	c &= connect( scrActions["toolsScrapbook"], SIGNAL(toggled(bool)) , scrapbookPalette, SLOT(setPaletteShown(bool)) );
+	c &= connect( scrapbookPalette, SIGNAL(paletteShown(bool)), scrActions["toolsScrapbook"], SLOT(setChecked(bool)));
+	c &= connect( scrapbookPalette, SIGNAL(pasteToActualPage(QString)), this, SLOT(pasteFromScrapbook(QString)));
 	scrapbookPalette->installEventFilter(this);
 	pagePalette = new PagePalette(this);
-	connect( scrActions["toolsPages"], SIGNAL(toggled(bool)) , pagePalette, SLOT(setPaletteShown(bool)) );
-	connect( pagePalette, SIGNAL(paletteShown(bool)), scrActions["toolsPages"], SLOT(setChecked(bool)));
+	c &= connect( scrActions["toolsPages"], SIGNAL(toggled(bool)) , pagePalette, SLOT(setPaletteShown(bool)) );
+	c &= connect( pagePalette, SIGNAL(paletteShown(bool)), scrActions["toolsPages"], SLOT(setChecked(bool)));
 	pagePalette->installEventFilter(this);
 	bookmarkPalette = new BookPalette(this);
-	connect( scrActions["toolsBookmarks"], SIGNAL(toggled(bool)) , bookmarkPalette, SLOT(setPaletteShown(bool)) );
-	connect( bookmarkPalette, SIGNAL(paletteShown(bool)), scrActions["toolsBookmarks"], SLOT(setChecked(bool)));
+	c &= connect( scrActions["toolsBookmarks"], SIGNAL(toggled(bool)) , bookmarkPalette, SLOT(setPaletteShown(bool)) );
+	c &= connect( bookmarkPalette, SIGNAL(paletteShown(bool)), scrActions["toolsBookmarks"], SLOT(setChecked(bool)));
 	bookmarkPalette->installEventFilter(this);
 //	measurementPalette = new Measurements(this);
 //	connect( scrActions["toolsMeasurements"], SIGNAL(toggled(bool)) , measurementPalette, SLOT(setPaletteShown(bool)) );
-	connect( scrActions["toolsMeasurements"], SIGNAL(toggledData(bool, int)) , this, SLOT(setAppModeByToggle(bool, int)) );
+	c &= connect( scrActions["toolsMeasurements"], SIGNAL(toggledData(bool, int)) , this, SLOT(setAppModeByToggle(bool, int)) );
 //	connect( measurementPalette, SIGNAL(paletteShown(bool)), scrActions["toolsMeasurements"], SLOT(setChecked(bool)));
 //	measurementPalette->installEventFilter(this);
 //	measurementPalette->hide();
 	docCheckerPalette = new CheckDocument(this, false);
-	connect( scrActions["toolsPreflightVerifier"], SIGNAL(toggled(bool)) , docCheckerPalette, SLOT(setPaletteShown(bool)) );
-	connect( scrActions["toolsPreflightVerifier"], SIGNAL(toggled(bool)) , this, SLOT(docCheckToggle(bool)) );
-	connect( docCheckerPalette, SIGNAL(paletteShown(bool)), scrActions["toolsPreflightVerifier"], SLOT(setChecked(bool)));
-	connect( docCheckerPalette, SIGNAL(paletteShown(bool)), this, SLOT(docCheckToggle(bool)));
+	c &= connect( scrActions["toolsPreflightVerifier"], SIGNAL(toggled(bool)) , docCheckerPalette, SLOT(setPaletteShown(bool)) );
+	c &= connect( scrActions["toolsPreflightVerifier"], SIGNAL(toggled(bool)) , this, SLOT(docCheckToggle(bool)) );
+	c &= connect( docCheckerPalette, SIGNAL(paletteShown(bool)), scrActions["toolsPreflightVerifier"], SLOT(setChecked(bool)));
+	c &= connect( docCheckerPalette, SIGNAL(paletteShown(bool)), this, SLOT(docCheckToggle(bool)));
 	docCheckerPalette->installEventFilter(this);
 	docCheckerPalette->hide();
 
 	alignDistributePalette = new AlignDistributePalette(this, "AlignDistributePalette", false);
-	connect( scrActions["toolsAlignDistribute"], SIGNAL(toggled(bool)) , alignDistributePalette, SLOT(setPaletteShown(bool)) );
-	connect( alignDistributePalette, SIGNAL(paletteShown(bool)), scrActions["toolsAlignDistribute"], SLOT(setChecked(bool)));
-	connect( alignDistributePalette, SIGNAL(documentChanged()), this, SLOT(slotDocCh()));
+	c &= connect( scrActions["toolsAlignDistribute"], SIGNAL(toggled(bool)) , alignDistributePalette, SLOT(setPaletteShown(bool)) );
+	c &= connect( alignDistributePalette, SIGNAL(paletteShown(bool)), scrActions["toolsAlignDistribute"], SLOT(setChecked(bool)));
+	c &= connect( alignDistributePalette, SIGNAL(documentChanged()), this, SLOT(slotDocCh()));
 	alignDistributePalette->installEventFilter(this);
+
+	infoPalette = new InfoPalette(this, "InfoPalette", false);
+	c &= connect( scrActions["toolsInfo"], SIGNAL(toggled(bool)) , infoPalette, SLOT(setPaletteShown(bool)) );
+	c &= connect( infoPalette, SIGNAL(paletteShown(bool)), scrActions["toolsInfo"], SLOT(setChecked(bool)));
+	infoPalette->installEventFilter(this);
 
 	symbolPalette = new SymbolPalette(this);
 	symbolPalette->setMainWindow(this);
-	connect(scrActions["toolsSymbols"], SIGNAL(toggled(bool)), symbolPalette, SLOT(setPaletteShown(bool)));
-	connect(symbolPalette, SIGNAL(paletteShown(bool)), scrActions["toolsSymbols"], SLOT(setChecked(bool)));
-	connect(symbolPalette, SIGNAL(startEdit(QString)), this, SLOT(editSymbolStart(QString)));
-	connect(symbolPalette, SIGNAL(endEdit()), this, SLOT(editSymbolEnd()));
+	c &= connect(scrActions["toolsSymbols"], SIGNAL(toggled(bool)), symbolPalette, SLOT(setPaletteShown(bool)));
+	c &= connect(symbolPalette, SIGNAL(paletteShown(bool)), scrActions["toolsSymbols"], SLOT(setChecked(bool)));
+	c &= connect(symbolPalette, SIGNAL(startEdit(QString)), this, SLOT(editSymbolStart(QString)));
+	c &= connect(symbolPalette, SIGNAL(endEdit()), this, SLOT(editSymbolEnd()));
 	symbolPalette->installEventFilter(this);
 	symbolPalette->hide();
 
 	inlinePalette = new InlinePalette(this);
 	inlinePalette->setMainWindow(this);
-	connect(scrActions["toolsInline"], SIGNAL(toggled(bool)), inlinePalette, SLOT(setPaletteShown(bool)));
-	connect(inlinePalette, SIGNAL(paletteShown(bool)), scrActions["toolsInline"], SLOT(setChecked(bool)));
-	connect(inlinePalette, SIGNAL(startEdit(int)), this, SLOT(editInlineStart(int)));
-	connect(inlinePalette, SIGNAL(endEdit()), this, SLOT(editInlineEnd()));
+	c &= connect(scrActions["toolsInline"], SIGNAL(toggled(bool)), inlinePalette, SLOT(setPaletteShown(bool)));
+	c &= connect(inlinePalette, SIGNAL(paletteShown(bool)), scrActions["toolsInline"], SLOT(setChecked(bool)));
+	c &= connect(inlinePalette, SIGNAL(startEdit(int)), this, SLOT(editInlineStart(int)));
+	c &= connect(inlinePalette, SIGNAL(endEdit()), this, SLOT(editInlineEnd()));
 	inlinePalette->installEventFilter(this);
 	inlinePalette->hide();
 	
@@ -574,8 +583,8 @@ void ScribusMainWindow::initPalettes()
 	undoPalette = new UndoPalette(this, "undoPalette");
 	undoPalette->installEventFilter(this);
 	undoManager->registerGui(undoPalette);
-	connect(undoPalette, SIGNAL(paletteShown(bool)), this, SLOT(setUndoPalette(bool)));
-	connect(undoPalette, SIGNAL(objectMode(bool)), this, SLOT(setUndoMode(bool)));
+	c &= connect(undoPalette, SIGNAL(paletteShown(bool)), this, SLOT(setUndoPalette(bool)));
+	c &= connect(undoPalette, SIGNAL(objectMode(bool)), this, SLOT(setUndoMode(bool)));
 
 	// initializing style manager here too even it's not strictly a palette
 	styleManager = new StyleManager(this, "styleManager");
@@ -585,35 +594,37 @@ void ScribusMainWindow::initPalettes()
 	styleManager->addStyle(tmpCS);
 	styleManager->addStyle(new SMTableStyle());
 	styleManager->addStyle(new SMCellStyle());
-	connect( scrActions["editStyles"], SIGNAL(toggled(bool)), styleManager, SLOT(setPaletteShown(bool)) );
-	connect( styleManager, SIGNAL(paletteShown(bool)), scrActions["editStyles"], SLOT(setChecked(bool)));
+	c &= connect( scrActions["editStyles"], SIGNAL(toggled(bool)), styleManager, SLOT(setPaletteShown(bool)) );
+	c &= connect( styleManager, SIGNAL(paletteShown(bool)), scrActions["editStyles"], SLOT(setChecked(bool)));
 	styleManager->installEventFilter(this);
 
 //	connect(docCheckerPalette, SIGNAL(selectElement(int, int)), this, SLOT(selectItemsFromOutlines(int, int)));
-	connect(docCheckerPalette, SIGNAL(selectElementByItem(PageItem *, bool)), this, SLOT(selectItemsFromOutlines(PageItem *, bool)));
-	connect(docCheckerPalette, SIGNAL(selectElement(PageItem *, bool, int)), this, SLOT(selectItemFromOutlines(PageItem *, bool, int)));
-	connect(docCheckerPalette, SIGNAL(selectPage(int)), this, SLOT(selectPagesFromOutlines(int)));
-	connect(docCheckerPalette, SIGNAL(selectMasterPage(QString)), this, SLOT(manageMasterPages(QString)));
+	c &= connect(docCheckerPalette, SIGNAL(selectElementByItem(PageItem *, bool)), this, SLOT(selectItemsFromOutlines(PageItem *, bool)));
+	c &= connect(docCheckerPalette, SIGNAL(selectElement(PageItem *, bool, int)), this, SLOT(selectItemFromOutlines(PageItem *, bool, int)));
+	c &= connect(docCheckerPalette, SIGNAL(selectPage(int)), this, SLOT(selectPagesFromOutlines(int)));
+	c &= connect(docCheckerPalette, SIGNAL(selectMasterPage(QString)), this, SLOT(manageMasterPages(QString)));
 //	connect(outlinePalette, SIGNAL(selectElement(int, int, bool)), this, SLOT(selectItemsFromOutlines(int, int, bool)));
-	connect(outlinePalette, SIGNAL(selectElementByItem(PageItem *, bool)), this, SLOT(selectItemsFromOutlines(PageItem *, bool)));
-	connect(outlinePalette, SIGNAL(editElementByItem(PageItem *)), this, SLOT(editItemsFromOutlines(PageItem *)));
-	connect(outlinePalette, SIGNAL(selectPage(int)), this, SLOT(selectPagesFromOutlines(int)));
-	connect(outlinePalette, SIGNAL(selectMasterPage(QString)), this, SLOT(manageMasterPages(QString)));
+	c &= connect(outlinePalette, SIGNAL(selectElementByItem(PageItem *, bool)), this, SLOT(selectItemsFromOutlines(PageItem *, bool)));
+	c &= connect(outlinePalette, SIGNAL(editElementByItem(PageItem *)), this, SLOT(editItemsFromOutlines(PageItem *)));
+	c &= connect(outlinePalette, SIGNAL(selectPage(int)), this, SLOT(selectPagesFromOutlines(int)));
+	c &= connect(outlinePalette, SIGNAL(selectMasterPage(QString)), this, SLOT(manageMasterPages(QString)));
 //	connect(propertiesPalette, SIGNAL(EditLSt()), this, SLOT(slotEditLineStyles()));
 //	connect(nodePalette, SIGNAL(paletteClosed()), propertiesPalette, SLOT(endEdit2()));
-	connect(nodePalette, SIGNAL(paletteClosed()), this, SLOT(slotSelect()));
-	connect(nodePalette, SIGNAL(DocChanged()), this, SLOT(slotDocCh()));
-	connect(layerPalette, SIGNAL(LayerChanged()), this, SLOT(showLayer()));
+	c &= connect(nodePalette, SIGNAL(paletteClosed()), this, SLOT(slotSelect()));
+	c &= connect(nodePalette, SIGNAL(DocChanged()), this, SLOT(slotDocCh()));
+	c &= connect(layerPalette, SIGNAL(LayerChanged()), this, SLOT(showLayer()));
 
-	connect(bookmarkPalette->BView, SIGNAL(MarkMoved()), this, SLOT(StoreBookmarks()));
-	connect(bookmarkPalette->BView, SIGNAL(changed()), this, SLOT(slotDocCh()));
-	connect(bookmarkPalette->BView, SIGNAL(SelectElement(PageItem *, bool)), this, SLOT(selectItemsFromOutlines(PageItem *, bool)));
+	c &= connect(bookmarkPalette->BView, SIGNAL(MarkMoved()), this, SLOT(StoreBookmarks()));
+	c &= connect(bookmarkPalette->BView, SIGNAL(changed()), this, SLOT(slotDocCh()));
+	c &= connect(bookmarkPalette->BView, SIGNAL(SelectElement(PageItem *, bool)), this, SLOT(selectItemsFromOutlines(PageItem *, bool)));
 	// guides
-	connect(scrActions["pageManageGuides"], SIGNAL(toggled(bool)), guidePalette, SLOT(setPaletteShown(bool)));
-	connect(guidePalette, SIGNAL(paletteShown(bool)), scrActions["pageManageGuides"], SLOT(setChecked(bool)));
+	c &= connect(scrActions["pageManageGuides"], SIGNAL(toggled(bool)), guidePalette, SLOT(setPaletteShown(bool)));
+	c &= connect(guidePalette, SIGNAL(paletteShown(bool)), scrActions["pageManageGuides"], SLOT(setChecked(bool)));
 	// char palette
-	connect(scrActions["insertGlyph"], SIGNAL(toggled(bool)), charPalette, SLOT(setPaletteShown(bool)));
-	connect(charPalette, SIGNAL(paletteShown(bool)), scrActions["insertGlyph"], SLOT(setChecked(bool)));
+	c &= connect(scrActions["insertGlyph"], SIGNAL(toggled(bool)), charPalette, SLOT(setPaletteShown(bool)));
+	c &= connect(charPalette, SIGNAL(paletteShown(bool)), scrActions["insertGlyph"], SLOT(setChecked(bool)));
+
+	Q_ASSERT(c);
 }
 
 
@@ -1064,6 +1075,7 @@ void ScribusMainWindow::addDefaultWindowMenuItems()
 	scrMenuMgr->addMenuItem(scrActions["toolsActionHistory"], "Windows", true);
 	scrMenuMgr->addMenuItem(scrActions["toolsPreflightVerifier"], "Windows", true);
 	scrMenuMgr->addMenuItem(scrActions["toolsAlignDistribute"], "Windows", true);
+	scrMenuMgr->addMenuItem(scrActions["toolsInfo"], "Windows", true);
 	scrMenuMgr->addMenuItem(scrActions["toolsSymbols"], "Windows", true);
 	scrMenuMgr->addMenuItem(scrActions["toolsInline"], "Windows", true);
 	scrMenuMgr->addMenuSeparator("Windows");
@@ -1081,63 +1093,34 @@ void ScribusMainWindow::initStatusBar()
 	QFont inputFont = QFont(font());
 	inputFont.setPointSize(inputFont.pointSize() - (ScCore->isWinGUI() ? 1 : 2));
 
-	mainWindowUnitSwitcher = new QComboBox();
-
-	mainWindowImagePreviewQualitySwitcher = new QComboBox();
-
-	mainWindowPreviewQualitySwitcher = new QComboBox();
-	mainWindowPreviewQualitySwitcher->setFocusPolicy(Qt::NoFocus);
-	mainWindowPreviewQualitySwitcher->setFont(inputFont);
-	mainWindowPreviewQualitySwitcher->addItem(tr("High"));
-	mainWindowPreviewQualitySwitcher->addItem(tr("Normal"));
-	mainWindowPreviewQualitySwitcher->addItem(tr("Low"));
-	// mainWindowPreviewQualitySwitcher->setCurrentIndex(Prefs->itemToolPrefs.imageLowResType);
-
-	mainWindowZoomSpinBox = new ScrSpinBox( 1, 3200, this, 6 );
-	mainWindowZoomSpinBox->setTabAdvance(false);
-	mainWindowZoomSpinBox->setFont(inputFont);
-	mainWindowZoomSpinBox->setDecimals(0);
-	mainWindowZoomSpinBox->setValue( 100 );
-	mainWindowZoomSpinBox->setSingleStep(10);
-	mainWindowZoomSpinBox->setFocusPolicy(Qt::ClickFocus);
-	mainWindowZoomSpinBox->setSuffix( tr( " %" ) );
-
-// TODO: is this needed? if yes, we need to also copy the else from scribusview; also in scribus.h! (ale/20120630)
-#if OPTION_USE_QTOOLBUTTON
-	mainWindowZoomOutToolbarButton = new QToolButton();
-	mainWindowZoomDefaultToolbarButton = new QToolButton();
-	mainWindowZoomInToolbarButton = new QToolButton();
-	mainWindowCmsToolbarButton = new QToolButton();
+	// mainWindowCmsToolbarButton = new QToolButton();
 	mainWindowPreviewToolbarButton = new QToolButton();
 	mainWindowZoomDefaultToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
 	mainWindowZoomOutToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
 	mainWindowZoomInToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
 	// mainWindowZoomInToolbarButton->setDefaultAction(m_ScMW->scrActions["toolsZoomIn"]);
 	// mainWindowZoomOutToolbarButton->setDefaultAction(m_ScMW->scrActions["toolsZoomOut"]);
+    /*
 	mainWindowCmsToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
 	mainWindowCmsToolbarButton->setCheckable(true);
 	QIcon ic2;
 	ic2.addPixmap(loadIcon("cmsOff.png"), QIcon::Normal, QIcon::Off);
 	ic2.addPixmap(loadIcon("cmsOn.png"), QIcon::Normal, QIcon::On);
 	mainWindowCmsToolbarButton->setIcon(ic2);
+    */
 	mainWindowPreviewToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
 	mainWindowPreviewToolbarButton->setCheckable(true);
 	QIcon ic;
 	ic.addPixmap(loadIcon("previewOff.png"), QIcon::Normal, QIcon::Off);
 	ic.addPixmap(loadIcon("previewOn.png"), QIcon::Normal, QIcon::On);
 	mainWindowPreviewToolbarButton->setIcon(ic);
-#endif
-
-	mainWindowZoomDefaultToolbarButton->setIcon(QIcon(loadIcon("16/zoom-original.png")));
-	mainWindowZoomOutToolbarButton->setIcon(QIcon(loadIcon("16/zoom-out.png")));
-	mainWindowZoomInToolbarButton->setIcon(QIcon(loadIcon("16/zoom-in.png")));
 
 	// PageSelector *mainWindowPageSelector = new PageSelector(view, view->Doc->Pages->count());
-	PageSelector *mainWindowPageSelector = new PageSelector(view, 0); // FIXME: when set and clear it? ... probablyin the updateStatusBar()? (ale(20120630)
+	mainWindowPageSelector = new PageSelector(view, 1); // FIXME: when set and clear it? ... probablyin the updateStatusBar()? (ale(20120630)
 	// PageSelector *mainWindowPageSelector = new PageSelector();
 	// mainWindowPageSelector->setFont(fo);
 	mainWindowPageSelector->setFocusPolicy(Qt::ClickFocus);
-	QComboBox *mainWindowLayerMenu = new QComboBox( view );
+	mainWindowLayerMenu = new QComboBox( view );
 	mainWindowLayerMenu->setEditable(false);
 	// mainWindowLayerMenu->setFont(fo);
 	mainWindowLayerMenu->setFocusPolicy(Qt::NoFocus);
@@ -1146,30 +1129,35 @@ void ScribusMainWindow::initStatusBar()
 	// mainWindowVisualMenu->setFont(fo);
 	// mainWindowVisualMenu->setEnabled(false);
 
-	mainWindowStatusLabel = new QLabel( "           ", statusBar());
-	mainWindowProgressBar = new QProgressBar(statusBar());
-	mainWindowProgressBar->setAlignment(Qt::AlignHCenter);
-	mainWindowProgressBar->setFixedWidth( 100 );
-	mainWindowProgressBar->reset();
+	// mainWindowStatusLabel = new QLabel( "           ", statusBar());
+	mainWindowStatusLabel = new QLabel( "           "); // FIXME: dummy definition to remove it frome the old statusbar
+	// mainWindowProgressBar = new QProgressBar(statusBar());
+	// mainWindowProgressBar->setAlignment(Qt::AlignHCenter);
+	// mainWindowProgressBar->setFixedWidth( 100 );
+	// mainWindowProgressBar->reset();
 	// mainWindowXPosLabel = new QLabel( tr("X-Pos:"), statusBar());
 	// mainWindowYPosLabel = new QLabel( tr("Y-Pos:"), statusBar());
 	// mainWindowXPosDataLabel = new QLabel( "        ", statusBar());
 	// mainWindowYPosDataLabel = new QLabel( "        ", statusBar());
 
+/*
 	statusBar()->addPermanentWidget(mainWindowUnitSwitcher, 1);
 	statusBar()->addPermanentWidget(mainWindowImagePreviewQualitySwitcher, 1);
-	statusBar()->addPermanentWidget(mainWindowZoomSpinBox, 0);
 	statusBar()->addPermanentWidget(mainWindowZoomOutToolbarButton, 0);
 	statusBar()->addPermanentWidget(mainWindowZoomDefaultToolbarButton, 1);
 	statusBar()->addPermanentWidget(mainWindowZoomInToolbarButton, 0);
 	statusBar()->addPermanentWidget(mainWindowPageSelector, 0);
 	statusBar()->addPermanentWidget(mainWindowLayerMenu, 0);
-	statusBar()->addPermanentWidget(mainWindowCmsToolbarButton, 0);
+	// statusBar()->addPermanentWidget(mainWindowCmsToolbarButton, 0);
 	statusBar()->addPermanentWidget(mainWindowPreviewToolbarButton, 0);
 	// statusBar()->addPermanentWidget(mainWindowVisualMenu, 0);
 
 	statusBar()->addPermanentWidget(mainWindowStatusLabel, 6);
 	statusBar()->addPermanentWidget(mainWindowProgressBar, 0);
+*/
+    statusbar = new Statusbar();
+	// statusBar()->addPermanentWidget(statusbar, 1);
+	statusBar()->addWidget(statusbar, 1);
 
     mainWindowXPosDataLabel = 0;
     mainWindowYPosDataLabel = 0;
@@ -1182,34 +1170,6 @@ void ScribusMainWindow::initStatusBar()
 
 	connect(statusBar(), SIGNAL(messageChanged(const QString &)), this, SLOT(setTempStatusBarText(const QString &)));
 
-}
-
-/**
- * connect the document related slots to the status bar
- * must be called when a document gets activated
- * TODO: rename it to reflect its task (ale/20120701)
- */
-void ScribusMainWindow::connectViewToStatusBar()
-{
-	if (view != NULL)
-	{
-		connect(mainWindowZoomDefaultToolbarButton, SIGNAL(clicked()), view, SLOT(slotZoom100()));
-		connect(mainWindowZoomOutToolbarButton, SIGNAL(clicked()), view, SLOT(slotZoomOut()));
-		connect(mainWindowZoomInToolbarButton, SIGNAL(clicked()), view, SLOT(slotZoomIn()));
-		connect(mainWindowZoomSpinBox, SIGNAL(valueChanged(double)), view, SLOT(setZoom(double)));
-	}
-}
-
-void ScribusMainWindow::disconnectViewToStatusBar()
-{
-	// disconnect(mainWindowZoomSpinBox, SIGNAL(valueChanged(double)), view, SLOT(setZoom()));
-}
-
-void ScribusMainWindow::setStatusBarZoom(double z)
-{
-	mainWindowZoomSpinBox->blockSignals(true);
-	mainWindowZoomSpinBox->setValue(z);
-	mainWindowZoomSpinBox->blockSignals(false);
 }
 
 void ScribusMainWindow::setStatusBarMousePosition(double xp, double yp)
@@ -1532,7 +1492,7 @@ void ScribusMainWindow::keyPressEvent(QKeyEvent *k)
 	}
 	Qt::KeyboardModifiers buttonModifiers = k->modifiers();
 	/**If we have a doc and we are not changing the page or zoom level in the status bar */
-	if ((HaveDoc) && (!view->zoomSpinBox->hasFocus()) && (!view->pageSelector->hasFocus()))
+	if ((HaveDoc) && (!statusbar->zoomHasFocus()) && (!statusbar->pageHasFocus()))
 	{
 		//Show our context menu
 		QKeySequence currKeySeq = QKeySequence(kk | keyMod);
@@ -1729,7 +1689,7 @@ void ScribusMainWindow::keyReleaseEvent(QKeyEvent *k)
 		case Qt::Key_Up:
 		case Qt::Key_Down:
 			_arrowKeyDown = false;
-			if ((HaveDoc) && (!view->zoomSpinBox->hasFocus()) && (!view->pageSelector->hasFocus()))
+            if ((HaveDoc) && (!statusbar->zoomHasFocus()) && (!statusbar->pageHasFocus()))
 			{
 				int docSelectionCount=doc->m_Selection->count();
 				if ((docSelectionCount != 0) && (doc->appMode == modeEditClip) && (doc->nodeEdit.hasNodeSelected()))
@@ -1812,6 +1772,7 @@ void ScribusMainWindow::closeEvent(QCloseEvent *ce)
 	docCheckerPalette->hide();
 	undoPalette->hide();
 	alignDistributePalette->hide();
+	infoPalette->hide();
 	guidePalette->hide();
 	charPalette->hide();
 	symbolPalette->hide();
@@ -2158,6 +2119,7 @@ void ScribusMainWindow::newView()
 	ScribusWin* w = new ScribusWin(mdiArea, doc);
 	w->setMainWindow(this);
 	view = new ScribusView(w, this, doc);
+    qDebug() << "creating a new view";
 	view->setScale(prefsManager->displayScale());
 	w->setView(view);
 	ActWin = w;
@@ -2304,7 +2266,7 @@ void ScribusMainWindow::newActWin(QMdiSubWindow *w)
 		connect(doc->m_Selection, SIGNAL(selectionIsMultiple(bool)), actionManager, SLOT( handleMultipleSelections(bool)));
 		//connect(doc->m_Selection, SIGNAL(empty()), propertiesPalette, SLOT( unsetItem()));
 	}
-
+    statusbar->setView(view);
 	pagePalette->setView(view);
 	alignDistributePalette->setDoc(doc);
 	if (!doc->isLoading())
@@ -2366,7 +2328,6 @@ void ScribusMainWindow::newActWin(QMdiSubWindow *w)
 		Q_ASSERT(plugin); // all the returned names should represent loaded plugins
 		plugin->setDoc(doc);
 	}
-	connectViewToStatusBar(); // TODO: check if its always needed or it could use some ifs (ale/20120630)
 }
 
 void ScribusMainWindow::windowsMenuActivated( int id )
@@ -4004,7 +3965,6 @@ bool ScribusMainWindow::loadDoc(QString fileName)
 		symbolPalette->setDoc(doc);
 		outlinePalette->setDoc(doc);
 		fileLoader->informReplacementFonts();
-		setCurrentComboItem(view->unitSwitcher, unitGetStrFromIndex(doc->unitIndex()));
 		view->unitChange();
 		setScriptRunning(false);
 		view->Deselect(true);
@@ -4696,6 +4656,7 @@ bool ScribusMainWindow::DoFileClose()
 	bookmarkPalette->BView->Last = 0;
 	outlinePalette->unsetDoc();
 	alignDistributePalette->setDoc(NULL);
+    statusbar->unsetView();
 	//>>
 	if ((mdiArea->subWindowList().isEmpty()) || (mdiArea->subWindowList().count() == 1))
 	{
@@ -5896,7 +5857,7 @@ void ScribusMainWindow::duplicateToMasterPage()
 	}
 }
 
-// FIXME: does this get called at some time?
+// used in ActionManager::initViewMenuActions()
 void ScribusMainWindow::slotZoom(double zoomFactor)
 {
 	qDebug() << "ScribusMainWindow::slotZoom() gets called! No need to remove it!";
@@ -6345,6 +6306,7 @@ void ScribusMainWindow::ToggleFrameEdit()
 		symbolPalette->setEnabled(false);
 		styleManager->setEnabled(false);
 		alignDistributePalette->setEnabled(false);
+		infoPalette->setEnabled(false); // #TODO: check if it's really needed (ale/20120729)
 		view->pageSelector->setEnabled(false);
 		view->layerMenu->setEnabled(false);
 		if (doc->m_Selection->count() != 0)
@@ -6431,6 +6393,7 @@ void ScribusMainWindow::NoFrameEdit()
 	docCheckerPalette->setEnabled(true);
 	styleManager->setEnabled(true);
 	alignDistributePalette->setEnabled(true);
+	infoPalette->setEnabled(true); // #TODO: check if it's really needed (ale/20120729)
 	symbolPalette->setEnabled(true);
 	inlinePalette->setEnabled(true);
 	view->pageSelector->setEnabled(true);
@@ -6571,7 +6534,7 @@ void ScribusMainWindow::setAppMode(int mode)
 		if (oldMode == modeEdit)
 		{
 			// TODO: check what it is doing here... (ale/20120701)
-			view->zoomSpinBox->setFocusPolicy(Qt::ClickFocus);
+			// view->zoomSpinBox->setFocusPolicy(Qt::ClickFocus);
 			view->pageSelector->setFocusPolicy(Qt::ClickFocus);
 			scrActions["editClearContents"]->setEnabled(false);
 			charPalette->setEnabled(false, 0);
@@ -7907,6 +7870,7 @@ int ScribusMainWindow::ShowSubs()
 //	measurementPalette->startup();
 	docCheckerPalette->startup();
 	alignDistributePalette->startup();
+	infoPalette->startup();
 	undoPalette->startup();
 	guidePalette->startup();
 	inlinePalette->startup();
@@ -9743,13 +9707,12 @@ void ScribusMainWindow::languageChange()
 			scrMenuMgr->languageChange();
 		if (undoManager!=NULL)
 			undoManager->languageChange();
-
-		mainWindowXPosLabel->setText( tr("X-Pos:"));
-		mainWindowYPosLabel->setText( tr("Y-Pos:"));
-		mainWindowXPosDataLabel->setText("         ");
-		mainWindowYPosDataLabel->setText("         ");
-		mainWindowStatusLabel->setText( tr("Ready"));
+        mainWindowUnitSwitcher->setToolTip( tr("Select the current unit"));
+        mainWindowPreviewToolbarButton->setToolTip( tr("Enable/disable the Preview Mode"));
+        mainWindowLayerMenu->setToolTip( tr("Select the current layer"));
+        qDebug() << "TEST: does it ever come through here?";
 	}
+    qDebug() << "TEST: does it ever also come through here?";
 }
 
 void ScribusMainWindow::setDefaultPrinter(const QString& name, const QString& file, const QString& command)

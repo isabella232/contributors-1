@@ -132,6 +132,7 @@ for which a new license (GPL+exception) is in place.
 #include "fileloader.h"
 #include "plugins/formatidlist.h"
 #include <tiffio.h>
+#include "ui/statusbar.h"
 
 
 using namespace std;
@@ -203,13 +204,6 @@ ScribusView::ScribusView(QWidget* win, ScribusMainWindow* mw, ScribusDoc *doc) :
 // 	setCurrentComboItem(previewQualitySwitcher, tr("Normal"));
 	previewQualitySwitcher->setCurrentIndex(Prefs->itemToolPrefs.imageLowResType);
 
-	zoomSpinBox = new ScrSpinBox( 1, 3200, this, 6 );
-	zoomSpinBox->setTabAdvance(false);
-	zoomSpinBox->setFont(fo);
-	zoomSpinBox->setValue( 100 );
-	zoomSpinBox->setSingleStep(10);
-	zoomSpinBox->setFocusPolicy(Qt::ClickFocus);
-	zoomSpinBox->setSuffix( tr( " %" ) );
 #if OPTION_USE_QTOOLBUTTON
 	zoomOutToolbarButton = new QToolButton(this);
 	zoomDefaultToolbarButton = new QToolButton(this);
@@ -322,8 +316,7 @@ ScribusView::ScribusView(QWidget* win, ScribusMainWindow* mw, ScribusDoc *doc) :
 	Doc->regionsChanged()->connectObserver(this);
 //	connect(zoomOutToolbarButton, SIGNAL(clicked()), this, SLOT(slotZoomOut()));
 //	connect(zoomInToolbarButton, SIGNAL(clicked()), this, SLOT(slotZoomIn()));
-	connect(zoomDefaultToolbarButton, SIGNAL(clicked()), this, SLOT(slotZoom100()));
-	connect(zoomSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setZoom()));
+	// connect(zoomDefaultToolbarButton, SIGNAL(clicked()), this, SLOT(slotZoom100()));
 	connect(pageSelector, SIGNAL(GotoPage(int)), this, SLOT(GotoPa(int)));
 	connect(layerMenu, SIGNAL(activated(int)), this, SLOT(GotoLa(int)));
 	connect(unitSwitcher, SIGNAL(activated(int)), this, SLOT(ChgUnit(int)));
@@ -361,10 +354,6 @@ void ScribusView::changeEvent(QEvent *e)
 
 void ScribusView::languageChange()
 {
-	zoomDefaultToolbarButton->setToolTip( tr("Zoom to 100%"));
-	zoomOutToolbarButton->setToolTip( tr("Zoom out by the stepping value in Tools preferences"));
-	zoomInToolbarButton->setToolTip( tr("Zoom in by the stepping value in Tools preferences"));
-	zoomSpinBox->setToolTip( tr("Current zoom level"));
 	cmsToolbarButton->setToolTip("");
 	previewToolbarButton->setToolTip("");
 	layerMenu->setToolTip( tr("Select the current layer"));
@@ -2378,16 +2367,12 @@ void ScribusView::setMenTxt(int Seite)
 
 void ScribusView::setZoom()
 {
-    setZoom(zoomSpinBox->value());
-}
-
-void ScribusView::setZoom(double z) {
 	int x = qRound(qMax(contentsX() / m_canvas->scale(), 0.0));
 	int y = qRound(qMax(contentsY() / m_canvas->scale(), 0.0));
 	int w = qRound(qMin(visibleWidth() / m_canvas->scale(), Doc->currentPage()->width()));
 	int h = qRound(qMin(visibleHeight() / m_canvas->scale(), Doc->currentPage()->height()));
 	rememberOldZoomLocation(w / 2 + x,h / 2 + y);
-	zoom(oldX, oldY, z / 100.0 * Prefs->displayPrefs.displayScale, false);
+	zoom(oldX, oldY, m_ScMW->statusbar->getZoom() / 100.0 * Prefs->displayPrefs.displayScale, false);
 	setFocus();
 }
 
@@ -2426,7 +2411,6 @@ void ScribusView::slotZoomIn(int mx,int my)
 		zoom(oldX, oldY, newScale, true);
 }
 
-/** Verkleinert die Ansicht */
 void ScribusView::slotZoomOut(int mx,int my)
 {
 	// FIXME : mx and my should really be ScribusView local coordinates or global coordinates
@@ -2507,7 +2491,7 @@ void ScribusView::DrawNew()
 	setRulerPos(contentsX(), contentsY());
 	setMenTxt(Doc->currentPage()->pageNr());
 
-    m_ScMW->setStatusBarZoom(m_canvas->scale()/Prefs->displayPrefs.displayScale*100);
+    m_ScMW->statusbar->setZoom(m_canvas->scale()/Prefs->displayPrefs.displayScale*100);
 }
 
 void ScribusView::SetCCPo(double x, double y)
@@ -4182,7 +4166,7 @@ void ScribusView::setScale(const double newScale)
 	m_canvas->setScale(Scale);
 
     // TODO: define "x/ and x* Prefs->displayPrefs.displayScale*100" as a function call with a name that explains what it does (ale/20120701)
-    m_ScMW->setStatusBarZoom(m_canvas->scale()/Prefs->displayPrefs.displayScale*100);
+    m_ScMW->statusbar->setZoom(m_canvas->scale()/Prefs->displayPrefs.displayScale*100);
 
 	unitChange();
 }

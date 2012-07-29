@@ -40,13 +40,10 @@ Tasks
 Todo
 ===
 
-- make the document related status bar buttons inactive when no document is active.
-- disconnect the slots when the view (document) loses focus.
-- implement the relevant parts of ScribusView::languageChange() in ScribusMainWindow::languageChange()... or similar... (and remove them from ScribusView; there are no tooltips in the status bar yet.)
-- don't allow .00 in the display of the zoom percent (does this precision make sense?)
+- move the coordinates to the infor palette
+- implement the call to languageChange() for the statusbar
 
-What did I do?
-===
+#What did I do? First try
 
 - Copied the widgets definitions from ScribusView::ScribusView() to ScribusMainWindow::initStatusBar()
 - Created ScribusMainWindow::updateStatusBar()
@@ -54,6 +51,19 @@ What did I do?
 - Added the signal/slots disconnection to ScribusMainWindow::???()
 - ScribusView::setZoom(), called by the zoomSpinBox signal, gets its value directly from the zoomSpinBox widget, instead of taking the value from the valueChanged signal: iv'e created a ScribusView::setZoom(double) to avoid this too close relationship.
 - a new ScribusMainWindow::setStatusBarZoom(double) method lets scribusview set the zoom level in the status bar
+- set the all the tooltips in ScribusMainWindow::languageChange()
+- gave up, I will have to remove all traces from scribus.cpp! but they are useful for now.
+
+#What did I do? Second try
+
+- creating a ui/cpp/h files for the statusbar (cf. the upcoming blog post on creating ui files for scribus for more details)
+- i had to set a minimal height for the QWidget to somehow match the old statusbar
+- the QHBoxLayout had a top margin which i could not get rid off. by luck i've found that when the layuot is selected i can press shift+up arrow and there is another margin that gets reduced. don't ask me why.
+- detected that ScribusMainWindow::newActWin(QMdiSubWindow *w) cuold be the right place for catching when a window gets activated (and call setView...)
+- ScribusMainWindow::DoFileClose() to call unsetView() when a file is closed (for the case that the last document gets closed)
+- implemented the widgets and connections for connections the unit, the image preview quality and the zoom
+- implemented the calls for documentation activation and deactivation
+- crated an empty info palette (where the mouse coordinates will go)
 
 Further work
 ===
