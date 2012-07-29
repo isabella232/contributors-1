@@ -65,8 +65,14 @@ Todo
 - implemented the calls for documentation activation and deactivation
 - crated an empty info palette (where the mouse coordinates will go)
 
+What am I doing:
+- merging ui/pageselector.cpp into ui/statusbar.* and  getting the page selector to work again.
+
+
 Further work
 ===
+
+- move the unit changer to the crossing of the ruler?
 
 Further ideas
 ===

@@ -1095,11 +1095,6 @@ void ScribusMainWindow::initStatusBar()
 
 	// mainWindowCmsToolbarButton = new QToolButton();
 	mainWindowPreviewToolbarButton = new QToolButton();
-	mainWindowZoomDefaultToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
-	mainWindowZoomOutToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
-	mainWindowZoomInToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
-	// mainWindowZoomInToolbarButton->setDefaultAction(m_ScMW->scrActions["toolsZoomIn"]);
-	// mainWindowZoomOutToolbarButton->setDefaultAction(m_ScMW->scrActions["toolsZoomOut"]);
     /*
 	mainWindowCmsToolbarButton->setAutoRaise(OPTION_FLAT_BUTTON);
 	mainWindowCmsToolbarButton->setCheckable(true);

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>692</width>
-    <height>63</height>
+    <height>29</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -104,6 +104,64 @@
       </property>
       <property name="maximum">
        <number>3200</number>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="zoomOut_2">
+      <property name="text">
+       <string>...</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normalon>../../resources/icons/16/go-first.png</normalon>
+       </iconset>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="zoomOut_3">
+      <property name="text">
+       <string>...</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normalon>../../resources/icons/16/go-previous.png</normalon>
+       </iconset>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QComboBox" name="comboBox">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="zoomOut_4">
+      <property name="text">
+       <string>...</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normalon>../../resources/icons/16/go-next.png</normalon>
+       </iconset>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="zoomOut_5">
+      <property name="text">
+       <string>...</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normalon>../../resources/icons/16/go-last.png</normalon>
+       </iconset>
       </property>
      </widget>
     </item>
