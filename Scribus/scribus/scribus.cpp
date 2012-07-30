@@ -9395,6 +9395,7 @@ void ScribusMainWindow::docCheckToggle(bool visible)
 			docCheckerPalette->buildErrorList(doc);
 		}
 	}
+	if (HaveDoc) doc->view()->DrawNew();
 }
 
 bool ScribusMainWindow::scanDocument()
