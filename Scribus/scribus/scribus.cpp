@@ -85,6 +85,7 @@ for which a new license (GPL+exception) is in place.
 
 #include "actionmanager.h"
 #include "canvasmode.h"
+#include "canvasmode_imageimport.h"
 #include "commonstrings.h"
 #include "desaxe/digester.h"
 #include "desaxe/saxXML.h"
@@ -197,6 +198,7 @@ for which a new license (GPL+exception) is in place.
 #include "ui/query.h"
 #include "ui/replacecolors.h"
 #include "ui/sccombobox.h"
+#include "ui/scfilewidget.h"
 #include "ui/scmessagebox.h"
 #include "ui/scrapbookpalette.h"
 #include "ui/scmwmenumanager.h"
@@ -1399,6 +1401,7 @@ void ScribusMainWindow::keyPressEvent(QKeyEvent *k)
 				case modeEditWeldPoint:
 				case modeEyeDropper:
 				case modeImportObject:
+				case modeImportImage:
 				case modePanning:
 					view->requestMode(modeNormal);
 					break;
@@ -4102,16 +4105,6 @@ bool ScribusMainWindow::loadDoc(QString fileName)
 			PageItem *ite = doc->Items->at(azz);
 			if(ite->nextInChain() == NULL)
 				ite->layout();
-/*			if (doc->OldBM)
-			{
-				if ((ite->itemType() == PageItem::TextFrame) && (ite->isBookmark))
-					bookmarkPalette->BView->AddPageItem(ite);
-			}
-			else
-			{
-				if ((ite->itemType() == PageItem::TextFrame) && (ite->isBookmark))
-					bookmarkPalette->BView->ChangeItem(ite->BMnr, ite->ItemNr);
-			} */
 		}
 		for (QHash<int, PageItem*>::iterator itf = doc->FrameItems.begin(); itf != doc->FrameItems.end(); ++itf)
 		{
@@ -4120,8 +4113,6 @@ bool ScribusMainWindow::loadDoc(QString fileName)
 			if(ite->nextInChain() == NULL)
 				ite->layout();
 		}
-//		if (doc->OldBM)
-//			StoreBookmarks();
 		doc->RePos = false;
 		doc->setModified(false);
 		updateRecent(FName);
@@ -4218,26 +4209,22 @@ void ScribusMainWindow::slotGetContent()
 				docDir = prefsManager->prefsFile->getContext("dirs")->get("images", prefsDocDir);
 			else
 				docDir = prefsManager->prefsFile->getContext("dirs")->get("images", ".");
-			QString fileName = CFileDialog( docDir, tr("Open"), formatD, "", fdShowPreview | fdExistingFiles);
-			if (!fileName.isEmpty())
+
+			QStringList fileNames;
+			fileNames.clear();
+			CustomFDialog *dia = new CustomFDialog(qApp->activeWindow(), docDir, tr("Open"), formatD, fdShowPreview | fdExistingFilesI);
+			if (dia->exec() == QDialog::Accepted)
+				fileNames = dia->fileDialog->selectedFiles();
+			delete dia;
+			//QStringList fileNames = CFileDialog( docDir, tr("Open"), formatD, "", fdShowPreview | fdExistingFiles);
+			if (!fileNames.isEmpty())
 			{
-				prefsManager->prefsFile->getContext("dirs")->set("images", fileName.left(fileName.lastIndexOf("/")));
-				currItem->EmProfile = "";
-				currItem->pixm.imgInfo.isRequest = false;
-				currItem->UseEmbedded = true;
-				currItem->IProfile = doc->cmsSettings().DefaultImageRGBProfile;
-				currItem->IRender = doc->cmsSettings().DefaultIntentImages;
-				qApp->changeOverrideCursor( QCursor(Qt::WaitCursor) );
-				qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-				doc->loadPict(fileName, currItem, false, true);
-				propertiesPalette->imagePal->displayScaleAndOffset(currItem->imageXScale(), currItem->imageYScale(), currItem->imageXOffset(), currItem->imageYOffset());
-				qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-				view->DrawNew();
-				emit UpdateRequest(reqColorsUpdate | reqCmsOptionsUpdate);
-				currItem->emitAllToGUI();
+				prefsManager->prefsFile->getContext("dirs")->set("images", fileNames[0].left(fileNames[0].lastIndexOf("/")));
+				view->requestMode(modeImportImage);
+				dynamic_cast<CanvasMode_ImageImport*>(view->canvasMode())->setImageList(fileNames);
 			}
 		}
-		if (currItem->asTextFrame())
+		else if (currItem->asTextFrame())
 		{
 			gtGetText* gt = new gtGetText(doc);
 			ImportSetup impsetup=gt->run();
@@ -4476,8 +4463,13 @@ bool ScribusMainWindow::slotFileSaveAs()
 	if (doc->hasName)
 	{
 		QFileInfo fi(doc->DocName);
+		QString completeBaseName = fi.completeBaseName();
+		if (completeBaseName.endsWith(".sla", Qt::CaseInsensitive))
+			completeBaseName.chop(4);
+		else if (completeBaseName.endsWith(".gz", Qt::CaseInsensitive))
+			completeBaseName.chop(3);
 		wdir = QDir::fromNativeSeparators( fi.path() );
-		fna  = QDir::fromNativeSeparators( fi.path()+"/"+fi.baseName()+".sla" );
+		fna  = QDir::fromNativeSeparators( fi.path()+"/"+completeBaseName+".sla" );
 	}
 	else
 	{
@@ -4843,7 +4835,12 @@ void ScribusMainWindow::slotReallyPrint()
 		if (!doc->DocName.startsWith( tr("Document")))
 		{
 			QFileInfo fi(doc->DocName);
-			doc->Print_Options.filename = fi.path()+"/"+fi.baseName()+".ps";
+			QString completeBaseName = fi.completeBaseName();
+			if (completeBaseName.endsWith(".sla", Qt::CaseInsensitive))
+				if (completeBaseName.length() > 4) completeBaseName.chop(4);
+			if (completeBaseName.endsWith(".gz", Qt::CaseInsensitive))
+				if (completeBaseName.length() > 3) completeBaseName.chop(3);
+			doc->Print_Options.filename = fi.path()+"/"+completeBaseName+".ps";
 		}
 		else
 		{
@@ -6440,8 +6437,8 @@ void ScribusMainWindow::setAppMode(int mode)
 	scrActions["toolsEditWithStoryEditor"]->setChecked(mode==modeStoryEditor);
 	scrActions["toolsLinkTextFrame"]->setChecked(mode==modeLinkFrames);
 	scrActions["toolsUnlinkTextFrame"]->setChecked(mode==modeUnlinkFrames);
-	scrActions["toolsUnlinkTextFrameWithTextCopy"]->setChecked(mode==modeUnlinkFrames);
-	scrActions["toolsUnlinkTextFrameWithTextCut"]->setChecked(mode==modeUnlinkFrames);
+//	scrActions["toolsUnlinkTextFrameWithTextCopy"]->setChecked(mode==modeUnlinkFrames);
+//	scrActions["toolsUnlinkTextFrameWithTextCut"]->setChecked(mode==modeUnlinkFrames);
 	scrActions["toolsEyeDropper"]->setChecked(mode==modeEyeDropper);
 	scrActions["toolsMeasurements"]->setChecked(mode==modeMeasurementTool);
 	scrActions["toolsCopyProperties"]->setChecked(mode==modeCopyProperties);
@@ -6466,6 +6463,16 @@ void ScribusMainWindow::setAppMode(int mode)
 			NoFrameEdit();
 		else if (oldMode != modeEditClip && mode == modeEditClip)
 			ToggleFrameEdit();
+
+		//Ugly hack but I have absolutly no idea about how to do this in another way
+		if(currItem && oldMode != mode && (mode == modeEditMeshPatch || mode == modeEditMeshGradient || mode == modeEditGradientVectors || oldMode == modeEditMeshPatch || oldMode == modeEditMeshGradient || oldMode == modeEditGradientVectors || oldMode == modeEditPolygon || mode == modeEditPolygon || oldMode == modeEditArc || mode == modeEditArc || oldMode == modeEditSpiral || mode == modeEditSpiral))
+		{
+			SimpleState *ss = new SimpleState(Um::Mode);
+			ss->set("CHANGE_MODE","change_mode");
+			ss->set("OLD",oldMode);
+			ss->set("NEW",mode);
+			undoManager->action(currItem,ss);
+		}
 		doc->appMode = mode;
 //		if (oldMode == modeMeasurementTool)
 //			disconnect(view, SIGNAL(MVals(double, double, double, double, double, double, int )), measurementPalette, SLOT(setValues(double, double, double, double, double, double, int )));
@@ -7479,12 +7486,14 @@ void ScribusMainWindow::duplicateItem()
 	doc->SnapGuides = false;
 	slotEditCopy();
 	view->Deselect(true);
+	UndoTransaction trans(undoManager->beginTransaction(Um::Selection,Um::IPolygon,Um::Duplicate,"",Um::IMultipleDuplicate));
 	slotEditPaste();
 	for (int b=0; b<doc->m_Selection->count(); ++b)
 	{
 		doc->m_Selection->itemAt(b)->setLocked(false);
 		doc->MoveItem(doc->opToolPrefs().dispX, doc->opToolPrefs().dispY, doc->m_Selection->itemAt(b));
 	}
+	trans.commit();
 	doc->useRaster = savedAlignGrid;
 	doc->SnapGuides = savedAlignGuides;
 	internalCopy = false;
@@ -9061,8 +9070,8 @@ QString ScribusMainWindow::CFileDialog(QString wDir, QString caption, QString fi
 	if (!defNa.isEmpty())
 	{
 		QFileInfo f(defNa);
-		dia->setExtension(f.completeSuffix());
-		dia->setZipExtension(f.completeSuffix() + ".gz");
+		dia->setExtension(f.suffix());
+		dia->setZipExtension(f.suffix() + ".gz");
 		dia->setSelection(defNa);
 		if (docom != NULL)
 			dia->SaveZip->setChecked(*docom);
@@ -9943,12 +9952,14 @@ void ScribusMainWindow::slotItemTransform()
 		TransformDialog td(this, doc);
 		if (td.exec())
 		{
+			UndoTransaction trans(undoManager->beginTransaction(Um::Selection,Um::IPolygon,Um::Transform,"",Um::IMove));
 			qApp->changeOverrideCursor(QCursor(Qt::WaitCursor));
 			int count=td.getCount();
 			QTransform matrix(td.getTransformMatrix());
 			int basepoint=td.getBasepoint();
 			doc->itemSelection_Transform(count, matrix, basepoint);
 			qApp->changeOverrideCursor(QCursor(Qt::ArrowCursor));
+			trans.commit();
 		}
 	}
 }

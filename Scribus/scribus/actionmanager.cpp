@@ -75,6 +75,7 @@ void ActionManager::init(ScribusMainWindow *mw)
 	createDefaultMenus();
 	createDefaultNonMenuActions();
 	languageChange();
+	setActionTooltips(scrActions);
 }
 
 void ActionManager::createActions()
@@ -94,7 +95,6 @@ void ActionManager::createActions()
 	initUnicodeActions(scrActions, mainWindow, unicodeCharActionNames);
 	enableUnicodeActions(scrActions, false);
 	initSpecialActions();
-	
 }
 
 void ActionManager::initFileMenuActions()
@@ -829,7 +829,7 @@ void ActionManager::initToolsMenuActions()
 	*modeActionNames << "toolsSelect" << "toolsInsertTextFrame" << "toolsInsertImageFrame" << "toolsInsertTable";
 	*modeActionNames << "toolsInsertShape" << "toolsInsertPolygon" << "toolsInsertArc" << "toolsInsertSpiral" << "toolsInsertLine" << "toolsInsertBezier";
 	*modeActionNames << "toolsInsertFreehandLine" << "toolsInsertCalligraphicLine" << "toolsInsertRenderFrame" << "toolsRotate" << "toolsZoom" << "toolsEditContents";
-	*modeActionNames << "toolsEditWithStoryEditor" << "toolsLinkTextFrame" << "toolsUnlinkTextFrame" << "toolsUnlinkTextFrameWithTextCopy" << "toolsUnlinkTextFrameWithTextCut";
+	*modeActionNames << "toolsEditWithStoryEditor" << "toolsLinkTextFrame" << "toolsUnlinkTextFrame"; //<< "toolsUnlinkTextFrameWithTextCopy" << "toolsUnlinkTextFrameWithTextCut";
 	*modeActionNames << "toolsEyeDropper" << "toolsCopyProperties";
 	*modeActionNames << "toolsPDFPushButton" << "toolsPDFTextField" << "toolsPDFCheckBox" << "toolsPDFComboBox" << "toolsPDFListBox" << "toolsPDFAnnotText" << "toolsPDFAnnotLink";
 #ifdef HAVE_OSG
@@ -1081,6 +1081,12 @@ void ActionManager::initSpecialActions()
 	scrActions->insert(name, new ScrAction( "", defaultKey(name), mainWindow));
 	connect( (*scrActions)["specialToggleAllPalettes"], SIGNAL(triggered()), mainWindow, SLOT(ToggleAllPalettes()) );
 	connect( (*scrActions)["specialToggleAllGuides"], SIGNAL(triggered()), mainWindow, SLOT(ToggleAllGuides()) );
+}
+
+void ActionManager::setActionTooltips(QMap<QString, QPointer<ScrAction> > *actionMap)
+{
+	for( QMap<QString, QPointer<ScrAction> >::Iterator it = actionMap->begin(); it!=actionMap->end(); ++it )
+		it.value()->setToolTipFromTextAndShortcut();
 }
 
 void ActionManager::disconnectModeActions()
@@ -1975,7 +1981,10 @@ void ActionManager::createDefaultMenus()
 		<< "itemSplitPolygons"
 		<< "itemsUnWeld"
 		<< "itemWeld"
-		<< "itemEditWeld";
+		<< "itemEditWeld"
+		<< "toolsUnlinkTextFrameWithTextCopy"
+		<< "toolsUnlinkTextFrameWithTextCut";
+	
 	//Insert
 	++itmenu;
 	itmenu->second
@@ -2199,8 +2208,8 @@ void ActionManager::createDefaultNonMenuActions()
 	itnmenua->second << "toolsEditContents";
 	itnmenua->second << "toolsLinkTextFrame";
 	itnmenua->second << "toolsUnlinkTextFrame";
-	itnmenua->second << "toolsUnlinkTextFrameWithTextCopy";
-	itnmenua->second << "toolsUnlinkTextFrameWithTextCut";
+//	itnmenua->second << "toolsUnlinkTextFrameWithTextCopy";
+//	itnmenua->second << "toolsUnlinkTextFrameWithTextCut";
 	itnmenua->second << "toolsEyeDropper";
 	itnmenua->second << "toolsCopyProperties";
 	itnmenua->second << "toolsPDFPushButton";
