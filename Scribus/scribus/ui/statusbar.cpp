@@ -179,11 +179,18 @@ void Statusbar::setDocumentButtonsEnabled(bool enabled)
 	ui->zoomDefault->setEnabled(enabled);
 	ui->zoomOut->setEnabled(enabled);
 	ui->zoomIn->setEnabled(enabled);
+}
 
+void Statusbar::setDocumentButtonsPageEnabled()
+{
+    setDocumentButtonsPageEnabled(true);
+}
+void Statusbar::setDocumentButtonsPageEnabled(bool enabled)
+{
 	ui->pageStart->setEnabled(enabled);
 	ui->pageBack->setEnabled(enabled);
-	ui->pageForward->setEnabled(enabled && (pageI == pageN));
-	ui->pageLast->setEnabled(enabled && (pageI == pageN));
+	ui->pageForward->setEnabled(enabled && (pageI < pageN));
+	ui->pageLast->setEnabled(enabled && (pageI < pageN));
 	ui->page->setEnabled(enabled);
 	ui->pageN->setEnabled(enabled);
 }
@@ -237,6 +244,114 @@ bool Statusbar::pageHasFocus()
 void Statusbar::pageClearFocus()
 {
 	ui->page->clearFocus();
+}
+
+// XXX: only used here
+void PageSelector::GotoPgE(int a)
+{
+	clearFocus();
+	GotoPg(a);
+	emit GotoPage(a+1);
+}
+
+
+/**
+ * ./ui/preview.cpp: connect(PGSel, SIGNAL(GotoPage(int)), this, SLOT(ToSeite(int)));
+ * ./scribusview.cpp:  connect(pageSelector, SIGNAL(GotoPage(int)), this, SLOT(GotoPa(int)));
+ * ./scribusview.cpp:  disconnect(pageSelector, SIGNAL(GotoPage(int)), this, SLOT(GotoPa(int)));
+ * ./scribusview.cpp:  connect(pageSelector, SIGNAL(GotoPage(int)), this, SLOT(GotoPa(int)));
+ */
+void PageSelector::GotoPage()
+{
+	static QRegExp rx("^([0-9])+.*");
+	int p = rx.cap(1).toInt();
+	if (p < 1)
+		p=1;
+	if (p > LastPG)
+		p = LastPG;
+	GotoPg(p-1);
+	emit GotoPage(p);
+}
+
+
+// XXX: ./scribus.cpp:    view->pageSelector->GotoPg(0);
+// XXX: ./scribusview.cpp:    pageSelector->GotoPg(Seite);
+// XXX: ./ui/preview.cpp: PGSel->GotoPg(doc->currentPage()->pageNr());
+void PageSelector::GotoPg(int a)
+{
+	disconnect( PageCombo, SIGNAL( activated(int) ), this, SLOT( GotoPgE(int) ) );
+	PageCombo->setCurrentIndex(a);
+	setCurrentComboItem(PageCombo, QString::number(a+1));
+	APage = a+1;
+	Back->setEnabled(true);
+	Start->setEnabled(true);
+	Forward->setEnabled(true);
+	Last->setEnabled(true);
+	if (a == 0)
+	{
+		Back->setEnabled(false);
+		Start->setEnabled(false);
+	}
+	if (a == LastPG-1)
+	{
+		Forward->setEnabled(false);
+		Last->setEnabled(false);
+	}
+	connect( PageCombo, SIGNAL( activated(int) ), this, SLOT( GotoPgE(int) ) );
+}
+
+void PageSelector::setMaximum(int a)
+{
+	disconnect( PageCombo, SIGNAL( activated(int) ), this, SLOT( GotoPgE(int) ) );
+	PageCombo->clear();
+	LastPG = a;
+//	v->setTop(LastPG);
+	m_validator->setRange(1, LastPG);
+	for (int b = 0; b < LastPG; ++b)
+	{
+		PageCombo->addItem(QString::number(b+1));
+	}
+	setCurrentComboItem(PageCombo, QString::number(APage));
+	PageCount->setText(PageCountString.arg(LastPG));
+	connect( PageCombo, SIGNAL( activated(int) ), this, SLOT( GotoPgE(int) ) );
+}
+
+void PageSelector::ToStart()
+{
+	if (APage == 1)
+		return;
+	GotoPgE(0);
+}
+
+void PageSelector::ToEnd()
+{
+	if (APage == LastPG)
+		return;
+	GotoPgE(LastPG-1);
+}
+
+void PageSelector::goBk()
+{
+	APage--;
+	if (APage < 1)
+		APage = 1;
+	GotoPgE(APage-1);
+}
+
+void PageSelector::goFw()
+{
+	APage++;
+	if (APage > LastPG)
+		APage = LastPG;
+	GotoPgE(APage-1);
+}
+
+void PageSelector::changeEvent(QEvent *e)
+{
+	if (e->type() == QEvent::LanguageChange)
+		languageChange();
+	else
+		QWidget::changeEvent(e);
 }
 
 /**

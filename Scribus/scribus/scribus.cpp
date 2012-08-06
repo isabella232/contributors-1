@@ -6928,10 +6928,6 @@ void ScribusMainWindow::deletePage(int from, int to)
 			doc->deleteMasterPage(a);
 		else
 			doc->deletePage(a);
-		disconnect(view->pageSelector, SIGNAL(GotoPage(int)), view, SLOT(GotoPa(int)));
-		view->pageSelector->setMaximum(doc->Pages->count());
-		view->pageSelector->GotoPg(0);
-		connect(view->pageSelector, SIGNAL(GotoPage(int)), view, SLOT(GotoPa(int)));
 		if (!isMasterPage) // Master pages are not added to sections when created
 			doc->removePageFromSection(a);
 	}
