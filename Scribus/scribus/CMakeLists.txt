@@ -907,6 +907,9 @@ SET(SCRIBUS_SOURCES
   ui/vruler.cpp
   ui/useprintermarginsdialog.cpp
   ui/weldedit.cpp
+  imposer/imposeinputfile.cpp
+  imposer/imposeoutputfile.cpp
+  imposer/imposer.cpp
 #  ${SCRIBUS_ITEMSETTERS_SRC}
   ${SCRIBUS_OSG_SRC}
   ${SCRIBUS_GMAGICK_SRC}

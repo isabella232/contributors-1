@@ -22,7 +22,7 @@ for which a new license (GPL+exception) is in place.
  ***************************************************************************/
 
 #include "pdflib_core.h"
-
+#include "imposer/imposer.h"
 #include "scconfig.h"
 
 #if defined(_MSC_VER) && !defined(_USE_MATH_DEFINES)
@@ -95,6 +95,7 @@ for which a new license (GPL+exception) is in place.
 
 using namespace std;
 using namespace TableUtils;
+using namespace PoDoFo::Impose;
 
 #if defined(_WIN32)
 #undef GetObject
@@ -258,6 +259,9 @@ bool PDFLibCore::doExport(const QString& fn, const QString& nam, int Components,
 				ret = PDF_End_Doc(ScCore->PrinterProfiles[doc.pdfOptions().PrintProf], nam, Components);
 			else
 				ret = PDF_End_Doc();
+			PoDoFo::Impose::imposer * imposer = new PoDoFo::Impose::imposer();
+			imposer->impose(fn.toStdString(),"test.pdf", "myplan");
+			delete (imposer);
 		}
 		else
 			closeAndCleanup();
