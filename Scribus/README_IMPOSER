@@ -6,6 +6,14 @@ Implement some simple imposing plans for the PDF creation in Scribus.
 
 Uses Podofo to impose the PDF created by Scribus and produce an imposed PDF.
 
+Currently, the code works for four default plans:
+- birthday card
+- magazine
+- multifold
+- business card
+
+When exporting to PDF, four extra files are created in the start directory of Scribus (you should start it from the console without using an alias, so you know where the files will be placed!)
+
 #Where is the code
 
 scribus/imposer/
