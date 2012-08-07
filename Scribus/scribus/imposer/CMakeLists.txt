@@ -1,0 +1,22 @@
+INCLUDE_DIRECTORIES(
+${CMAKE_SOURCE_DIR}
+${CMAKE_SOURCE_DIR}/scribus
+${LIBPODOFO_INCLUDE_DIR}
+)
+
+SET(SCRIBUS_IMPOSER_LIB_SOURCES
+imposeinputfile.cpp
+imposeoutputfile.cpp
+imposer.cpp
+)
+
+SET(SCRIBUS_IMPOSER_LIB "scribus_imposer_lib")
+
+ADD_LIBRARY(${SCRIBUS_IMPOSER_LIB} STATIC ${SCRIBUS_IMPOSER_LIB_SOURCES})
+# This is a convenience library that for linkage purposes is part of Scribus's
+# main API.
+
+SET_TARGET_PROPERTIES(${SCRIBUS_IMPOSER_LIB}
+  PROPERTIES
+  COMPILE_FLAGS -DCOMPILE_SCRIBUS_MAIN_APP
+  )

@@ -9,6 +9,7 @@ ADD_SUBDIRECTORY(desaxe)
 ADD_SUBDIRECTORY(fonts)
 ADD_SUBDIRECTORY(styles)
 ADD_SUBDIRECTORY(text)
+ADD_SUBDIRECTORY(imposer)
 IF(WITH_TESTS)
   ADD_SUBDIRECTORY(tests)
 ENDIF(WITH_TESTS)
@@ -907,9 +908,6 @@ SET(SCRIBUS_SOURCES
   ui/vruler.cpp
   ui/useprintermarginsdialog.cpp
   ui/weldedit.cpp
-  imposer/imposeinputfile.cpp
-  imposer/imposeoutputfile.cpp
-  imposer/imposer.cpp
 #  ${SCRIBUS_ITEMSETTERS_SRC}
   ${SCRIBUS_OSG_SRC}
   ${SCRIBUS_GMAGICK_SRC}
@@ -951,6 +949,7 @@ LINK_DIRECTORIES(
   ${CMAKE_CURRENT_BINARY_DIR}/fonts
   ${CMAKE_CURRENT_BINARY_DIR}/styles
   ${CMAKE_CURRENT_BINARY_DIR}/text
+  ${CMAKE_CURRENT_BINARY_DIR}/imposer
   ${CMAKE_CURRENT_BINARY_DIR}/third_party/wpg
   ${CMAKE_CURRENT_BINARY_DIR}/third_party/pgf
 )
@@ -986,6 +985,8 @@ ENDIF (HAVE_BOOST)
 SET(SCRIBUS_WPG_LIB "scribus_wpg_lib")
 
 SET(SCRIBUS_PGF_LIB "scribus_pgf_lib")
+
+SET(SCRIBUS_IMPOSER_LIB "scribus_imposer_lib")
 
 INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}
@@ -1153,6 +1154,7 @@ TARGET_LINK_LIBRARIES(${EXE_NAME}
   ${SCRIBUS_WPG_LIB}
   ${SCRIBUS_PGF_LIB}
   ${LCMS_LIBRARIES}
+  ${SCRIBUS_IMPOSER_LIB}
 )
 
 IF(WITH_TESTS)
