@@ -3,13 +3,7 @@
 
 #include "podofo/podofo.h"
 #include "imposeinputfile.h"
-
-#include <string>
-#include <map>
-#include <vector>
-#include <sstream>
-#include <istream>
-#include <string>
+#include <QString>
 
 namespace PoDoFo
 {
@@ -20,15 +14,12 @@ namespace PoDoFo
 		public:
 			imposer();
 			~imposer() { }
-			int  impose (std::string in, std::string out, std::string plan  );
+			int  impose (QString in, QString out );
 		private:
-			void imposeBirthdayCard (const std::string & target, PoDoFo::Impose::imposeInputFile * input );
-			void imposeBusinessCard (const std::string & target, PoDoFo::Impose::imposeInputFile * input );
-			void imposeMagazine 	(const std::string & target, PoDoFo::Impose::imposeInputFile * input );
-			void imposeMultiFold 	(const std::string & target, PoDoFo::Impose::imposeInputFile * input );
-
-
-
+			void imposeBirthdayCard (const QString & target, PoDoFo::Impose::imposeInputFile * input );
+			void imposeBusinessCard (const QString & target, PoDoFo::Impose::imposeInputFile * input );
+			void imposeMagazine 	(const QString & target, PoDoFo::Impose::imposeInputFile * input );
+			void imposeMultiFold 	(const QString & target, PoDoFo::Impose::imposeInputFile * input );
 		};
 
 	};

@@ -181,6 +181,25 @@ bool PDFLibCore::doExport(const QString& fn, const QString& nam, int Components,
 	bool ret = false, error = false;
 	int  pc_exportpages=0;
 	int  pc_exportmasterpages=0;
+
+	int  imposer_enabled = 1;
+	QString fileName;
+	QTemporaryFile *tempPdfFile = NULL;
+
+	if   (imposer_enabled == 1) {
+		/* If imposing is enabled, the pdf will be exported to a temporary file before
+		 * the imposer creates the final file.
+		 */
+		tempPdfFile = new QTemporaryFile(QDir::tempPath() + "/scribus_temp_XXXXXX.pdf");
+		tempPdfFile->open();
+		fileName = getLongPathName(tempPdfFile->fileName());
+		tempPdfFile->close();
+	} else {
+		/* Otherwise the final file is written directly.
+		 */
+		fileName = fn;
+	}
+
 	if (usingGUI)
 		progressDialog->show();
 	QMap<QString, QMap<uint, FPointArray> > usedFonts;
@@ -194,7 +213,7 @@ bool PDFLibCore::doExport(const QString& fn, const QString& nam, int Components,
 		PDF_Error( tr("Qt build miss both \"UTF-16\" and \"ISO-10646-UCS-2\" text codecs, pdf export is not possible") );
 		return false;
 	}
-	if (PDF_Begin_Doc(fn, PrefsManager::instance()->appPrefs.fontPrefs.AvailFonts, usedFonts, doc.scMW()->bookmarkPalette->BView))
+	if (PDF_Begin_Doc(fileName, PrefsManager::instance()->appPrefs.fontPrefs.AvailFonts, usedFonts, doc.scMW()->bookmarkPalette->BView))
 	{
 		QMap<int, int> pageNsMpa;
 		for (uint a = 0; a < pageNs.size(); ++a)
@@ -259,9 +278,12 @@ bool PDFLibCore::doExport(const QString& fn, const QString& nam, int Components,
 				ret = PDF_End_Doc(ScCore->PrinterProfiles[doc.pdfOptions().PrintProf], nam, Components);
 			else
 				ret = PDF_End_Doc();
-			PoDoFo::Impose::imposer * imposer = new PoDoFo::Impose::imposer();
-			imposer->impose(fn.toStdString(),"test.pdf", "myplan");
-			delete (imposer);
+			if   (imposer_enabled == 1) {
+				PoDoFo::Impose::imposer * imposer = new PoDoFo::Impose::imposer();
+				imposer->impose(fileName, fn);
+				delete (imposer);
+				delete (tempPdfFile); 
+			}
 		}
 		else
 			closeAndCleanup();

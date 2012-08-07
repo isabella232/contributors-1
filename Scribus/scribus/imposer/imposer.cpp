@@ -29,7 +29,7 @@ namespace PoDoFo
 			std::cerr<<"imposer::imposer"<<std::endl;
 		}
 
-		void imposer::imposeBirthdayCard (const std::string & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeBirthdayCard (const QString & target, PoDoFo::Impose::imposeInputFile * input )
 		{
 			int numberOfSheets = 0;
 			int currentSheet;
@@ -44,7 +44,7 @@ namespace PoDoFo
  			std::cerr<<"imposer::imposeBirthdayCard"<<std::endl;
 	
 			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
-			output->createTarget(target,input);
+			output->createTarget(target.toStdString(),input);
 	
 			if ( !output->targetDoc )
 				throw std::invalid_argument ( "Output file is null" );
@@ -107,11 +107,12 @@ namespace PoDoFo
 				output->finishSheet();
 
 			}
-			output->targetDoc->Write ( target.c_str() );
+			std::string tmpstr = target.toStdString();
+			output->targetDoc->Write ( tmpstr.c_str() );
 
 		}
 
-		void imposer::imposeBusinessCard (const std::string & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeBusinessCard (const QString & target, PoDoFo::Impose::imposeInputFile * input )
 		{
 			int numberOfSheets = 0;
 			int currentSheet;
@@ -128,7 +129,7 @@ namespace PoDoFo
  			std::cerr<<"imposer::imposeBusinessCard"<<std::endl;
 	
 			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
-			output->createTarget(target,input);
+			output->createTarget(target.toStdString(),input);
 	
 			if ( !output->targetDoc )
 				throw std::invalid_argument ( "Output file is null" );
@@ -150,15 +151,14 @@ namespace PoDoFo
 				currentPage++;
 
 			}
-			output->targetDoc->Write ( target.c_str() );
+			std::string tmpstr = target.toStdString();
+			output->targetDoc->Write ( tmpstr.c_str() );
 
 		}
 		
-		void imposer::imposeMultiFold (const std::string & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeMultiFold (const QString & target, PoDoFo::Impose::imposeInputFile * input )
 		{
 			int numberOfCreatedPages = 0;
-			int numberOfSheets = 0;
-			int currentSheet;
 			int leftPage, rightPage;
 			int doubleSided = 1; 		/* From configuration dialog */
 
@@ -177,7 +177,7 @@ namespace PoDoFo
  			std::cerr<<"imposer::imposeMultiFold BROKEN"<<std::endl;
 	
 			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
-			output->createTarget(target,input);
+			output->createTarget(target.toStdString(),input);
 	
 			if ( !output->targetDoc )
 				throw std::invalid_argument ( "Output file is null" );
@@ -232,15 +232,14 @@ namespace PoDoFo
 		                output->finishSheet();
 
 			}
-			output->targetDoc->Write ( target.c_str() );
+			std::string tmpstr = target.toStdString();
+			output->targetDoc->Write ( tmpstr.c_str() );
 
 		}
 
-		void imposer::imposeMagazine (const std::string & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeMagazine (const QString & target, PoDoFo::Impose::imposeInputFile * input )
 		{
 			int numberOfCreatedPages = 0;
-			int numberOfSheets = 0;
-			int currentSheet;
 			int leftPage, rightPage;
 			int doubleSided = 1; 		/* From configuration dialog */
 
@@ -259,7 +258,7 @@ namespace PoDoFo
  			std::cerr<<"imposer::imposeMagazine"<<std::endl;
 	
 			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
-			output->createTarget(target,input);
+			output->createTarget(target.toStdString(),input);
 	
 			if ( !output->targetDoc )
 				throw std::invalid_argument ( "Output file is null" );
@@ -314,22 +313,23 @@ namespace PoDoFo
 		                output->finishSheet();
 
 			}
-			output->targetDoc->Write ( target.c_str() );
+			std::string tmpstr = target.toStdString();
+			output->targetDoc->Write ( tmpstr.c_str() );
 
 		}
 
-		int imposer::impose ( string in, string out, string plan )
+		int imposer::impose ( QString in, QString out)
 		{
 			try
 			{
-			PoDoFo::Impose::imposeInputFile * input = new PoDoFo::Impose::imposeInputFile(in);
+				PoDoFo::Impose::imposeInputFile * input = new PoDoFo::Impose::imposeInputFile(in.toStdString());
+
 #if 0
 				out = "birthdaycard.pdf";
 				imposeBirthdayCard (out,input);
 				out = "businesscard.pdf";
 				imposeBusinessCard (out,input);
 #endif
-				out = "magazine.pdf";
 				imposeMagazine (out,input);
 
 			}
