@@ -1,0 +1,32 @@
+#Goal
+
+Implement some simple imposing plans for the PDF creation in Scribus.
+
+#Introduction
+
+Uses Podofo to impose the PDF created by Scribus and produce an imposed PDF.
+
+#Where is the code
+
+scribus/imposer/
+scribus/pdflib.cpp
+...
+
+
+#Tasks
+
+... what has been done
+
+#Todo
+
+- create a GUI
+
+
+#Further work
+
+- move the unit changer to the crossing of the ruler?
+
+#Further ideas
+
+- manage the imposition process by Scribus scripting?
+- use external imposition plans
