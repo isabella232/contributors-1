@@ -894,6 +894,32 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	BleedLeft->setMinimum(0);
 	BleedLeft->setMaximum(3000*unitRatio);
 
+	/* Imposition tab */
+	tabImposition = new QWidget( this );
+    tabImpositionLayout = new QVBoxLayout( tabImposition );
+	tabImpositionLayout->setSpacing( 5 );
+	tabImpositionLayout->setMargin( 10 );
+    ImpositionGroup = new QGroupBox( tr( "Imposition style" ), tabImposition);
+    ImpositionGroupLayout = new QHBoxLayout( ImpositionGroup );
+    ImpositionGroupLayout->setSpacing( 5 );
+    ImpositionGroupLayout->setMargin( 10 );
+    ImpositionGroupLayout->setAlignment( Qt::AlignTop );
+    ImpositionCombo = new QComboBox( ImpositionGroup );
+    ImpositionCombo->addItem( tr( "No imposition" ) );
+    ImpositionCombo->addItem( tr( "Birthday Cards: Two-way 2x2 fold" ) );
+    ImpositionCombo->addItem( tr( "Business Cards: Grid of each page on a sheet" ) );
+    ImpositionCombo->addItem( tr( "Magazine: Two pages on one sheet, in magazine order" ) );
+    ImpositionCombo->addItem( tr( "Multi-fold: Two or more adjacent pages on one sheet" ) );
+    ImpositionCombo->setEditable(false);
+    ImpositionGroupLayout->addWidget(ImpositionCombo);
+    tabImpositionLayout->addWidget( ImpositionGroup );
+    ImpOptions = new QGroupBox( tr( "Imposition options" ), tabImposition);
+    ImpOptionsLayout = new QGridLayout( ImpOptions );
+    ImpOptAutoSheetSize = new QCheckBox( tr( "Automatically calculate sheet size" ), ImpOptions );
+    ImpOptionsLayout->addWidget(ImpOptAutoSheetSize);
+    tabImpositionLayout->addWidget( ImpOptions );
+    addTab( tabImposition, tr( "Imposition" ) );
+	
 	restoreDefaults(Optionen, AllFonts, PDFXProfiles, DocFonts, Eff, unitIndex, PageH, PageB, doc, pdfExport);
 
 	if (doc != 0 && exporting)

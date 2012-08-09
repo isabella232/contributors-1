@@ -310,7 +310,17 @@ private:
 	QRadioButton* useViewDefault;
 	QGroupBox* X3Group;
 	QGridLayout* X3GroupLayout;
-	// end protected GUI member pointers
+	/* Imposition tab */
+	QWidget* tabImposition;
+	QVBoxLayout* tabImpositionLayout;
+    	QLabel* ImpositionText;
+	QGroupBox* ImpositionGroup;
+    	QHBoxLayout* ImpositionGroupLayout;
+    	QGroupBox* ImpOptions;
+    	QGridLayout* ImpOptionsLayout;
+    	QCheckBox* ImpOptAutoSheetSize;
+    	QComboBox* ImpositionCombo;
+    	// end protected GUI member pointers
 
 	// Non-GUI protected members
 	QString unit;
