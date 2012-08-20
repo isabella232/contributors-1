@@ -105,6 +105,7 @@ for which a new license (GPL+exception) is in place.
 #include "ui/layers.h"
 #include "ui/scmessagebox.h"
 #include "ui/storyeditor.h"
+#include "imposer/imposeroptions.h"
 
 // static const bool FRAMESELECTION_EDITS_DEFAULTSTYLE = false;
 
@@ -762,6 +763,15 @@ void ScribusDoc::setup(const int unitIndex, const int fp, const int firstLeft, c
 	docPrefsData.pdfPrefs.PrintProf = docPrefsData.colorPrefs.DCMSset.DefaultPrinterProfile;
 	docPrefsData.pdfPrefs.Intent = docPrefsData.colorPrefs.DCMSset.DefaultIntentColors;
 	docPrefsData.pdfPrefs.Intent2 = docPrefsData.colorPrefs.DCMSset.DefaultIntentImages;
+    switch(firstPageNumber) {
+		case 1:
+		case 2: 	
+            docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::MultiFold;
+			break;
+		default:
+            docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::None;
+		        break;
+	}
 	BlackPoint   = docPrefsData.colorPrefs.DCMSset.BlackPoint;
 	SoftProofing = docPrefsData.colorPrefs.DCMSset.SoftProofOn;
 	Gamut        = docPrefsData.colorPrefs.DCMSset.GamutCheck;

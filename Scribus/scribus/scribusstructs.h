@@ -34,6 +34,7 @@ for which a new license (GPL+exception) is in place.
 #include "sctextstruct.h"
 #include "vgradient.h"
 #include "colormgmt/sccolormgmtstructs.h"
+#include "imposer/imposeroptions.h"
 
 extern bool SCRIBUS_API compareDouble(double, double);
 

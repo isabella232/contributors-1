@@ -58,6 +58,7 @@ for which a new license (GPL+exception) is in place.
 
 #include "cmsettings.h"
 #include "commonstrings.h"
+#include "imposer/imposeroptions.h"
 #include "pageitem.h"
 #include "pageitem_textframe.h"
 #include "pageitem_group.h"
@@ -182,11 +183,10 @@ bool PDFLibCore::doExport(const QString& fn, const QString& nam, int Components,
 	int  pc_exportpages=0;
 	int  pc_exportmasterpages=0;
 
-	int  imposer_enabled = 1;
 	QString fileName;
 	QTemporaryFile *tempPdfFile = NULL;
 
-	if   (imposer_enabled == 1) {
+	if   (doc.pdfOptions().imposerOptions.style != ImposerOptions::None) {
 		/* If imposing is enabled, the pdf will be exported to a temporary file before
 		 * the imposer creates the final file.
 		 */
@@ -278,9 +278,10 @@ bool PDFLibCore::doExport(const QString& fn, const QString& nam, int Components,
 				ret = PDF_End_Doc(ScCore->PrinterProfiles[doc.pdfOptions().PrintProf], nam, Components);
 			else
 				ret = PDF_End_Doc();
-			if   (imposer_enabled == 1) {
+
+			if   (doc.pdfOptions().imposerOptions.style != ImposerOptions::None) {
 				PoDoFo::Impose::imposer * imposer = new PoDoFo::Impose::imposer();
-				imposer->impose(fileName, fn);
+				imposer->impose(fileName, fn, &doc.pdfOptions().imposerOptions);
 				delete (imposer);
 				delete (tempPdfFile); 
 			}

@@ -896,30 +896,83 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 
 	/* Imposition tab */
 	tabImposition = new QWidget( this );
-    tabImpositionLayout = new QVBoxLayout( tabImposition );
+	tabImpositionLayout = new QVBoxLayout( tabImposition );
 	tabImpositionLayout->setSpacing( 5 );
 	tabImpositionLayout->setMargin( 10 );
-    ImpositionGroup = new QGroupBox( tr( "Imposition style" ), tabImposition);
-    ImpositionGroupLayout = new QHBoxLayout( ImpositionGroup );
-    ImpositionGroupLayout->setSpacing( 5 );
-    ImpositionGroupLayout->setMargin( 10 );
-    ImpositionGroupLayout->setAlignment( Qt::AlignTop );
-    ImpositionCombo = new QComboBox( ImpositionGroup );
-    ImpositionCombo->addItem( tr( "No imposition" ) );
-    ImpositionCombo->addItem( tr( "Birthday Cards: Two-way 2x2 fold" ) );
-    ImpositionCombo->addItem( tr( "Business Cards: Grid of each page on a sheet" ) );
-    ImpositionCombo->addItem( tr( "Magazine: Two pages on one sheet, in magazine order" ) );
-    ImpositionCombo->addItem( tr( "Multi-fold: Two or more adjacent pages on one sheet" ) );
-    ImpositionCombo->setEditable(false);
-    ImpositionGroupLayout->addWidget(ImpositionCombo);
-    tabImpositionLayout->addWidget( ImpositionGroup );
-    ImpOptions = new QGroupBox( tr( "Imposition options" ), tabImposition);
-    ImpOptionsLayout = new QGridLayout( ImpOptions );
-    ImpOptAutoSheetSize = new QCheckBox( tr( "Automatically calculate sheet size" ), ImpOptions );
-    ImpOptionsLayout->addWidget(ImpOptAutoSheetSize);
-    tabImpositionLayout->addWidget( ImpOptions );
-    addTab( tabImposition, tr( "Imposition" ) );
+	ImpositionGroup = new QGroupBox( tr( "Imposition" ), tabImposition);
+	ImpositionGroupLayout = new QGridLayout( ImpositionGroup );
+	ImpositionGroupLayout->setSpacing( 5 );
+	ImpositionGroupLayout->setMargin( 10 );
+	ImpositionGroupLayout->setAlignment( Qt::AlignTop );
+	ImpositionCombo = new QComboBox( ImpositionGroup );
+	ImpositionCombo->addItem( tr( "No imposition" ) );
+	ImpositionCombo->addItem( tr( "Birthday Cards: Two-way 2x2 fold" ) );
+	ImpositionCombo->addItem( tr( "Business Cards: Grid of each page on a sheet" ) );
+	ImpositionCombo->addItem( tr( "Magazine: Two pages on one sheet, in magazine order" ) );
+	ImpositionCombo->addItem( tr( "Multi-fold: Two or more adjacent pages on one sheet" ) );
+	ImpositionCombo->addItem( tr( "Tiles: Split each page in a grid of sheets." ) );
+	ImpositionCombo->addItem( tr( "File: Load external imposition plan" ) );
+	ImpositionCombo->setEditable(false);
+	ImpositionGroupLayout->addWidget(ImpositionCombo,0,0);
+	tabImpositionLayout->addWidget( ImpositionGroup );
+	ImpOptAutoSheetSize = new QCheckBox( tr( "Automatically calculate sheet size" ), ImpositionGroup );
+	ImpositionGroupLayout->addWidget(ImpOptAutoSheetSize, 1,0);
+	SheetSizeLabel = new QLabel( tr( "&Size:" ), ImpositionGroup );
+	ImpositionGroupLayout->addWidget( SheetSizeLabel, 2, 1 );
+//	PageSize ss(prefsManager->appPrefs.docSetupPrefs.pageSize);
+	ImpDoubleSidedComboBox = new QComboBox( ImpositionGroup );
+	ImpDoubleSidedComboBox->addItem( tr("Single sided") );
+	ImpDoubleSidedComboBox->addItem( tr("Double sided") );
+	ImpDoubleSidedComboBox->setCurrentIndex(1/*prefsManager->appPrefs.docSetupPrefs.pageRotation*/);
+	ImpositionGroupLayout->addWidget(ImpDoubleSidedComboBox, 0, 1 );
+	SheetSizeComboBox = new QComboBox( ImpositionGroup );
+//	SheetSizeComboBox->addItems(ss.activeSizeTRList());
+	SheetSizeComboBox->addItem( CommonStrings::trCustomPageSize );
+	SheetSizeComboBox->setEditable(false);
+	SheetSizeLabel->setBuddy(SheetSizeComboBox);
+	ImpositionGroupLayout->addWidget(SheetSizeComboBox, 2, 2 );
+	SheetRotationLabel = new QLabel( tr( "&Rotation:" ), ImpositionGroup );
+	ImpositionGroupLayout->addWidget( SheetRotationLabel, 3, 1 );
+	SheetRotationComboBox = new QComboBox( ImpositionGroup );
+	SheetRotationComboBox->addItem( tr( "0" ) );
+	SheetRotationComboBox->addItem( tr( "90" ) );
+	SheetRotationComboBox->addItem( tr( "180" ) );
+	SheetRotationComboBox->addItem( tr( "270" ) );
+	SheetRotationComboBox->setEditable(false);
+	SheetRotationComboBox->setCurrentIndex(0/*prefsManager->appPrefs.docSetupPrefs.pageRotation*/);
+	SheetRotationLabel->setBuddy(SheetRotationComboBox);
+	ImpositionGroupLayout->addWidget( SheetRotationComboBox, 3, 2 );
+	tabImpositionLayout->addWidget( ImpositionGroup );
+	/* Imposer-specific options */
+	ImpBirthdayCardOptions = new QGroupBox( tr( "Birthday card options" ), tabImposition);
+	ImpBirthdayCardOptionsLayout = new QGridLayout( ImpBirthdayCardOptions );
+	ImpBirthdayCardOptionsLayout->setSpacing( 5 );
+	ImpBirthdayCardOptionsLayout->setMargin( 10 );
+	tabImpositionLayout->addWidget( ImpBirthdayCardOptions );
+	ImpBirthdayCardOptions->hide();
 	
+	ImpBusinessCardOptions = new QGroupBox( tr( "Business card options" ), tabImposition);
+	ImpBusinessCardOptionsLayout = new QGridLayout( ImpBusinessCardOptions );
+	ImpBusinessCardOptionsLayout->setSpacing( 5 );
+	ImpBusinessCardOptionsLayout->setMargin( 10 );
+	tabImpositionLayout->addWidget( ImpBusinessCardOptions );
+//	ImpBusinessCardOptions->hide();
+	
+	ImpMagazineOptions = new QGroupBox( tr( "Magazine options" ), tabImposition);
+	ImpMagazineOptionsLayout = new QGridLayout( ImpMagazineOptions );
+	ImpMagazineOptionsLayout->setSpacing( 5 );
+	ImpMagazineOptionsLayout->setMargin( 10 );
+	tabImpositionLayout->addWidget( ImpMagazineOptions );
+	ImpMagazineOptions->hide();
+	
+	ImpMultiFoldOptions = new QGroupBox( tr( "Multi-Fold options" ), tabImposition);
+	ImpMultiFoldOptionsLayout = new QGridLayout( ImpMultiFoldOptions );
+	ImpMultiFoldOptionsLayout->setSpacing( 5 );
+	ImpMultiFoldOptionsLayout->setMargin( 10 );
+	tabImpositionLayout->addWidget( ImpMultiFoldOptions );
+	ImpMultiFoldOptions->hide();
+
+	addTab( tabImposition, tr( "Imposition" ) );
 	restoreDefaults(Optionen, AllFonts, PDFXProfiles, DocFonts, Eff, unitIndex, PageH, PageB, doc, pdfExport);
 
 	if (doc != 0 && exporting)
@@ -1473,6 +1526,7 @@ void TabPDFOptions::restoreDefaults(PDFOptions & Optionen,
 		}
 		
 	}
+	ImpositionCombo->setCurrentIndex(Opts.imposerOptions.style);
 }
 
 void TabPDFOptions::storeValues(PDFOptions& pdfOptions)

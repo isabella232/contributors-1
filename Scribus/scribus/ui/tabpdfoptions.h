@@ -315,12 +315,29 @@ private:
 	QVBoxLayout* tabImpositionLayout;
     	QLabel* ImpositionText;
 	QGroupBox* ImpositionGroup;
-    	QHBoxLayout* ImpositionGroupLayout;
-    	QGroupBox* ImpOptions;
-    	QGridLayout* ImpOptionsLayout;
+    	QGridLayout* ImpositionGroupLayout;
+//    	QGroupBox* ImpOptions;
+//    	QGridLayout* ImpOptionsLayout;
     	QCheckBox* ImpOptAutoSheetSize;
     	QComboBox* ImpositionCombo;
-    	// end protected GUI member pointers
+    	QLabel* SheetSizeLabel;
+    	QLabel* SheetRotationLabel;
+    	QComboBox * SheetSizeComboBox;
+    	QComboBox * SheetRotationComboBox;
+    	QComboBox * ImpDoubleSidedComboBox;
+    
+	QGroupBox * ImpBirthdayCardOptions;
+    	QGridLayout* ImpBirthdayCardOptionsLayout;
+
+    	QGroupBox * ImpBusinessCardOptions;
+    	QGridLayout* ImpBusinessCardOptionsLayout;
+
+    	QGroupBox * ImpMagazineOptions;
+    	QGridLayout* ImpMagazineOptionsLayout;
+    	
+	QGroupBox * ImpMultiFoldOptions;
+    	QGridLayout* ImpMultiFoldOptionsLayout;
+	// end protected GUI member pointers
 
 	// Non-GUI protected members
 	QString unit;

@@ -157,6 +157,7 @@ public:
 	double markLength;
 	double markOffset;
 	QString openAction;
+	ImposerOptions imposerOptions;
 };
 
 #endif
