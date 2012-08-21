@@ -919,6 +919,7 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	
   tabImpositionLayout->addWidget( ImpositionGroup );
 	ImpOptAutoSheetSize = new QCheckBox( tr( "Automatically calculate sheet size" ), ImpositionGroup );
+	connect(ImpOptAutoSheetSize, SIGNAL(stateChanged(int)), this, SLOT(ImpositionSheetSize(int)));
 	ImpositionGroupLayout->addWidget(ImpOptAutoSheetSize, 1,0);
 	SheetSizeLabel = new QLabel( tr( "&Size:" ), ImpositionGroup );
 	ImpositionGroupLayout->addWidget( SheetSizeLabel, 2, 1 );
@@ -927,6 +928,7 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	ImpDoubleSidedComboBox->addItem( tr("Single sided") );
 	ImpDoubleSidedComboBox->addItem( tr("Double sided") );
 	ImpDoubleSidedComboBox->setCurrentIndex(1/*prefsManager->appPrefs.docSetupPrefs.pageRotation*/);
+	connect(ImpDoubleSidedComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionSheetSides(int)));
 	ImpositionGroupLayout->addWidget(ImpDoubleSidedComboBox, 0, 1 );
 	SheetSizeComboBox = new QComboBox( ImpositionGroup );
 //	SheetSizeComboBox->addItems(ss.activeSizeTRList());
@@ -2305,4 +2307,22 @@ void TabPDFOptions::createPageNumberRange( )
 
 void TabPDFOptions::ImpositionStyle(int i) {
   Opts.imposerOptions.style = (ImposerOptions::ImposerStyle) i;
+  bool impositionEnabled = i>0; // Imposition is enabled except when the first style is selected (No imposition)
+
+  ImpOptAutoSheetSize->setEnabled (impositionEnabled);
+  SheetSizeComboBox->setEnabled(impositionEnabled && !ImpOptAutoSheetSize->isChecked());
+  SheetRotationComboBox->setEnabled(impositionEnabled);
+  ImpDoubleSidedComboBox->setEnabled(impositionEnabled);
+}
+
+void TabPDFOptions::ImpositionSheetSize(int i) {
+  Opts.imposerOptions.sheetAutoSize = ImpOptAutoSheetSize->isChecked();
+  SheetSizeComboBox->setEnabled(!ImpOptAutoSheetSize->isChecked());
+
+//  Opts.imposerOptions.sheetAutoSize = ImpOptAutoSheetSize.isChecked();
+}
+
+void TabPDFOptions::ImpositionSheetSides(int i) {
+  Opts.imposerOptions.doubleSided = (ImpDoubleSidedComboBox->currentIndex() == 1);
+
 }

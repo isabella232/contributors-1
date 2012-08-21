@@ -148,6 +148,8 @@ public slots:
 	void enableCMS(bool enable);
 	void checkInfo();
 	void ImpositionStyle(int i);
+	void ImpositionSheetSize(int i);
+	void ImpositionSheetSides(int i);
 
 protected slots:
 	void createPageNumberRange();
