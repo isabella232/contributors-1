@@ -763,13 +763,17 @@ void ScribusDoc::setup(const int unitIndex, const int fp, const int firstLeft, c
 	docPrefsData.pdfPrefs.PrintProf = docPrefsData.colorPrefs.DCMSset.DefaultPrinterProfile;
 	docPrefsData.pdfPrefs.Intent = docPrefsData.colorPrefs.DCMSset.DefaultIntentColors;
 	docPrefsData.pdfPrefs.Intent2 = docPrefsData.colorPrefs.DCMSset.DefaultIntentImages;
-    switch(firstPageNumber) {
-		case 1:
-		case 2: 	
-            docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::MultiFold;
-			break;
+	/* Setup some defaults for the imposition style based on the chosen page layout */
+	switch(fp) {
+		case 2:
+		case 3: 	
+		case 4: 	
+	            docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::MultiFold;
+	            docPrefsData.pdfPrefs.imposerOptions.nFold = fp;
+		break;
 		default:
-            docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::None;
+            	    docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::None;
+	            docPrefsData.pdfPrefs.imposerOptions.nFold = 1;
 		        break;
 	}
 	BlackPoint   = docPrefsData.colorPrefs.DCMSset.BlackPoint;

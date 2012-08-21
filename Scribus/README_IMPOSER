@@ -9,15 +9,18 @@ Uses Podofo to impose the PDF created by Scribus and produce an imposed PDF.
 Currently, the code works for four default plans:
 - birthday card (2-way folding)
 - magazine (2-Fold with left pages counting from page 1 and right pages counting from last page down)
-- multifold (N-Fold, one direction, broken in current code base)
+- multifold (N-Fold, one direction, fixed to N = 3 in current code base)
 - business card (X times Y grid of each page on one separate sheet. X and Y are hardcoded 3 and 4 now.
+- tiling: BROKEN
+- external file: BROKEN
 
-When exporting to PDF, the imposer is always enabled in this branch. Currently the imposing plan is hardcoded to the magazine style imposing, the GUI to select imposition is still missing. You can test different imposition plans by modifying the imposer::impose procedure in .scribus/imposer/imposer.cpp 
+A new tab is available on the PDF export dialog. Although it presents multiple options, only the imposer selection works. The rest is work in progress.
 
 #Where is the code
 
 scribus/imposer/
-scribus/pdflib.cpp
+scribus/pdflib_core.cpp
+scribus/ui/tabpdfoptions.*
 ...
 
 
@@ -27,7 +30,7 @@ scribus/pdflib.cpp
 
 #Todo
 
-- create a GUI
+- improve GUI, save / restore settings to file
 - further integration of code base, original podofo-impose code was not Qt based.
 - Features: Configuration, paper rotation, etc.
 

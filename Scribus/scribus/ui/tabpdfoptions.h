@@ -55,8 +55,6 @@ public:
 						 int unitIndex, double PageH, double PageB,
 						 ScribusDoc *mdoc, bool exporting);
 
-	void storeValues(PDFOptions& options);
-
 	void unitChange(QString unit, int docUnitIndex, double invUnitConversion);
 
 	// GUI member pointers
@@ -149,6 +147,7 @@ public slots:
 	void SelLPIcol(int);
 	void enableCMS(bool enable);
 	void checkInfo();
+	void ImpositionStyle(int i);
 
 protected slots:
 	void createPageNumberRange();
