@@ -10,6 +10,9 @@ for which a new license (GPL+exception) is in place.
     begin                : Sat Apr 7 2001
     copyright            : (C) 2001 by Franz Schmid
     email                : Franz.Schmid@altmuehlnet.de
+
+    Modified for Indic unicode support , Aug 2012 
+	by 	: Anilkumar KV,  Email: anilankv@gmail.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -179,6 +182,7 @@ void PageItem_PathText::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 	for (a = firstChar; a < itemText.length(); ++a)
 	{
 		hl = itemText.item(a);
+		if (hl->gIdx < 0) continue ;
 		CharStyle nstyle = itemText.charStyle(a);
 		ParagraphStyle pstyle = itemText.paragraphStyle(a);
 		chstr = hl->ch;
@@ -207,6 +211,7 @@ void PageItem_PathText::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 	{
 		hl = itemRenderText.item(a);
 		chstr = hl->ch;
+		if (hl->gIdx < 0) continue ;
 		if (chstr[0] == SpecialChars::PAGENUMBER || chstr[0] == SpecialChars::PARSEP || chstr[0] == SpecialChars::PAGECOUNT
 			|| chstr[0] == SpecialChars::TAB || chstr[0] == SpecialChars::LINEBREAK)
 			continue;
@@ -260,6 +265,7 @@ void PageItem_PathText::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 	{
 		CurY = 0;
 		hl = itemRenderText.item(a);
+		if (hl->gIdx < 0) continue ;
 		chstr = hl->ch;
 		if (chstr[0] == SpecialChars::PAGENUMBER || chstr[0] == SpecialChars::PARSEP || chstr[0] == SpecialChars::PAGECOUNT
 			|| chstr[0] == SpecialChars::TAB || chstr[0] == SpecialChars::LINEBREAK)

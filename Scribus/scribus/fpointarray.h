@@ -25,6 +25,7 @@ for which a new license (GPL+exception) is in place.
 #define FPOINTARRAY_H
 
 #include <QTransform>
+#include <QMatrix>
 #include <QPainterPath>
 #include <QPoint>
 #include <QPointF>
@@ -61,6 +62,7 @@ public:
 	void scale( double sx, double sy );
 	FPoint WidthHeight() const;
 	void map(QTransform m);
+	void map(QMatrix m);
 	FPointArray &operator=( const FPointArray &a );
 	FPointArray copy() const;
 	void setMarker();

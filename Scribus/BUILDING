@@ -35,6 +35,7 @@ Requirements:
 	libjpeg (depending on how Qt is packaged)
 	libpng
 	Qtwebkit
+	ICU
 
 Recommended:
 	CUPS
@@ -260,6 +261,7 @@ Recommended packages for compiling from source on SuSE 11.x:
         boost-devel
         libGraphicsMagick++-devel
         libOpenSceneGraph-devel  *Optional- but available from the Packman repo
+        libicu-devel
 
 You can install these packages using YaST. You may find it difficult to compile
 Scribus 1.3.5+ on anything older than Suse 11.1. 

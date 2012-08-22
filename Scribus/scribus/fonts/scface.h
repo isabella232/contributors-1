@@ -26,6 +26,7 @@ virtual:      dispatch to constituents, handle embedding (-)
 #include <utility>
 
 #include "fpointarray.h"
+#include "fonts/fontfeatureset.h"
 
 
 
@@ -180,6 +181,8 @@ public:
 		virtual bool EmbedFont(QString &/*str*/)       const { return false; }
 		virtual void RawData(QByteArray & /*bb*/)      const {}
 		virtual bool glyphNames(QMap<uint, std::pair<QChar, QString> >& gList) const;
+		virtual FontFeatureSet * features() const { return 0; }
+		virtual int shapeText(void* /*gs*/, unsigned int /*item*/) const {return 0;}
 
 		// these use the cache:
 		virtual qreal      glyphWidth(uint gl, qreal sz)   const;
@@ -373,6 +376,12 @@ public:
 	/// deprecated, see glyphBBox()
 	qreal realCharDescent(QChar ch, qreal sz=1.0) const { return glyphBBox(char2CMap(ch),sz).descent; }
 	
+        /// Return a features Object provided by the font
+        FontFeatureSet * features() { return m->features();}
+       
+        /// Process a string
+        int shapeText(void* gs, unsigned int item) const{return m->shapeText(gs, item);}
+        
 private:
 		
 	friend class SCFonts;

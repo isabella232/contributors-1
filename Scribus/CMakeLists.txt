@@ -437,6 +437,11 @@ IF(WIN32)
                   -DCOMPILE_PLUGIN_AS_DLL
   )
   SET(BUILD_WINDOWS_VERSION 1)
+  SET(SC_USE_GDI 1)
+  IF(NOT SC_SHOULD_NOT_USE_GDIPLUS)
+    SET(SC_USE_GDIPLUS 1)
+  ENDIF(NOT SC_SHOULD_NOT_USE_GDIPLUS)
+
   SET(DLL_USE_NATIVE_API 1)
 ENDIF(WIN32)
 
@@ -781,6 +786,15 @@ ELSE (POPPLER_FOUND)
 	MESSAGE("Poppler NOT found - Disabling support for native PDF import")
 ENDIF (POPPLER_FOUND)
 #>>Poppler for PDF import
+
+#<<ICU for text shaping (required)
+FIND_PACKAGE(ICU)
+IF(ICU_FOUND)
+  MESSAGE(STATUS "ICU Found OK")
+ELSE(ICU_FOUND)
+  MESSAGE(FATAL_ERROR "ICU NOT Found!")
+ENDIF(ICU_FOUND)
+#>>ICU for text shaping
 
 
 ##############################################################################################################
