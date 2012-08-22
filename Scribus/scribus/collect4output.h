@@ -64,6 +64,7 @@ class CollectForOutput : public QObject
 
 		/*! Ask user for output directory via GUI.
 		\retval true on success */
+        bool createDir(QString rdir);
 		bool newDirDialog();
 		/*! Check permissions and export document itself.
 		\retval true on success */

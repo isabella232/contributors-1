@@ -58,6 +58,26 @@ CollectForOutput::CollectForOutput(ScribusDoc* doc, QString outputDirectory, boo
 	patternCount=patterns.count();
 }
 
+bool CollectForOutput::createDir(QString rdir)
+{
+    QDir dir(m_outputDirectory+rdir);
+    if (!dir.exists())
+    {
+        bool created = dir.mkpath(m_outputDirectory+rdir+"/");
+        if (!created)
+        {
+            QMessageBox::warning(ScCore->primaryMainWindow(), CommonStrings::trWarning,
+                             "<qt>" + tr("Cannot create directory:\n%1").arg(m_outputDirectory+rdir) + "</qt>",
+                             CommonStrings::tr_OK);
+            return false;
+        }
+        QMessageBox::warning(ScCore->primaryMainWindow(), CommonStrings::trWarning,
+                         "<qt>" + tr("create directory:\n%1").arg(m_outputDirectory+rdir) + "</qt>",
+                         CommonStrings::tr_OK);
+    }
+    return true;
+}
+
 bool CollectForOutput::newDirDialog()
 {
 	QString curDir = QDir::currentPath();
@@ -75,24 +95,11 @@ bool CollectForOutput::newDirDialog()
 		return false;
 	if (!m_outputDirectory.endsWith("/"))
 		m_outputDirectory += "/";
-    char *directories[]={"","images/","fonts/","profiles/"};
-    int Indice;
-    for (Indice = 0; Indice < 4; Indice++) {
-        QDir dir(m_outputDirectory+directories[Indice]);
-        if (!dir.exists())
-        {
-            bool created = dir.mkpath(m_outputDirectory+directories[Indice]);
-            if (!created)
-            {
-                QMessageBox::warning(ScCore->primaryMainWindow(), CommonStrings::trWarning,
-                                 "<qt>" + tr("Cannot create directory:\n%1").arg(m_outputDirectory+directories[Indice]) + "</qt>",
-                                 CommonStrings::tr_OK);
-                return false;
-            }
-        }
-    }
+    createDir("");
 	return true;
 }
+
+
 
 QString CollectForOutput::collect(QString &newFileName)
 {
@@ -112,8 +119,8 @@ QString CollectForOutput::collect(QString &newFileName)
 		return errorMsg;
 	}
 
-	if (m_withFonts)
-		collectFonts();
+    if (m_withFonts)
+        collectFonts();
 	if (m_withProfiles)
 		collectProfiles();
 
@@ -137,8 +144,8 @@ QString CollectForOutput::collect(QString &newFileName)
 	collectedFiles.clear();
 	newFileName=newName;
 
-    QString filename = m_outputDirectory + "report.txt";
-    /*QFile f(filename);
+    /*QString filename = m_outputDirectory + "report.txt";
+    QFile f(filename);
     if(!f.open(QIODevice::WriteOnly))
             return false;
     QString wr = "";
@@ -155,7 +162,7 @@ bool CollectForOutput::collectDocument()
 {
 	QFileInfo fi = QFileInfo(m_outputDirectory);
 	newName = m_outputDirectory;
-    m_message = "\nSOURCE DOCUMENT\n====================\n"+m_message +"\n";
+    //m_message = "\nSOURCE DOCUMENT\n====================\n"+m_message +"\n";
 	if (!fi.exists())
 		return false;
 	if (!fi.isDir() || !fi.isWritable())
@@ -349,6 +356,7 @@ void CollectForOutput::processItem(PageItem *ite)
 bool CollectForOutput::collectFonts()
 {
     //m_message = m_message + "\n\nUSED FONTS\n====================\n";
+    createDir("fonts/");
 	PrefsManager *prefsManager = PrefsManager::instance();
 	QMap<QString,int>::Iterator it3;
 	QMap<QString,int>::Iterator it3end = m_Doc->UsedFonts.end();
@@ -434,6 +442,7 @@ QStringList CollectForOutput::findFontMetrics(const QString& baseDir, const QStr
 
 bool CollectForOutput::collectProfiles()
 {
+    createDir("profiles/");
     //m_message = m_message + "\n\nUSED PROFILES\n====================\n";
 	ProfilesL::Iterator itend = docProfiles.end();
 	int c=0;
@@ -451,6 +460,7 @@ bool CollectForOutput::collectProfiles()
 
 QString CollectForOutput::collectFile(QString oldFile, QString newFile)
 {
+    createDir("images/");
     //m_message = m_message + "USED IMAGES\n====================\n";
 	uint cnt = 1;
 	bool copy = true;
