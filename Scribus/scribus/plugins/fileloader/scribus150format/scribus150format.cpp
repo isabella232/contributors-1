@@ -1378,6 +1378,11 @@ bool Scribus150Format::loadFile(const QString & fileName, const FileFormat & /* 
 			success = readPDFOptions(m_Doc, reader);
 			if (!success) break;
 		}
+		if (tagName == "Imposition")
+		{
+			success = readImpositionOptions(m_Doc, reader);
+			if (!success) break;
+		}
 		if (tagName == "Printer")
 		{
 			success = readPrinterOptions(m_Doc, reader);
@@ -2967,6 +2972,21 @@ bool Scribus150Format::readPDFOptions(ScribusDoc* doc, ScXmlStreamReader& reader
 	return !reader.hasError();
 }
 
+bool Scribus150Format::readImpositionOptions(ScribusDoc* doc, ScXmlStreamReader& reader)
+{
+	ScXmlStreamAttributes attrs = reader.scAttributes();
+
+	doc->pdfOptions().imposerOptions.style = (ImposerOptions::ImposerStyle)attrs.valueAsInt("Style");
+	doc->pdfOptions().imposerOptions.sheetRotation = attrs.valueAsInt("SheetRotation");
+	doc->pdfOptions().imposerOptions.sheetAutoSize = attrs.valueAsBool("SheetAutoSize");
+	doc->pdfOptions().imposerOptions.sheetWidth = attrs.valueAsDouble("SheetWidth");
+	doc->pdfOptions().imposerOptions.sheetHeight = attrs.valueAsDouble("SheetHeight");
+	doc->pdfOptions().imposerOptions.nFold = attrs.valueAsInt("NX");
+//	doc->pdfOptions().imposerOptions. = attrs.valueAsInt("Style");
+	doc->pdfOptions().imposerOptions.doubleSided = attrs.valueAsBool("DoubleSided");
+	return !reader.hasError();
+}
+
 bool Scribus150Format::readPrinterOptions(ScribusDoc* doc, ScXmlStreamReader& reader)
 {
 	ScXmlStreamAttributes attrs = reader.scAttributes();
@@ -3016,6 +3036,7 @@ bool Scribus150Format::readPrinterOptions(ScribusDoc* doc, ScXmlStreamReader& re
 	}
 	return !reader.hasError();
 }
+
 
 bool Scribus150Format::readDocItemAttributes(ScribusDoc *doc, ScXmlStreamReader& reader)
 {
