@@ -36,22 +36,28 @@ typedef std::pair<QString, QString> langPair;
 class SCRIBUS_API LanguageManager
 {
 	static LanguageManager* m_instance;
-	LanguageManager() {};
+	LanguageManager(){}
 	~LanguageManager();
 	void init(bool generateInstalledList = true);
 	
 public:
 	static LanguageManager* instance();
-	
+
+	const QStringList getAllLangs(bool getTranslated=true);
 	const QString getLangFromAbbrev(QString, bool getTranslated=true);
 	const QString getAbbrevFromLang(QString, bool getFromTranslated=true, bool useInstalled=true);
 	const QString getLangFromTransLang(QString lang);
 	const QString getTransLangFromLang(QString lang);
+	const QString getIsoLangFromAbbr(QString abbr);
 	void fillInstalledStringList(QStringList *stringListToFill, bool addDefaults);
 	void printInstalledList();
 	QString numericSequence(QString seq);
 	bool findDictionaries(QStringList& sl);
 	void findDictionarySets(QStringList& dictionaryPaths, QMap<QString, QString>& dictionaryMap);
+	bool isRightToLeft(const QString& langAbbr);
+	const QString getScriptTag(const QString& abbr);
+	const QString getLangTag(const QString& abbr);
+
 	
 	void addHyphLang(const QString& lang, const QString& filename);
 	const QString getHyphFilename(const QString& lang, bool langIsAbbreviated = true);
@@ -61,6 +67,10 @@ private:
 	QMap<QString, langPair > langList;
 	QMap<QString, QString> installedLangList;
 	QMap<QString, QString> hyphLangList; // <lang abbreviated, dict filename>
+	QMap<QString, QString> isoLang; // <lang abbreviated, iso639-2 abbreviation>
+	QStringList RTLLang;
+	QMap<QString, QString> scriptTag; // <lang abbreviated, script tag>
+	QMap<QString, QString> langTag; // <lang abbreviated, lang tag>
 
 	void generateLangList();
 	void generateInstalledLangList();

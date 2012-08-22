@@ -3,6 +3,9 @@ For general Scribus (>=1.3.2) copyright and licensing information please refer
 to the COPYING file provided with the program. Following this notice may exist
 a copyright and/or license notice that predates the release of Scribus 1.3.2
 for which a new license (GPL+exception) is in place.
+
+    Modified for Indic unicode support , Aug 2012 
+	by 	: Anilkumar KV,  Email: anilankv@gmail.com
 */
 #include "scpageoutput.h"
 
@@ -1111,6 +1114,7 @@ void ScPageOutput::drawItem_PathText( PageItem_PathText* item, ScPainterExBase* 
 	for (int a = 0; a < itemText.length(); ++a)
 	{
 		hl = itemText.item(a);
+		if (hl->gIdx < 0) continue ;
 		chstr = hl->ch;
 		if (chstr[0] == SpecialChars::PAGENUMBER || chstr[0] == SpecialChars::PARSEP || chstr[0] == SpecialChars::PAGECOUNT
 			|| chstr[0] == SpecialChars::TAB || chstr == SpecialChars::LINEBREAK)
@@ -1149,6 +1153,7 @@ void ScPageOutput::drawItem_PathText( PageItem_PathText* item, ScPainterExBase* 
 	for (int a = item->firstInFrame(); a < itemText.length(); ++a)
 	{
 		hl = itemText.item(a);
+		if (hl->gIdx < 0) continue ;
 		chstr = hl->ch;
 		if (chstr[0] == SpecialChars::PAGENUMBER || chstr[0] == SpecialChars::PARSEP || chstr[0] == SpecialChars::PAGECOUNT
 			|| chstr[0] == SpecialChars::TAB || chstr[0] == SpecialChars::LINEBREAK)

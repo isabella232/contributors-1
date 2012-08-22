@@ -10,6 +10,10 @@ for which a new license (GPL+exception) is in place.
     begin                : Sat Apr 7 2001
     copyright            : (C) 2001 by Franz Schmid
     email                : Franz.Schmid@altmuehlnet.de
+
+
+    Modified for Indic unicode support , Aug 2012 
+	by 	: Anilkumar KV,  Email: anilankv@gmail.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -45,6 +49,7 @@ for which a new license (GPL+exception) is in place.
 #include "scraction.h"
 #include "scribus.h"
 #include "scribusdoc.h"
+#include "text/shaper.h"
 #include "scribusstructs.h"
 #include "selection.h"
 #include "text/nlsconfig.h"
@@ -1298,6 +1303,7 @@ void PageItem_TextFrame::layout()
 {
 // 	qDebug()<<"==Layout==" << itemName() ;
 // 	printBacktrace(24);
+        Shaper *shaper = new Shaper( &itemText);
 	if (BackBox != NULL && BackBox->invalid) {
 //		qDebug("textframe: len=%d, going back", itemText.length());
 		// Why that invalid = false here? Calling prevInChain->layout() does
@@ -1421,6 +1427,7 @@ void PageItem_TextFrame::layout()
 
 		//automatic line spacing factor (calculated once)
 		double autoLS = static_cast<double>(m_Doc->typographicPrefs().autoLineSpacing) / 100.0;
+		shaper->shape(firstInFrame(), itemText.length() - 1 ) ;
 
 		// find start of first line
 		if (firstInFrame() < itemText.length())
@@ -1470,6 +1477,7 @@ void PageItem_TextFrame::layout()
 		for (int a = firstInFrame(); a < itemText.length(); ++a)
 		{
 			hl = itemText.item(a);
+			if (hl->gIdx < 0) continue ;
 			curStat = SpecialChars::getCJKAttr(hl->ch);
 			if (a > 0 && itemText.text(a-1) == SpecialChars::PARSEP)
 				style = itemText.paragraphStyle(a);
@@ -1655,9 +1663,9 @@ void PageItem_TextFrame::layout()
 			{
 				wide = hl->glyph.wide();
 				// apply kerning
-				if (a+1 < itemText.length())
+				if (a+1 < itemText.nOfGlyphs)
 				{
-					uint glyph2 = font.char2CMap(itemText.text(a+1));
+					uint glyph2 = itemText.item(a+1)->glyph.glyph;
 					double kern= font.glyphKerning(hl->glyph.glyph, glyph2, chs / 10.0) * hl->glyph.scaleH;
 					wide += kern;
 					hl->glyph.xadvance += kern;
@@ -2125,7 +2133,7 @@ void PageItem_TextFrame::layout()
 							if (tglyph)
 							{
 								tglyph->fillChar = tabs.fillChar;
-								tglyph->glyph    = font.char2CMap(tabs.fillChar);
+								//tglyph->glyph    = font.char2CMap(tabs.fillChar);
 								tglyph->yoffset  = hl->glyph.yoffset;
 								tglyph->scaleV   = tglyph->scaleH = chs / charStyle.fontSize();
 								tglyph->xadvance = 0;
@@ -2825,6 +2833,7 @@ void PageItem_TextFrame::layout()
 		nextFrame->firstChar = MaxChars;
 		nextFrame = dynamic_cast<PageItem_TextFrame*>(nextFrame->NextBox);
 	}
+	delete shaper;
 //	qDebug("textframe: len=%d, done relayout", itemText.length());
 	return;
 			

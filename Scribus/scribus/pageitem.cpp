@@ -10,6 +10,9 @@ for which a new license (GPL+exception) is in place.
     begin                : Sat Apr 7 2001
     copyright            : (C) 2001 by Franz Schmid
     email                : Franz.Schmid@altmuehlnet.de
+
+    Modified for Indic unicode support , Aug 2012 
+	by 	: Anilkumar KV,  Email: anilankv@gmail.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -2320,7 +2323,7 @@ double PageItem::layoutGlyphs(const CharStyle& style, const QString& chars, Glyp
 	}
 	else */
 	{
-		layout.glyph = font.char2CMap(chars[0].unicode());
+		//layout.glyph = font.char2CMap(chars[0].unicode());
 	}
 	double tracking = 0.0;
 	if ( (style.effects() & ScStyle_StartOfLine) == 0)
@@ -2349,7 +2352,7 @@ double PageItem::layoutGlyphs(const CharStyle& style, const QString& chars, Glyp
 		layout.scaleV *= style.scaleV() / 1000.0;
 		if (chst & ScStyle_AllCaps)
 		{
-			layout.glyph = font.char2CMap(chars[0].toUpper().unicode());
+			//layout.glyph = font.char2CMap(chars[0].toUpper().unicode());
 		}
 		if (chst & ScStyle_SmallCaps)
 		{
@@ -2390,8 +2393,9 @@ double PageItem::layoutGlyphs(const CharStyle& style, const QString& chars, Glyp
 	if (layout.xadvance > 0)
 		layout.xadvance += tracking;
 
-	if (chars.length() > 1) {
-		layout.grow();
+	//if (chars.length() > 1) {
+	if (layout.more) {
+		//layout.grow();
 		layoutGlyphs(style, chars.mid(1), *layout.more);
 		layout.xadvance += font.glyphKerning(layout.glyph, layout.more->glyph, style.fontSize() / 10) * layout.scaleH;
 		if (layout.more->yadvance > layout.yadvance)
