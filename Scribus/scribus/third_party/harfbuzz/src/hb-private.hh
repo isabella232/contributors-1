@@ -30,7 +30,7 @@
 #define HB_PRIVATE_HH
 
 #ifdef HAVE_CONFIG_H
-//#include "config.h"
+//#include "scconfig.h"
 #endif
 
 #include "hb.h"
