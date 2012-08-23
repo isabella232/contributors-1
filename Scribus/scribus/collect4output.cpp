@@ -155,7 +155,7 @@ bool CollectForOutput::collectDocument()
 {
 	QFileInfo fi = QFileInfo(m_outputDirectory);
 	newName = m_outputDirectory;
-    m_message = "\nSOURCE DOCUMENT\n====================\n"+m_message +"\n";
+    // m_message = "\nSOURCE DOCUMENT\n====================\n"+m_message +"\n";
 	if (!fi.exists())
 		return false;
 	if (!fi.isDir() || !fi.isWritable())
