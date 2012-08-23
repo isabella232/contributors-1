@@ -23,7 +23,7 @@ hb-ot-tag.cc
 hb-ot-layout.cc
 hb-fallback-shape.cc
 hb-font.cc
-hb-graphite2.cc
+#hb-graphite2.cc
 hb-icu.cc
 hb-ot-layout.cc
 hb-ot-map.cc
