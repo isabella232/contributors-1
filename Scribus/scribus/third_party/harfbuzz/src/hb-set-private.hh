@@ -131,7 +131,7 @@ struct _hb_set_t
   elt_t elts[ELTS]; /* 8kb */
 
   ASSERT_STATIC (sizeof (elt_t) * 8 == BITS);
-  ASSERT_STATIC (sizeof (elts) * 8 > MAX_G);
+  //ASSERT_STATIC (sizeof (elts) * 8 > MAX_G);
 };
 
 

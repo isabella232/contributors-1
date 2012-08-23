@@ -437,7 +437,7 @@ int ScFace_ttf::shapeText(void* stry, unsigned int item) const
 		}
 		st->nOfGlyphs++ ;
 //qDebug()<< "(" << __FILE__ << ")(" << __LINE__ << __func__ << ") (" << bIdx << ")(" << bLen << ") text len (" << st->length() << ")(" << st->nOfGlyphs << ")" ;
-if ((int)curGlyph < 0x1000 ){
+if ((long)curGlyph < 0x1000 ){
 qDebug()<< "FIXME (" << __FILE__ << ")(" << __LINE__ << __func__ << ") (" << bIdx << ")(" << bLen << ") text len (" << st->length() << ") glyph len(" << st->nOfGlyphs << ") adr Glyph(" << curGlyph << ")" ;
    continue ;
 }
