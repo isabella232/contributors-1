@@ -81,7 +81,10 @@ public:
 	bool sheetAutoSize;
 	int  sheetWidth;
 	int  sheetHeight;
-	int  nFold;
+  double scalingFactor;
+  /* nX, nY: number of repetitions/slices horizontally and vertically */
+	int  nX;  
+	int  nY;
 	bool doubleSided;
 };
 

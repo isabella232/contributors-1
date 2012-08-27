@@ -1124,8 +1124,9 @@ void Scribus150Format::writeImpositionOptions(ScXmlStreamWriter & docu)
 	docu.writeAttribute("SheetAutoSize", static_cast<int>(m_Doc->pdfOptions().imposerOptions.sheetAutoSize));
 	docu.writeAttribute("SheetWidth", m_Doc->pdfOptions().imposerOptions.sheetWidth);
 	docu.writeAttribute("SheetHeight", m_Doc->pdfOptions().imposerOptions.sheetHeight);
-	docu.writeAttribute("NX", m_Doc->pdfOptions().imposerOptions.nFold);
-	docu.writeAttribute("NY", m_Doc->pdfOptions().imposerOptions.nFold);
+	docu.writeAttribute("ScalingFactor", m_Doc->pdfOptions().imposerOptions.scalingFactor);
+	docu.writeAttribute("NX", m_Doc->pdfOptions().imposerOptions.nX);
+	docu.writeAttribute("NY", m_Doc->pdfOptions().imposerOptions.nY);
 	docu.writeAttribute("DoubleSided", static_cast<int>(m_Doc->pdfOptions().imposerOptions.doubleSided));
 	docu.writeEndElement();
 }

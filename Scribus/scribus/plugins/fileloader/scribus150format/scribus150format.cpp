@@ -2981,8 +2981,9 @@ bool Scribus150Format::readImpositionOptions(ScribusDoc* doc, ScXmlStreamReader&
 	doc->pdfOptions().imposerOptions.sheetAutoSize = attrs.valueAsBool("SheetAutoSize");
 	doc->pdfOptions().imposerOptions.sheetWidth = attrs.valueAsDouble("SheetWidth");
 	doc->pdfOptions().imposerOptions.sheetHeight = attrs.valueAsDouble("SheetHeight");
-	doc->pdfOptions().imposerOptions.nFold = attrs.valueAsInt("NX");
-//	doc->pdfOptions().imposerOptions. = attrs.valueAsInt("Style");
+	doc->pdfOptions().imposerOptions.scalingFactor = attrs.valueAsDouble("ScalingFactor");
+	doc->pdfOptions().imposerOptions.nX = attrs.valueAsInt("NX");
+	doc->pdfOptions().imposerOptions.nY = attrs.valueAsInt("NY");
 	doc->pdfOptions().imposerOptions.doubleSided = attrs.valueAsBool("DoubleSided");
 	return !reader.hasError();
 }
