@@ -10,10 +10,7 @@ pageitem.cpp  -  description
     begin                : Sat Apr 7 2001
     copyright            : (C) 2001 by Franz Schmid
     email                : Franz.Schmid@altmuehlnet.de
-
-    Modified for Indic unicode support , Aug 2012 
-	by 	: Anilkumar KV,  Email: anilankv@gmail.com
-***************************************************************************/
+	***************************************************************************/
 
 /***************************************************************************
 *                                                                         *
@@ -91,18 +88,8 @@ struct LineSpec
 class SCRIBUS_API StoryText : public QObject, public SaxIO
 {
 	Q_OBJECT
-	struct ItemData {
-		int textPosition;
-		uint charCount;
-		uint glyphIndex;
-		uint glyphCount;
-		ItemData(int p, uint c, uint i, uint g=0): textPosition(p), charCount(c), glyphIndex(i), glyphCount(g) {}
-	};
-	QVector<GlyphLayout> m_glyphs;
-	QList<ItemData> m_items;
 	
  public:
-        int nOfGlyphs ;
 	StoryText(ScribusDoc *doc);
  	StoryText();
  	StoryText(const StoryText & other);
@@ -113,7 +100,7 @@ class SCRIBUS_API StoryText : public QObject, public SaxIO
 	static const Xml_string saxxDefaultElem;
 	static void  desaxeRules(const Xml_string& prefixPattern, desaxe::Digester& ruleset, Xml_string elemtag = saxxDefaultElem);
 	
-	virtual void saxx(SaxHandler& handler, const Xml_string& elemtag) const ;
+	virtual void saxx(SaxHandler& handler, const Xml_string& elemtag) const;
 	virtual void saxx(SaxHandler& handler)                     const { saxx(handler, saxxDefaultElem); }
 	
 	int  cursorPosition() const;
@@ -346,21 +333,6 @@ public:
 	
 	int firstInFrame() { return firstFrameItem; }
 	int lastInFrame() { return lastFrameItem; }
-
-	uint addItem(int pos, uint len) ;
-	void clearItem(uint i) ;
-	void clearAllItems(uint firstItem) ;
-	void deleteItem(uint i) ;
-	void deleteItems(QList<uint> li) ;
-	uint findItem(int pos) const ;
-	QList<uint> findItems(int start, int end) const ;
-	uint itemGlyphCount(uint i) const ;
-	void itemSetGlyphCount(uint i, int n) ;
-	GlyphLayout* itemGlyphStart(uint i) ;
-	const GlyphLayout* itemGlyphStart(uint i) const ;
-	int itemTextPosition(uint i) const ;
-	uint itemCharCount(uint i) const ;
-        uint itemCount() const ;
 
 private:
 	ScribusDoc * doc; 
