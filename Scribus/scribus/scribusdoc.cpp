@@ -769,12 +769,14 @@ void ScribusDoc::setup(const int unitIndex, const int fp, const int firstLeft, c
 		case 3: 	
 		case 4: 	
 	            docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::MultiFold;
-	            docPrefsData.pdfPrefs.imposerOptions.nFold = fp;
-		break;
+	            docPrefsData.pdfPrefs.imposerOptions.nX = fp;
+	            docPrefsData.pdfPrefs.imposerOptions.nY = 1;
+          		break;
 		default:
-            	    docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::None;
-	            docPrefsData.pdfPrefs.imposerOptions.nFold = 1;
-		        break;
+            	docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::None;
+	            docPrefsData.pdfPrefs.imposerOptions.nX = 1;
+	            docPrefsData.pdfPrefs.imposerOptions.nY = 1;
+		          break;
 	}
 	BlackPoint   = docPrefsData.colorPrefs.DCMSset.BlackPoint;
 	SoftProofing = docPrefsData.colorPrefs.DCMSset.SoftProofOn;

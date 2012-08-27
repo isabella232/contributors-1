@@ -18,12 +18,12 @@ namespace PoDoFo
 			~imposer() { }
 			int  impose (QString in, QString out, ImposerOptions * options);
 		private:
-			void imposeBirthdayCard (const QString & target, PoDoFo::Impose::imposeInputFile * input );
-			void imposeBusinessCard (const QString & target, PoDoFo::Impose::imposeInputFile * input );
-			void imposeMagazine 	(const QString & target, PoDoFo::Impose::imposeInputFile * input );
-			void imposeMultiFold 	(const QString & target, PoDoFo::Impose::imposeInputFile * input );
-			void imposeTiles 	(const QString & target, PoDoFo::Impose::imposeInputFile * input );
-			void imposeFile 	(const QString & target, PoDoFo::Impose::imposeInputFile * input );
+			void imposeBirthdayCard (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
+			void imposeBusinessCard (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
+			void imposeMagazine 	(const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
+			void imposeMultiFold 	(const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
+			void imposeTiles 	(const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
+			void imposeFile 	(const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
 		};
 
 	};

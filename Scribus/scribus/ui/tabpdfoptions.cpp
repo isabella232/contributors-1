@@ -914,12 +914,10 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	ImpositionCombo->addItem( tr( "Tiles: Split each page in a grid of sheets." ) );
 	ImpositionCombo->addItem( tr( "File: Load external imposition plan" ) );
 	ImpositionCombo->setEditable(false);
-	connect(ImpositionCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionStyle(int)));
 	ImpositionGroupLayout->addWidget(ImpositionCombo,0,0);
 	
   tabImpositionLayout->addWidget( ImpositionGroup );
 	ImpOptAutoSheetSize = new QCheckBox( tr( "Automatically calculate sheet size" ), ImpositionGroup );
-	connect(ImpOptAutoSheetSize, SIGNAL(stateChanged(int)), this, SLOT(ImpositionSheetSize(int)));
 	ImpositionGroupLayout->addWidget(ImpOptAutoSheetSize, 1,0);
 	SheetSizeLabel = new QLabel( tr( "&Size:" ), ImpositionGroup );
 	ImpositionGroupLayout->addWidget( SheetSizeLabel, 2, 1 );
@@ -928,7 +926,6 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	ImpDoubleSidedComboBox->addItem( tr("Single sided") );
 	ImpDoubleSidedComboBox->addItem( tr("Double sided") );
 	ImpDoubleSidedComboBox->setCurrentIndex(1/*prefsManager->appPrefs.docSetupPrefs.pageRotation*/);
-	connect(ImpDoubleSidedComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionSheetSides(int)));
 	ImpositionGroupLayout->addWidget(ImpDoubleSidedComboBox, 0, 1 );
 	SheetSizeComboBox = new QComboBox( ImpositionGroup );
 //	SheetSizeComboBox->addItems(ss.activeSizeTRList());
@@ -946,36 +943,21 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	SheetRotationComboBox->setEditable(false);
 	SheetRotationComboBox->setCurrentIndex(0/*prefsManager->appPrefs.docSetupPrefs.pageRotation*/);
 	SheetRotationLabel->setBuddy(SheetRotationComboBox);
-	ImpositionGroupLayout->addWidget( SheetRotationComboBox, 3, 2 );
+  ImpositionGroupLayout->addWidget( SheetRotationComboBox, 3, 2 );
+  ImpNXSpinBox = new QSpinBox (ImpositionGroup);
+  ImpNXSpinBox->setRange(1,99);
+  ImpositionGroupLayout->addWidget( ImpNXSpinBox, 5, 2 );
+	ImpNXLabel   = new QLabel( tr( "&Horizontal:" ), ImpositionGroup );
+  ImpNXSpinBox->setValue(1);
+	ImpositionGroupLayout->addWidget( ImpNXLabel, 5, 1 );
+  ImpNYSpinBox = new QSpinBox (ImpositionGroup);
+  ImpNYSpinBox->setRange(1,99);
+  ImpNYSpinBox->setValue(1);
+  ImpositionGroupLayout->addWidget( ImpNYSpinBox, 6, 2 );
+	ImpNYLabel   = new QLabel( tr( "&Vertical:" ), ImpositionGroup );
+	ImpositionGroupLayout->addWidget( ImpNYLabel, 6, 1 );
+
 	tabImpositionLayout->addWidget( ImpositionGroup );
-	/* Imposer-specific options */
-	ImpBirthdayCardOptions = new QGroupBox( tr( "Birthday card options" ), tabImposition);
-	ImpBirthdayCardOptionsLayout = new QGridLayout( ImpBirthdayCardOptions );
-	ImpBirthdayCardOptionsLayout->setSpacing( 5 );
-	ImpBirthdayCardOptionsLayout->setMargin( 10 );
-	tabImpositionLayout->addWidget( ImpBirthdayCardOptions );
-	ImpBirthdayCardOptions->hide();
-	
-	ImpBusinessCardOptions = new QGroupBox( tr( "Business card options" ), tabImposition);
-	ImpBusinessCardOptionsLayout = new QGridLayout( ImpBusinessCardOptions );
-	ImpBusinessCardOptionsLayout->setSpacing( 5 );
-	ImpBusinessCardOptionsLayout->setMargin( 10 );
-	tabImpositionLayout->addWidget( ImpBusinessCardOptions );
-//	ImpBusinessCardOptions->hide();
-	
-	ImpMagazineOptions = new QGroupBox( tr( "Magazine options" ), tabImposition);
-	ImpMagazineOptionsLayout = new QGridLayout( ImpMagazineOptions );
-	ImpMagazineOptionsLayout->setSpacing( 5 );
-	ImpMagazineOptionsLayout->setMargin( 10 );
-	tabImpositionLayout->addWidget( ImpMagazineOptions );
-	ImpMagazineOptions->hide();
-	
-	ImpMultiFoldOptions = new QGroupBox( tr( "Multi-Fold options" ), tabImposition);
-	ImpMultiFoldOptionsLayout = new QGridLayout( ImpMultiFoldOptions );
-	ImpMultiFoldOptionsLayout->setSpacing( 5 );
-	ImpMultiFoldOptionsLayout->setMargin( 10 );
-	tabImpositionLayout->addWidget( ImpMultiFoldOptions );
-	ImpMultiFoldOptions->hide();
 
 	addTab( tabImposition, tr( "Imposition" ) );
 	restoreDefaults(Optionen, AllFonts, PDFXProfiles, DocFonts, Eff, unitIndex, PageH, PageB, doc, pdfExport);
@@ -1041,6 +1023,11 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	connect(Encry, SIGNAL(clicked()), this, SLOT(ToggleEncr()));
 	connect(UseLPI, SIGNAL(clicked()), this, SLOT(EnableLPI2()));
 	connect(LPIcolor, SIGNAL(activated(int)), this, SLOT(SelLPIcol(int)));
+	connect(ImpositionCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionStyle(int)));
+	connect(ImpDoubleSidedComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionSheetSides(int)));
+	connect(ImpOptAutoSheetSize, SIGNAL(stateChanged(int)), this, SLOT(ImpositionSheetSize(int)));
+	connect(ImpNXSpinBox, SIGNAL(valueChanged(int)), this, SLOT(ImpositionNXNY(int)));
+	connect(ImpNYSpinBox, SIGNAL(valueChanged(int)), this, SLOT(ImpositionNXNY(int)));
 	//tooltips
 	RotateDeg->setToolTip( "<qt>" + tr( "Automatically rotate the exported pages" ) + "</qt>" );
 	AllPages->setToolTip( "<qt>" + tr( "Export all pages to PDF" ) + "</qt>" );
@@ -1532,6 +1519,8 @@ void TabPDFOptions::restoreDefaults(PDFOptions & Optionen,
 		
 	}
 	ImpositionCombo->setCurrentIndex(Opts.imposerOptions.style);
+  ImpNXSpinBox->setValue(Opts.imposerOptions.nX);
+  ImpNYSpinBox->setValue(Opts.imposerOptions.nY);
 }
 
 void TabPDFOptions::doDocBleeds()
@@ -2318,11 +2307,15 @@ void TabPDFOptions::ImpositionStyle(int i) {
 void TabPDFOptions::ImpositionSheetSize(int i) {
   Opts.imposerOptions.sheetAutoSize = ImpOptAutoSheetSize->isChecked();
   SheetSizeComboBox->setEnabled(!ImpOptAutoSheetSize->isChecked());
-
-//  Opts.imposerOptions.sheetAutoSize = ImpOptAutoSheetSize.isChecked();
 }
 
 void TabPDFOptions::ImpositionSheetSides(int i) {
   Opts.imposerOptions.doubleSided = (ImpDoubleSidedComboBox->currentIndex() == 1);
+
+}
+
+void TabPDFOptions::ImpositionNXNY(int i) {
+  Opts.imposerOptions.nX = ImpNXSpinBox->value();
+  Opts.imposerOptions.nY = ImpNYSpinBox->value();
 
 }

@@ -150,6 +150,7 @@ public slots:
 	void ImpositionStyle(int i);
 	void ImpositionSheetSize(int i);
 	void ImpositionSheetSides(int i);
+	void ImpositionNXNY(int i);
 
 protected slots:
 	void createPageNumberRange();
@@ -314,31 +315,20 @@ private:
 	/* Imposition tab */
 	QWidget* tabImposition;
 	QVBoxLayout* tabImpositionLayout;
-    	QLabel* ImpositionText;
+ 	QLabel* ImpositionText;
 	QGroupBox* ImpositionGroup;
-    	QGridLayout* ImpositionGroupLayout;
-//    	QGroupBox* ImpOptions;
-//    	QGridLayout* ImpOptionsLayout;
-    	QCheckBox* ImpOptAutoSheetSize;
-    	QComboBox* ImpositionCombo;
-    	QLabel* SheetSizeLabel;
-    	QLabel* SheetRotationLabel;
-    	QComboBox * SheetSizeComboBox;
-    	QComboBox * SheetRotationComboBox;
-    	QComboBox * ImpDoubleSidedComboBox;
-    
-	QGroupBox * ImpBirthdayCardOptions;
-    	QGridLayout* ImpBirthdayCardOptionsLayout;
-
-    	QGroupBox * ImpBusinessCardOptions;
-    	QGridLayout* ImpBusinessCardOptionsLayout;
-
-    	QGroupBox * ImpMagazineOptions;
-    	QGridLayout* ImpMagazineOptionsLayout;
-    	
-	QGroupBox * ImpMultiFoldOptions;
-    	QGridLayout* ImpMultiFoldOptionsLayout;
-	// end protected GUI member pointers
+ 	QGridLayout* ImpositionGroupLayout;
+ 	QCheckBox* ImpOptAutoSheetSize;
+ 	QComboBox* ImpositionCombo;
+ 	QLabel* SheetSizeLabel;
+ 	QLabel* SheetRotationLabel;
+ 	QComboBox * SheetSizeComboBox;
+ 	QComboBox * SheetRotationComboBox;
+ 	QComboBox * ImpDoubleSidedComboBox;
+  QLabel    * ImpNXLabel;
+  QSpinBox  * ImpNXSpinBox;
+  QLabel    * ImpNYLabel;
+  QSpinBox  * ImpNYSpinBox;
 
 	// Non-GUI protected members
 	QString unit;

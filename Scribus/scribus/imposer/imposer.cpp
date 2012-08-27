@@ -27,7 +27,7 @@ namespace PoDoFo
 			std::cerr<<"imposer::imposer"<<std::endl;
 		}
 
-		void imposer::imposeBirthdayCard (const QString & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeBirthdayCard (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
 		{
 			int numberOfSheets = 0;
 			int currentSheet;
@@ -110,13 +110,14 @@ namespace PoDoFo
 
 		}
 
-		void imposer::imposeBusinessCard (const QString & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeBusinessCard (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
 		{
 			int numberOfSheets = 0;
 			int currentSheet;
 			int currentPage;
 			
-			int nx= 3, ny=4;
+			int nx = options->nX;
+      int ny = options->nY;
 			
 			double tx,ty;
 			double destWidth = input->sourceWidth * nx;
@@ -154,19 +155,19 @@ namespace PoDoFo
 
 		}
 		
-		void imposer::imposeMultiFold (const QString & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeMultiFold (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
 		{
+			int nPagesPerSheet = options->nX * options->nY;
+
+			double scaleFactor = 1.0;
+			double destWidth   = input->sourceWidth  * options->nX * scaleFactor;
+			double destHeight  = input->sourceHeight * options->nY * scaleFactor;
+
+			std::string boundingBox = "";
+			
+      int currentSide = 0;		/* 0 = front, 1 = back */
 			int numberOfCreatedPages = 0;
 			int currentPage = 0;
-
-			int doubleSided = 1; 		/* From configuration dialog */
-			int nFold 	= 3;		/* From configuration dialog */
-			int currentSide = 0;		/* 0 = front, 1 = back */
-
-			double destWidth = input->sourceWidth * nFold;
-			double destHeight = input->sourceHeight;
-			double scaleFactor = 1.0;
-			std::string boundingBox = "";
 					
 			/* cosR and sinR are fixed for now: no rotation supported yet */	
 			double cosR = 1.0;
@@ -183,31 +184,34 @@ namespace PoDoFo
 			if ( !output->targetDoc )
 				throw std::invalid_argument ( "Output file is null" );
 
-			if (doubleSided == 1) {
+			if (options->doubleSided == true) {
 			  /* The number of pages we create is the number of input pages rounded up to the nearest multiple of 2*nFold. 
-			   * nFold pages per sheet, double sided */
-			  numberOfCreatedPages = (input->pcount+(nFold*2)-1); 
-			  numberOfCreatedPages -= numberOfCreatedPages % (nFold*2);
+			   * nPagesPerSheet pages per sheet, double sided */
+			  numberOfCreatedPages = (input->pcount+(nPagesPerSheet*2)-1); 
+			  numberOfCreatedPages -= numberOfCreatedPages % (nPagesPerSheet*2);
 			} else {
 			  /* The number of pages we create is the number of input pages rounded up to the nearest multiple of 2. 
-			   * Two pages per sheet, single sided */
-			  numberOfCreatedPages = (input->pcount+nFold-1); 
-			  numberOfCreatedPages -= numberOfCreatedPages % nFold;
+			   * nPagesPerSheet pages per sheet, single sided */
+			  numberOfCreatedPages = (input->pcount+nPagesPerSheet-1); 
+			  numberOfCreatedPages -= numberOfCreatedPages % nPagesPerSheet;
 			}
 #ifdef DEBUG
-			std::cerr<<"Creating " << numberOfCreatedPages/nFold << " sheets from " << input->pcount << " pages." <<std::endl;
+			std::cerr<<"Creating " << numberOfCreatedPages/nPagesPerSheet << " sheets from " << input->pcount << " pages." <<std::endl;
 #endif			
 			currentPage = 1; currentSide = 0;
 			while (currentPage <= numberOfCreatedPages) {
 				/* Create new sheet */
 				output->startSheet(destWidth, destHeight, scaleFactor);
-				for (int pageOnSheet = 1; pageOnSheet <= nFold; pageOnSheet ++) {
-					tx = cosR*(pageOnSheet-1)*input->sourceWidth;
-					ty = sinR*(pageOnSheet-1)*input->sourceHeight;
-					if (currentPage <= input->pcount) output->imposePage(currentPage, cosR, sinR, tx,ty);
-					currentPage++;
+				for (int pY = 1; pY <= options->nY; pY ++) {
+          for (int pX = 1; pX <= options->nX; pX ++) {
+            /* FIXME: Support rotation */
+					  tx = (pX-1)*input->sourceWidth;
+					  ty = (options->nY-pY)*input->sourceHeight;
+					  if (currentPage <= input->pcount) output->imposePage(currentPage, cosR, sinR, tx,ty);
+					  currentPage++;
+          }
 				}
-		                output->finishSheet();
+        output->finishSheet();
 				currentSide ^=1;
 
 			}
@@ -216,7 +220,7 @@ namespace PoDoFo
 
 		}
 
-		void imposer::imposeMagazine (const QString & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeMagazine (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
 		{
 			int numberOfCreatedPages = 0;
 			int leftPage, rightPage;
@@ -297,11 +301,11 @@ namespace PoDoFo
 
 		}
 
-		void imposer::imposeTiles (const QString & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeTiles (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
 		{
 		}
 
-		void imposer::imposeFile (const QString & target, PoDoFo::Impose::imposeInputFile * input )
+		void imposer::imposeFile (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
 		{
 		}
 		
@@ -317,22 +321,22 @@ namespace PoDoFo
 				PoDoFo::Impose::imposeInputFile * input = new PoDoFo::Impose::imposeInputFile(in.toStdString());
 				switch (options->style) {
 					case ImposerOptions::BirthdayCard:
-						imposeBirthdayCard (out,input);
+						imposeBirthdayCard (out,input,options);
 						break;
 					case ImposerOptions::BusinessCard:
-						imposeBusinessCard (out,input);
+						imposeBusinessCard (out,input,options);
 						break;
 					case ImposerOptions::Magazine:
-						imposeMagazine (out,input);
+						imposeMagazine (out,input,options);
 						break;
 					case ImposerOptions::MultiFold:
-						imposeMultiFold (out,input);
+						imposeMultiFold (out,input,options);
 						break;
 					case ImposerOptions::Tiles:
-						imposeTiles (out,input);
+						imposeTiles (out,input,options);
 						break;
 					case ImposerOptions::File:
-						imposeFile (out,input);
+						imposeFile (out,input,options);
 						break;
 					default:
 						std::cerr << "imposer::impose called with unhandled imposition style: " << options->style << std::endl;
