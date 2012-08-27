@@ -592,8 +592,6 @@ QString colorSpaceText(int cs)
 		return CommonStrings::trGrayscale;
 	if (cs==3)
 		return CommonStrings::trDuotone;
-	if (cs==4)
-		return CommonStrings::trMonochrome;
 	return CommonStrings::trUnknownCS;
 }
 

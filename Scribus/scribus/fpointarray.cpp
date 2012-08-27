@@ -266,11 +266,6 @@ void FPointArray::map( QTransform m )
 	}
 }
 
-void FPointArray::map(QMatrix m)
-{
-       map(QTransform(m));
-}
-
 void FPointArray::setMarker()
 {
 	addQuadPoint(999999.0, 999999.0,

@@ -3,9 +3,6 @@ For general Scribus (>=1.3.2) copyright and licensing information please refer
 to the COPYING file provided with the program. Following this notice may exist
 a copyright and/or license notice that predates the release of Scribus 1.3.2
 for which a new license (GPL+exception) is in place.
-
-    Modified for Indic unicode support , Aug 2012 
-	by 	: Anilkumar KV,  Email: anilankv@gmail.com
 */
 #ifndef SCTEXTSTRUCT_H
 #define SCTEXTSTRUCT_H
@@ -114,17 +111,15 @@ public:
 	float PDx;
 	int embedded;
 	QChar ch;
-	QChar gch;
-	int gIdx;
 	ScText() : 
 		CharStyle(),
 		parstyle(NULL), glyph(), 
-		PtransX(0.0f), PtransY(0.0f), PRot(0.0f), PDx(0.0f), embedded(0), ch(), gch(), gIdx(-1) {}
+		PtransX(0.0f), PtransY(0.0f), PRot(0.0f), PDx(0.0f), embedded(0), ch() {}
 	ScText(const ScText& other) : 
 		CharStyle(other),
 		parstyle(NULL), glyph(other.glyph), 
 		PtransX(other.PtransX), PtransY(other.PtransY), PRot(other.PRot), PDx(other.PDx), 
-		embedded(other.embedded), ch(other.ch), gch(other.ch), gIdx(other.gIdx)
+		embedded(other.embedded), ch(other.ch)
 	{
 		glyph.more = NULL;
 		GlyphLayout *layout = &glyph;
@@ -155,9 +150,8 @@ public:
 enum FirstLineOffsetPolicy
 {
     FLOPRealGlyphHeight = 0, // Historical
-    FLOPFontAscent	 = 1,
-    FLOPLineSpacing  = 2,
-	FLOPBaselineGrid = 3
+    FLOPFontAscent	= 1,
+    FLOPLineSpacing	= 2
 };
 
 

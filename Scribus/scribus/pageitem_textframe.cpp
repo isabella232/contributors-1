@@ -10,10 +10,6 @@ for which a new license (GPL+exception) is in place.
     begin                : Sat Apr 7 2001
     copyright            : (C) 2001 by Franz Schmid
     email                : Franz.Schmid@altmuehlnet.de
-
-
-    Modified for Indic unicode support , Aug 2012 
-	by 	: Anilkumar KV,  Email: anilankv@gmail.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -49,7 +45,6 @@ for which a new license (GPL+exception) is in place.
 #include "scraction.h"
 #include "scribus.h"
 #include "scribusdoc.h"
-#include "text/shaper.h"
 #include "scribusstructs.h"
 #include "selection.h"
 #include "text/nlsconfig.h"
@@ -975,18 +970,17 @@ static void justifyLine(StoryText& itemText, LineSpec& line)
 	// measure natural widths for glyphs and spaces
 	for (int sof = line.firstItem; sof <= line.lastItem; ++sof)
 	{
-		ScText* hl = itemText.item(sof);
-		if (!SpecialChars::isExpandingSpace(hl->ch))
+		if (!SpecialChars::isExpandingSpace(itemText.text(sof)))
 		{
-			glyphNatural += hl->glyph.wide();
+			glyphNatural += itemText.item(sof)->glyph.wide();
 		}
-		else if ( (hl->effects() & ScStyle_SuppressSpace) == 0)
+		else if ( (itemText.item(sof)->effects() & ScStyle_SuppressSpace) == 0)
 		{
-			spaceNatural += hl->glyph.wide();
-			if (imSpace < 0.0 || imSpace > hl->glyph.wide())
-				imSpace = hl->glyph.wide();
+			spaceNatural += itemText.item(sof)->glyph.wide();
+			if (imSpace < 0.0 || imSpace > itemText.item(sof)->glyph.wide())
+				imSpace = itemText.item(sof)->glyph.wide();
 		}
-		if (sof != line.firstItem && implicitSpace(itemText.item(sof - 1), hl)) {
+		if (sof != line.firstItem && implicitSpace(itemText.item(sof - 1), itemText.item(sof))) {
 			spaceInsertion += 1;
 		}
 	}
@@ -1047,12 +1041,11 @@ static void justifyLine(StoryText& itemText, LineSpec& line)
 	// distribute whitespace on spaces and glyphs
 	for (int yof = startItem; yof <= line.lastItem; ++yof)
 	{
-		ScText* hl = itemText.item(yof);
-		double wide = hl->glyph.wide();
-		if (!SpecialChars::isExpandingSpace(hl->ch))
+		double wide = itemText.item(yof)->glyph.wide();
+		if (!SpecialChars::isExpandingSpace(itemText.text(yof)))
 		{
-			hl->glyph.last()->xadvance += wide * glyphExtension;
-			GlyphLayout* glyph = &(hl->glyph);
+			itemText.item(yof)->glyph.last()->xadvance += wide * glyphExtension;
+			GlyphLayout* glyph = &(itemText.item(yof)->glyph);
 			while (glyph)
 			{
 				glyph->xoffset *= glyphScale;
@@ -1060,11 +1053,11 @@ static void justifyLine(StoryText& itemText, LineSpec& line)
 				glyph = glyph->more;
 			}
 		}
-		else if ((hl->effects() & ScStyle_SuppressSpace) == 0)
+		else if ((itemText.item(yof)->effects() & ScStyle_SuppressSpace) == 0)
 		{
-			hl->glyph.last()->xadvance += wide * spaceExtension;
+			itemText.item(yof)->glyph.last()->xadvance += wide * spaceExtension;
 		}
-		if (yof != line.firstItem && implicitSpace(itemText.item(yof - 1), hl)) {
+		if (yof != line.firstItem && implicitSpace(itemText.item(yof - 1), itemText.item(yof))) {
 			itemText.item(yof - 1)->glyph.last()->xadvance += imSpace;
 		}
 	}
@@ -1134,11 +1127,10 @@ static double opticalRightMargin(const StoryText& itemText, const LineSpec& line
 		--b;
 	if (b >= line.firstItem) 
 	{
-		const CharStyle& chStyle(itemText.charStyle(b));
-		double chs = chStyle.fontSize() * (chStyle.scaleH() / 1000.0);
+		double chs = itemText.charStyle(b).fontSize() * (itemText.charStyle(b).scaleH() / 1000.0);
 		QChar chr = (itemText.item(b)->effects() & ScStyle_SoftHyphenVisible) ? 
 			QChar('-') : itemText.text(b);
-		double rightCorr = chStyle.font().realCharWidth(chr, chs / 10.0);
+		double rightCorr = itemText.charStyle(b).font().realCharWidth(chr, chs / 10.0);
 		if (QString("-,.`´'~").indexOf(chr) >= 0
 			|| chr == QChar(0x2018)
 			|| chr == QChar(0x2019)
@@ -1161,8 +1153,8 @@ static double opticalRightMargin(const StoryText& itemText, const LineSpec& line
 				 )
 			rightCorr *= 0.5;
 		else {
-			rightCorr = chStyle.font().charWidth(chr, chs / 10.0);
-			rightCorr -= chStyle.font().charWidth(chr, chs / 10.0, QChar('.'));
+			rightCorr = itemText.charStyle(b).font().charWidth(chr, chs / 10.0);
+			rightCorr -= itemText.charStyle(b).font().charWidth(chr, chs / 10.0, QChar('.'));
 		}
 		return rightCorr;
 	}
@@ -1303,7 +1295,6 @@ void PageItem_TextFrame::layout()
 {
 // 	qDebug()<<"==Layout==" << itemName() ;
 // 	printBacktrace(24);
-        Shaper *shaper = new Shaper( &itemText);
 	if (BackBox != NULL && BackBox->invalid) {
 //		qDebug("textframe: len=%d, going back", itemText.length());
 		// Why that invalid = false here? Calling prevInChain->layout() does
@@ -1353,7 +1344,7 @@ void PageItem_TextFrame::layout()
 	QList<ParagraphStyle::TabRecord> tTabValues;
 	tTabValues.clear();
 	
-	bool   DropCmode = false, FlopBaseline = false;
+	bool DropCmode = false;
 	double desc=0, asce=0, realAsce=0, realDesc = 0, offset = 0;
 	double maxDY=0, maxDX=0;
 	double DropCapDrop = 0;
@@ -1427,7 +1418,6 @@ void PageItem_TextFrame::layout()
 
 		//automatic line spacing factor (calculated once)
 		double autoLS = static_cast<double>(m_Doc->typographicPrefs().autoLineSpacing) / 100.0;
-		shaper->shape(firstInFrame(), itemText.length() - 1 ) ;
 
 		// find start of first line
 		if (firstInFrame() < itemText.length())
@@ -1477,7 +1467,6 @@ void PageItem_TextFrame::layout()
 		for (int a = firstInFrame(); a < itemText.length(); ++a)
 		{
 			hl = itemText.item(a);
-			if (hl->gIdx < 0) continue ;
 			curStat = SpecialChars::getCJKAttr(hl->ch);
 			if (a > 0 && itemText.text(a-1) == SpecialChars::PARSEP)
 				style = itemText.paragraphStyle(a);
@@ -1494,8 +1483,6 @@ void PageItem_TextFrame::layout()
 			if (chstr.isEmpty())
 				chstr = SpecialChars::ZWNBSPACE;
 			style.setLineSpacing (calculateLineSpacing (style, this));
-			FlopBaseline = (current.startOfCol && firstLineOffset() == FLOPBaselineGrid);
-
 			// find out about par gap and dropcap
 			if (a == firstInFrame())
 			{
@@ -1536,8 +1523,6 @@ void PageItem_TextFrame::layout()
 					itemText.setCharStyle(a, chstr.length(),charStyle);
 				}
 			}
-
-			const ScFace font = charStyle.font();
 
 			{  // local block for 'fl'
 				StyleFlag fl = hl->effects();
@@ -1616,11 +1601,11 @@ void PageItem_TextFrame::layout()
 				// FIXME : we should ensure that fonts are loaded before calls to layout()
 				// ScFace::realCharHeight()/Ascent() ensure font is loaded thanks to an indirect call to char2CMap()
 				// ScFace::ascent() can be called safely afterwards
-				double realCharHeight = font.realCharHeight(chstr[0], 1);
-				double realCharAscent = font.realCharAscent(chstr[0], 1);
-				double fontAscent     = font.ascent(style.charStyle().fontSize() / 10.0);
+				double realCharHeight = charStyle.font().realCharHeight(chstr[0], 1);
+				double realCharAscent = charStyle.font().realCharAscent(chstr[0], 1);
+				double fontAscent     = charStyle.font().ascent(style.charStyle().fontSize() / 10.0);
 				if (realCharHeight == 0.0)
-					realCharHeight = font.height(style.charStyle().fontSize() / 10.0);
+					realCharHeight = charStyle.font().height(style.charStyle().fontSize() / 10.0);
 				if (realCharAscent == 0.0)
 					realCharAscent = fontAscent;
 				chsd = (10 * ((DropCapDrop + fontAscent) / realCharHeight));
@@ -1663,10 +1648,10 @@ void PageItem_TextFrame::layout()
 			{
 				wide = hl->glyph.wide();
 				// apply kerning
-				if (a+1 < itemText.nOfGlyphs)
+				if (a+1 < itemText.length())
 				{
-					uint glyph2 = itemText.item(a+1)->glyph.glyph;
-					double kern= font.glyphKerning(hl->glyph.glyph, glyph2, chs / 10.0) * hl->glyph.scaleH;
+					uint glyph2 = charStyle.font().char2CMap(itemText.text(a+1));
+					double kern= charStyle.font().glyphKerning(hl->glyph.glyph, glyph2, chs / 10.0) * hl->glyph.scaleH;
 					wide += kern;
 					hl->glyph.xadvance += kern;
 					// change xadvance, xoffset according to JIS X4051
@@ -1754,7 +1739,7 @@ void PageItem_TextFrame::layout()
 				{
 					double itemHeight = hl->getItem(m_Doc)->height() + hl->getItem(m_Doc)->lineWidth();
 					if (itemHeight == 0)
-						itemHeight = font.height(style.charStyle().fontSize() / 10.0);
+						itemHeight = charStyle.font().height(style.charStyle().fontSize() / 10.0);
 					wide = hl->getItem(m_Doc)->width() + hl->getItem(m_Doc)->lineWidth();
 					asce = hl->getItem(m_Doc)->height() + hl->getItem(m_Doc)->lineWidth();
 					realAsce = calculateLineSpacing (style, this) * DropLines;
@@ -1764,12 +1749,12 @@ void PageItem_TextFrame::layout()
 				}
 				else
 				{
-					double realCharHeight = font.realCharHeight(chstr[0], charStyle.fontSize() / 10.0);
+					double realCharHeight = charStyle.font().realCharHeight(chstr[0], charStyle.fontSize() / 10.0);
 					if (realCharHeight == 0)
-						realCharHeight = font.height(style.charStyle().fontSize() / 10.0);
-					wide = (font.realCharWidth(chstr[0], chsd / 10.0) * scaleH) + (1 - scaleH); //dropcaps are to close to next glyphs if glyphs are hard scaled
-					realAsce = font.realCharHeight(chstr[0], chsd / 10.0) * scaleV + offset;
-					asce = font.ascent(hlcsize10);
+						realCharHeight = charStyle.font().height(style.charStyle().fontSize() / 10.0);
+					wide = (charStyle.font().realCharWidth(chstr[0], chsd / 10.0) * scaleH) + (1 - scaleH); //dropcaps are to close to next glyphs if glyphs are hard scaled
+					realAsce = charStyle.font().realCharHeight(chstr[0], chsd / 10.0) * scaleV + offset;
+					asce = charStyle.font().ascent(hlcsize10);
 					// qDebug() QString("dropcaps pre: chsd=%1 realCharHeight = %2 chstr=%3").arg(chsd).arg(asce).arg(chstr2[0]);
 					hl->glyph.scaleH /= hl->glyph.scaleV;
 					hl->glyph.scaleV = (realAsce / realCharHeight);
@@ -1792,8 +1777,8 @@ void PageItem_TextFrame::layout()
 					desc = realDesc = 0;
 				else
 				{
-					desc = -font.descent(hlcsize10);
-					realDesc = font.realCharDescent(chstr[0], hlcsize10) * scaleV - offset;
+					desc = -charStyle.font().descent(hlcsize10);
+					realDesc = charStyle.font().realCharDescent(chstr[0], hlcsize10) * scaleV - offset;
 					current.rememberShrinkStretch(hl->ch, wide, style);
 				}
 				if ((hl->ch == SpecialChars::OBJECT) && (hl->hasObject(m_Doc)))
@@ -1803,8 +1788,8 @@ void PageItem_TextFrame::layout()
 				}
 				else
 				{
-					asce = font.ascent(hlcsize10);
-					realAsce = font.realCharAscent(chstr[0], hlcsize10) * scaleV + offset;
+					asce = charStyle.font().ascent(hlcsize10);
+					realAsce = charStyle.font().realCharAscent(chstr[0], hlcsize10) * scaleV + offset;
 				}
 			}
 
@@ -1817,18 +1802,7 @@ void PageItem_TextFrame::layout()
 					if (current.startOfCol)
 					{
 						lastLineY = qMax(lastLineY, extra.Top + lineCorr);
-						if (style.lineSpacingMode() == ParagraphStyle::BaselineGridLineSpacing || FlopBaseline)
-						{
-							if (current.yPos <= lastLineY)
-								current.yPos = lastLineY +1;
-							double by = Ypos;
-							if (OwnPage != -1)
-								by = Ypos - m_Doc->Pages->at(OwnPage)->yOffset();
-							int ol1 = qRound((by + current.yPos - m_Doc->guidesPrefs().offsetBaselineGrid) * 10000.0);
-							int ol2 = static_cast<int>(ol1 / m_Doc->guidesPrefs().valueBaselineGrid);
-							current.yPos = ceil(  ol2 / 10000.0 ) * m_Doc->guidesPrefs().valueBaselineGrid + m_Doc->guidesPrefs().offsetBaselineGrid - by;
-						}
-						else if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
+						if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
 						{
 							if (firstLineOffset() == FLOPRealGlyphHeight)
 							{
@@ -1841,6 +1815,17 @@ void PageItem_TextFrame::layout()
 								current.yPos += style.lineSpacing();
 							else
 								current.yPos += asce;
+						}
+						else if (style.lineSpacingMode() == ParagraphStyle::BaselineGridLineSpacing)
+						{
+							if (current.yPos <= lastLineY)
+								current.yPos = lastLineY +1;
+							double by = Ypos;
+							if (OwnPage != -1)
+								by = Ypos - m_Doc->Pages->at(OwnPage)->yOffset();
+							int ol1 = qRound((by + current.yPos - m_Doc->guidesPrefs().offsetBaselineGrid) * 10000.0);
+							int ol2 = static_cast<int>(ol1 / m_Doc->guidesPrefs().valueBaselineGrid);
+							current.yPos = ceil(  ol2 / 10000.0 ) * m_Doc->guidesPrefs().valueBaselineGrid + m_Doc->guidesPrefs().offsetBaselineGrid - by;
 						}
 					}
 					else
@@ -1949,7 +1934,7 @@ void PageItem_TextFrame::layout()
 					{
 						// new line
 						current.xPos = qMax(current.colLeft, maxDX);
-						if (style.lineSpacingMode() == ParagraphStyle::BaselineGridLineSpacing || FlopBaseline)
+						if (style.lineSpacingMode() == ParagraphStyle::BaselineGridLineSpacing)
 						{
 							current.yPos++;
 							double by = Ypos;
@@ -2032,7 +2017,7 @@ void PageItem_TextFrame::layout()
 					if ((hl->ch == SpecialChars::OBJECT) && (hl->hasObject(m_Doc)))
 						diff = (hl->getItem(m_Doc)->height() + hl->getItem(m_Doc)->lineWidth()) * scaleV + offset - (current.yPos - lastLineY);
 					else
-						diff = font.realCharAscent(QChar('l'), hlcsize10) * scaleV + offset - (current.yPos - lastLineY);
+						diff = charStyle.font().realCharAscent(QChar('l'), hlcsize10) * scaleV + offset - (current.yPos - lastLineY);
 				}
 				else
 				{
@@ -2048,7 +2033,7 @@ void PageItem_TextFrame::layout()
 						maxDX = 0;
 					}
 					int linesDrop = 0;
-					if (style.lineSpacingMode() == ParagraphStyle::BaselineGridLineSpacing || FlopBaseline)
+					if (style.lineSpacingMode() == ParagraphStyle::BaselineGridLineSpacing)
 					{
 						linesDrop = ceil(diff / m_Doc->guidesPrefs().valueBaselineGrid);
 						current.yPos += m_Doc->guidesPrefs().valueBaselineGrid * linesDrop;
@@ -2133,7 +2118,7 @@ void PageItem_TextFrame::layout()
 							if (tglyph)
 							{
 								tglyph->fillChar = tabs.fillChar;
-								//tglyph->glyph    = font.char2CMap(tabs.fillChar);
+								tglyph->glyph    = charStyle.font().char2CMap(tabs.fillChar);
 								tglyph->yoffset  = hl->glyph.yoffset;
 								tglyph->scaleV   = tglyph->scaleH = chs / charStyle.fontSize();
 								tglyph->xadvance = 0;
@@ -2149,7 +2134,7 @@ void PageItem_TextFrame::layout()
 			
 			// remember y pos
 			if (DropCmode)
-				hl->glyph.yoffset -= font.realCharHeight(chstr[0], chsd / 10.0) - font.realCharAscent(chstr[0], chsd / 10.0);
+				hl->glyph.yoffset -= charStyle.font().realCharHeight(chstr[0], chsd / 10.0) - charStyle.font().realCharAscent(chstr[0], chsd / 10.0);
 
 			// remember x pos
 			double breakPos = current.xPos;
@@ -2205,7 +2190,7 @@ void PageItem_TextFrame::layout()
 			double hyphWidth = 0.0;
 			bool inOverflow = false;
 			if (hl->effects() & ScStyle_HyphenationPossible || hl->ch == SpecialChars::SHYPHEN)
-				hyphWidth = font.charWidth('-', hlcsize10) * (charStyle.scaleH() / 1000.0);
+				hyphWidth = charStyle.font().charWidth('-', hlcsize10) * (charStyle.scaleH() / 1000.0);
 			if ((current.isEndOfLine(style.rightMargin() + hyphWidth)) || current.isEndOfCol(realDesc) || SpecialChars::isBreak(hl->ch, Cols > 1) || (current.xPos - current.maxShrink + hyphWidth) >= current.mustLineEnd)
 			{
 				//end of row reached - right column, end of column, break char or line must end
@@ -2523,7 +2508,7 @@ void PageItem_TextFrame::layout()
 						// go back to last break position
 						style = itemText.paragraphStyle(a);
 						if (style.lineSpacingMode() == ParagraphStyle::AutomaticLineSpacing)
-							style.setLineSpacing(font.height(hlcsize10) * autoLS);
+							style.setLineSpacing(charStyle.font().height(hlcsize10) * autoLS);
 						else if (style.lineSpacingMode() == ParagraphStyle::BaselineGridLineSpacing)
 							style.setLineSpacing(m_Doc->guidesPrefs().valueBaselineGrid);
 						
@@ -2547,8 +2532,8 @@ void PageItem_TextFrame::layout()
 								current.hyphenCount++;
 							hl->setEffects(hl->effects() | ScStyle_SoftHyphenVisible);
 							hl->glyph.grow();
-							hl->glyph.more->glyph = font.char2CMap(QChar('-'));
-							hl->glyph.more->xadvance = font.charWidth('-', itemText.charStyle(a).fontSize() / 10.0) * scaleH; //FIX ME - hyphen is not rendered with proper width - check yhis with large glyphs horizontal scaling eg. 20%
+							hl->glyph.more->glyph = charStyle.font().char2CMap(QChar('-'));
+							hl->glyph.more->xadvance = charStyle.font().charWidth('-', itemText.charStyle(a).fontSize() / 10.0) * scaleH; //FIX ME - hyphen is not rendered with proper width - check yhis with large glyphs horizontal scaling eg. 20%
 							hyphWidth = hl->glyph.more->xadvance;
 						}
 						else
@@ -2760,8 +2745,7 @@ void PageItem_TextFrame::layout()
 				if (DropCmode)
 					addAsce = qMax(realAsce, asce + offset);
 				else
-					addAsce = asce + offset;
-				if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
+					addAsce = asce + offset;				if (style.lineSpacingMode() != ParagraphStyle::BaselineGridLineSpacing)
 				{
 					if (firstLineOffset() == FLOPRealGlyphHeight)
 						addAsce = realAsce;
@@ -2833,7 +2817,6 @@ void PageItem_TextFrame::layout()
 		nextFrame->firstChar = MaxChars;
 		nextFrame = dynamic_cast<PageItem_TextFrame*>(nextFrame->NextBox);
 	}
-	delete shaper;
 //	qDebug("textframe: len=%d, done relayout", itemText.length());
 	return;
 			
@@ -3038,10 +3021,8 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 									xcoZli -= hls->glyph.xoffset;
 								}
 							}
-							const ScFace font = charStyleS.font();
-							double fontSize = charStyleS.fontSize() / 10.0;
-							desc = - font.descent(fontSize);
-							asce = font.ascent(fontSize);
+							desc = - charStyleS.font().descent(charStyleS.fontSize() / 10.0);
+							asce = charStyleS.font().ascent(charStyleS.fontSize() / 10.0);
 							wide = hls->glyph.wide();
 							QRectF scr;
 							if ((hls->ch == SpecialChars::OBJECT)  && (hls->hasObject(m_Doc)))
@@ -3107,10 +3088,8 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 
 				if (!m_Doc->RePos)
 				{
-					const ScFace font = charStyle.font();
-					double fontSize = charStyle.fontSize() / 10.0;
-					desc = - font.descent(fontSize);
-					asce = font.ascent(fontSize);
+					desc = - charStyle.font().descent(charStyle.fontSize() / 10.0);
+					asce = charStyle.font().ascent(charStyle.fontSize() / 10.0);
 					if (((selected && Select) || ((NextBox != 0 || BackBox != 0) && selected)) && (m_Doc->appMode == modeEdit || m_Doc->appMode == modeEditTable))
 					{
 						// set text color to highlight if its selected
@@ -4027,46 +4006,46 @@ void PageItem_TextFrame::deleteSelectedTextFromFrame()
 			for (int i=start; i <= stop; ++i)
 			{
 				const CharStyle& curParent(itemText.charStyle(i));
-				if (curParent.equiv(lastParent) && i != stop)
-					continue;
-
-				added = false;
-				lastIsDelete = false;
-				if (is && ts && dynamic_cast<ScItemState<CharStyle>*>(ts->at(0))->get("ETEA") == "delete_frametext" && lastPos<is->getInt("START"))
-				{
-					if (is->getItem().equiv(lastParent))
+				if (!curParent.equiv(lastParent) || i==stop)
 					{
-						is->set("START",start);
-						is->set("TEXT_STR",itemText.text(lastPos,i - lastPos) + is->get("TEXT_STR"));
-						added = true;
+						added = false;
+						lastIsDelete = false;
+						if(is && dynamic_cast<ScItemState<CharStyle>*>(ts->at(0))->get("ETEA") == "delete_frametext" && lastPos<is->getInt("START"))
+						{
+							if(is->getItem().equiv(lastParent))
+							{
+								is->set("START",start);
+								is->set("TEXT_STR",itemText.text(lastPos,i - lastPos) + is->get("TEXT_STR"));
+								added = true;
+							}
+							lastIsDelete = true;
+						}
+						else if(is && dynamic_cast<ScItemState<CharStyle>*>(ts->at(0))->get("ETEA") == "delete_frametext"  && lastPos>=is->getInt("START"))
+						{
+							if(is && is->getItem().equiv(lastParent)){
+								is->set("TEXT_STR",is->get("TEXT_STR") + itemText.text(lastPos,i - lastPos));
+								added = true;
+							}
+							lastIsDelete = true;
+						}
+						if(!added)
+						{
+							is = new ScItemState<CharStyle>(Um::DeleteText,"",Um::IDelete);
+							is->set("DELETE_FRAMETEXT", "delete_frametext");
+							is->set("ETEA", QString("delete_frametext"));
+							is->set("TEXT_STR",itemText.text(lastPos,i - lastPos));
+							is->set("START", start);
+							is->setItem(lastParent);
+							if(!ts || !lastIsDelete){
+								undoManager->action(this, is);
+								ts = NULL;
+							}
+							else
+								ts->pushBack(this,is);
+						}
+						lastPos = i;
+						lastParent = curParent;
 					}
-					lastIsDelete = true;
-				}
-				else if (is && ts && dynamic_cast<ScItemState<CharStyle>*>(ts->at(0))->get("ETEA") == "delete_frametext"  && lastPos>=is->getInt("START"))
-				{
-					if (is->getItem().equiv(lastParent)){
-						is->set("TEXT_STR",is->get("TEXT_STR") + itemText.text(lastPos,i - lastPos));
-						added = true;
-					}
-					lastIsDelete = true;
-				}
-				if (!added)
-				{
-					is = new ScItemState<CharStyle>(Um::DeleteText,"",Um::IDelete);
-					is->set("DELETE_FRAMETEXT", "delete_frametext");
-					is->set("ETEA", QString("delete_frametext"));
-					is->set("TEXT_STR",itemText.text(lastPos,i - lastPos));
-					is->set("START", start);
-					is->setItem(lastParent);
-					if(!ts || !lastIsDelete){
-						undoManager->action(this, is);
-						ts = NULL;
-					}
-					else
-						ts->pushBack(this,is);
-				}
-				lastPos = i;
-				lastParent = curParent;
 			}
 			trans.commit();
 		}
