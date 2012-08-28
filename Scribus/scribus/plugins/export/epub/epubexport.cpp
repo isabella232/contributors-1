@@ -423,7 +423,7 @@ bool EPUBexport::exportOPF()
 	element.appendChild(text);
 	metadata.appendChild(element);
 
-	element = xmlDocument.createElement("dc:createTextNode");
+	element = xmlDocument.createElement("dc:creator");
 	element.setAttribute("opf:file-as", "Author, Name"); // TODO: set author
 	element.setAttribute("opf:role", "aut");
 	text = xmlDocument.createTextNode("Name Author"); // TODO: set author
