@@ -10,7 +10,10 @@ pageitem.cpp  -  description
     begin                : Sat Apr 7 2001
     copyright            : (C) 2001 by Franz Schmid
     email                : Franz.Schmid@altmuehlnet.de
-	***************************************************************************/
+
+    Modified for Indic unicode support , Aug 2012 
+	by 	: Anilkumar KV,  Email: anilankv@gmail.com
+***************************************************************************/
 
 /***************************************************************************
 *                                                                         *
@@ -28,10 +31,16 @@ pageitem.cpp  -  description
 
 #include <QString>
 #include "scribusapi.h"
+#include "fpointarray.h"
+
+
 
 class SCRIBUS_API SpecialChars {
 public:
 	static QChar OBJECT;
+	static QChar START_TAG;
+	static QChar END_TAG;
+	static QChar EMPTY_TAG;
 	static QChar TAB;
 	static QChar PARSEP;
 	static QChar LINEBREAK;
@@ -51,29 +60,43 @@ public:
 	static bool isBreak(QChar c, bool includeColBreak = true);
 	static bool isBreakingSpace(QChar c);
 	static bool isExpandingSpace(QChar c);
+	
+	class SymbolGlyphs
+	{
+		friend class SpecialChars;
+		SymbolGlyphs();
+	public:
+		FPointArray Return;
+		FPointArray NewLine;
+		FPointArray Tab;
+		FPointArray NonBreak;
+		FPointArray NewCol;
+		FPointArray NewFrame;		
+	};
 
-		enum {
-			CJK_FENCE_BEGIN = 0x0001,
-			CJK_FENCE_END = 0x0002,
-			CJK_NOTOP = 0x0003,
-			CJK_HYPHEN = 0x0004,
-			CJK_DELMITER = 0x0005,
-			CJK_MIDPOINT = 0x0006,
-			CJK_PERIOD = 0x0007,
-			CJK_COMMA = 0x0008,
-			CJK_BETWEEN = 0x0009,
-			CJK_PREFIX = 0x000a,
-			CJK_POSTFIX = 0x000b,
-			CJK_SPACE = 0x000c,
-			CJK_KANA = 0x000d,
-			CJK_KANJI = 0x000e,
+	static SymbolGlyphs symbols;
+	enum {
+		CJK_FENCE_BEGIN = 0x0001,
+		CJK_FENCE_END = 0x0002,
+		CJK_NOTOP = 0x0003,
+		CJK_HYPHEN = 0x0004,
+		CJK_DELMITER = 0x0005,
+		CJK_MIDPOINT = 0x0006,
+		CJK_PERIOD = 0x0007,
+		CJK_COMMA = 0x0008,
+		CJK_BETWEEN = 0x0009,
+		CJK_PREFIX = 0x000a,
+		CJK_POSTFIX = 0x000b,
+		CJK_SPACE = 0x000c,
+		CJK_KANA = 0x000d,
+		CJK_KANJI = 0x000e,
 
-			CJK_CHAR_MASK = 0x00ff,
+		CJK_CHAR_MASK = 0x00ff,
 
-			CJK_NOBREAK_BEFORE = 0x0100,
-			CJK_NOBREAK_AFTER = 0x0200,
-		};
-		static int getCJKAttr(QChar c);
+		CJK_NOBREAK_BEFORE = 0x0100,
+		CJK_NOBREAK_AFTER = 0x0200,
+	};
+	static int getCJKAttr(QChar c);
 };
 
 #endif

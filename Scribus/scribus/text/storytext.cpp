@@ -10,6 +10,9 @@ pageitem.cpp  -  description
     begin                : Sat Apr 7 2001
     copyright            : (C) 2001 by Franz Schmid
     email                : Franz.Schmid@altmuehlnet.de
+
+    Modified for Indic unicode support , Aug 2012 
+	by 	: Anilkumar KV,  Email: anilankv@gmail.com
 ***************************************************************************/
 
 /***************************************************************************
@@ -48,6 +51,7 @@ StoryText::StoryText(ScribusDoc * doc_) : doc(doc_)
 	else {
 		d = new ScText_Shared(NULL);
 	}
+//	m_glyphStore = new GlyphStore(this);
 	selFirst = 0;
 	selLast = -1;
 	
@@ -55,6 +59,7 @@ StoryText::StoryText(ScribusDoc * doc_) : doc(doc_)
 	lastFrameItem = -1;
 	m_magicX = 0.0;
 	m_lastMagicPos = -1;
+	nOfGlyphs = 0;
 	
 	d->len = 0;
 	invalidateAll();
@@ -63,9 +68,11 @@ StoryText::StoryText(ScribusDoc * doc_) : doc(doc_)
 StoryText::StoryText() : doc(NULL)
 {
 	d = new ScText_Shared(NULL);
+	//m_glyphStore = new GlyphStore(this);
 
 	selFirst = 0;
 	selLast = -1;
+	nOfGlyphs = 0;
 	
 	firstFrameItem = 0;
 	lastFrameItem = -1;
@@ -76,6 +83,7 @@ StoryText::StoryText() : doc(NULL)
 StoryText::StoryText(const StoryText & other) : QObject(), SaxIO(), doc(other.doc)
 {
 	d = other.d;
+	//m_glyphStore = new GlyphStore(this);
 	d->refs++;
 	
 	if(doc) {
@@ -85,6 +93,7 @@ StoryText::StoryText(const StoryText & other) : QObject(), SaxIO(), doc(other.do
 	
 	selFirst = 0;
 	selLast = -1;
+	nOfGlyphs = 0;
 	
 	firstFrameItem = 0;
 	lastFrameItem = -1;
@@ -152,6 +161,7 @@ StoryText& StoryText::operator= (const StoryText & other)
 	
 	firstFrameItem = 0;
 	lastFrameItem = -1;
+	nOfGlyphs = 0;
 
 	invalidateLayout();
 	return *this;
@@ -192,6 +202,9 @@ void StoryText::clear()
 
 	d->clear();
 	d->len = 0;
+	nOfGlyphs = 0;
+	clearAllItems(0);
+	m_items.clear();
 	invalidateAll();
 }
 
@@ -293,6 +306,7 @@ void StoryText::insert(int pos, const StoryText& other, bool onlySelection)
 {
 	if (pos < 0)
 		pos += length()+1;
+     nOfGlyphs++ ;
 	
 	CharStyle cstyle(charStyle(pos));
 	ParagraphStyle pstyle(paragraphStyle(pos));
@@ -372,6 +386,7 @@ void StoryText::insertParSep(int pos)
 //		it->parstyle->charStyle().setContext( d->defaultStyle.charStyleContext() );
 	}
 	d->replaceCharStyleContextInParagraph(pos, it->parstyle->charStyleContext());
+     nOfGlyphs++ ;
 }
 /**
      need to remove the ParagraphStyle structure and replace all pointers
@@ -391,6 +406,7 @@ void StoryText::removeParSep(int pos)
 	// doesnt choke:
 	it->ch = 0;
 	d->replaceCharStyleContextInParagraph(pos, paragraphStyle(pos+1).charStyleContext());	
+     nOfGlyphs-- ;
 }
 
 void StoryText::removeChars(int pos, uint len)
@@ -661,7 +677,7 @@ QString StoryText::plainText() const
 	result.reserve(len);
 
 	StoryText* that(const_cast<StoryText*>(this));
-	for (int i = 0; i < len; ++i) {
+	for (uint i = 0; i < len; ++i) {
 		ch = that->d->at(i)->ch;
 		if (ch == SpecialChars::PARSEP)
 			ch = QLatin1Char('\n');
@@ -735,6 +751,17 @@ QString StoryText::textWithSoftHyphens(int pos, uint len) const
 	return result;
 }
 
+//TextFlags& StoryText::charAttributes(int pos)
+//{
+//        return d->charAttributes(pos);
+//}
+//
+//
+//const TextFlags& StoryText::charAttributes(int pos) const
+//{
+//        return d->charAttributes(pos);
+//}
+
 bool StoryText::hasObject(int pos) const
 {
 	if (pos < 0)
@@ -779,7 +806,7 @@ const CharStyle & StoryText::charStyle(int pos) const
 		return defaultStyle().charStyle();
 	}
 	else if (pos == length()) {
-		qDebug() << "storytext::charstyle: access at end of text %i" << pos;
+//		qDebug() << "storytext::charstyle: access at end of text %i" << pos;
 		--pos;
 	}
 	if (text(pos) == SpecialChars::PARSEP)
@@ -817,7 +844,7 @@ const ParagraphStyle & StoryText::paragraphStyle(int pos) const
 	}
 	else if ( !that->d->at(pos)->parstyle ) {
 		ScText* current = that->d->at(pos);
-		qDebug("inserting default parstyle at %i", pos);
+		qDebug("(%s)(%i)inserting default parstyle at %i ",__FILE__, __LINE__, pos);
 		current->parstyle = new ParagraphStyle();
 		current->parstyle->setContext( & d->pstyleContext);
 //		current->parstyle->setName( "para(paragraphStyle)" ); // DONT TRANSLATE
@@ -1335,7 +1362,7 @@ QString StoryText::wordAt(int pos) const
 	int tmpPosEnd = qMin(len, pos+1);
 	while (tmpPosEnd < len  && wordBoundaries.indexOf(text(tmpPosEnd)) < 0)
 	{
-		qDebug()<<tmpPosEnd<<text(tmpPosEnd)<<wordBoundaries.indexOf(text(tmpPosEnd));
+		//qDebug()<<tmpPosEnd<<text(tmpPosEnd)<<wordBoundaries.indexOf(text(tmpPosEnd));
 		++tmpPosEnd;
 	}
 	int endWordPos=tmpPosEnd < len ? tmpPosEnd + 1 : tmpPosEnd;
@@ -1751,6 +1778,7 @@ FRect StoryText::boundingBox(int pos, uint len) const
 
 int StoryText::layout(int startItem)
 {
+//printf ( "(%s)(%d)(%s) (%X)  \n", __FILE__, __LINE__, __func__,startItem) ;
 	//FIXME:NLS
 	return -1;
 }
@@ -1943,7 +1971,7 @@ public:
 				if (toInsert > 0)
 					obj->insertChars(obj->length(), txt.mid(lastPos, toInsert));
 				len = obj->length();
-				ScText* lastItem = obj->item(len-1);
+				ScText* lastItem = obj->item_p(len-1);
 				// qreal SHY means user provided SHY, single SHY is automatic one
 				if (lastItem->effects() & ScStyle_HyphenationPossible)
 				{
@@ -2103,7 +2131,7 @@ public:
 		if (lastStyle)
 			delete lastStyle;
 	}
-
+	
 	virtual void reset()
 	{
 		numPara = 0;
@@ -2254,3 +2282,161 @@ void StoryText::desaxeRules(const Xml_string& prefixPattern, Digester& ruleset, 
 	ruleset.addRule(Digester::concat(spanPrefix, "item"), AppendInlineFrame() );
 	
 }
+
+uint StoryText::addItem(int pos, uint len)
+{
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+	int end = m_glyphs.count();
+	m_glyphs.reserve(end + len);
+	m_items.append(ItemData(pos, len, end));
+	return m_items.count() - 1;
+}
+
+void StoryText::clearItem(uint i)
+{
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+	m_items[i].glyphCount = 0;
+}
+
+
+void StoryText::clearAllItems(uint firstItem)
+{
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+	if(firstItem >= m_items.count())
+		return;
+	int end = m_items[firstItem].glyphIndex;
+	m_glyphs.resize(end);
+	for (int i=firstItem; i < m_items.count(); ++i)
+	{
+		m_items[i].glyphIndex = end;
+		m_items[i].glyphCount = 0;
+	}			 
+}
+
+
+void StoryText::deleteItem(uint i)
+{
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+	clearItem(i);
+	m_items.removeAt(i);
+}
+
+void StoryText::deleteItems(QList<uint> li)
+{
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+	foreach(uint it,  li)
+	{
+		clearItem(it);
+	}
+	QList<ItemData> tmpStore(m_items);
+	m_items.clear();
+	for(uint it(0); it < tmpStore.length() ; ++it)
+	{
+		if(!li.contains(it))
+			m_items << tmpStore[it];
+	}
+}
+
+
+uint StoryText::findItem(int pos) const
+{
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+	for (uint i=0; i < unsigned(m_items.count()); ++i)
+	{
+		StoryText::ItemData it = m_items[i];
+		if (it.textPosition <= pos && pos < it.textPosition + signed(it.charCount))
+			return i;
+	}
+	return unsigned(m_items.count());		
+}
+
+QList<uint> StoryText::findItems(int start, int end) const
+{
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+	QList<uint> ret;
+	bool first(true);
+	for (uint i=0; i < unsigned(m_items.count()); ++i)
+	{
+		StoryText::ItemData it = m_items[i];
+		if(first)
+		{
+			if (it.textPosition <= start && start < it.textPosition + signed(it.charCount))
+			{
+				ret << i;
+				first = false;
+			}
+		}
+		else
+		{
+			if((it.textPosition + signed(it.charCount)) < end)
+				ret << i;
+			else
+			{
+				ret << i;
+				break;
+			}
+		}
+	}
+	return ret;
+}
+
+
+uint StoryText::itemGlyphCount(uint i) const
+{
+	return m_items[i].glyphCount;
+}
+
+void StoryText::itemSetGlyphCount(uint i, int n)
+{
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+	ItemData& item(m_items[i]);
+	int delta = n - item.glyphCount;
+	if (delta < 0)
+	{
+		m_glyphs.remove(item.glyphIndex + n, -delta);
+	}
+	else if (delta > 0)
+	{
+		if (signed(item.glyphIndex) == m_glyphs.count())
+		{
+			m_glyphs.resize(m_glyphs.count() + delta);
+		}
+		else
+		{
+			m_glyphs.insert(item.glyphIndex + item.glyphCount, delta, GlyphLayout());
+		}
+	}
+	item.glyphCount = n;
+	for (int j = i+1; j < m_items.count(); ++j)
+	{
+		m_items[j].glyphIndex += delta;
+	}
+}
+
+
+GlyphLayout* StoryText::itemGlyphStart(uint i)
+{
+	return m_glyphs.data() + m_items[i].glyphIndex;
+}
+
+const GlyphLayout* StoryText::itemGlyphStart(uint i) const
+{
+	return m_glyphs.constData() + m_items[i].glyphIndex;
+}
+
+	
+int StoryText::itemTextPosition(uint i) const
+{
+	return m_items[i].textPosition;
+}
+
+uint StoryText::itemCharCount(uint i) const
+{
+	return m_items[i].charCount;
+}
+
+uint StoryText::itemCount() const
+{
+	return m_items.count();
+}
+
