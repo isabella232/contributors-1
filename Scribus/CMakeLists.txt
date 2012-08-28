@@ -783,6 +783,15 @@ ENDIF (POPPLER_FOUND)
 #>>Poppler for PDF import
 
 
+#<<ICU for text shaping (required)
+FIND_PACKAGE(ICU)
+IF(ICU_FOUND)
+  MESSAGE(STATUS "ICU Found OK")
+ELSE(ICU_FOUND)
+  MESSAGE(FATAL_ERROR "ICU NOT Found!")
+ENDIF(ICU_FOUND)
+#>>ICU for text shaping
+
 ##############################################################################################################
 ########## Include Setup                                                                            ##########
 

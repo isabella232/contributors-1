@@ -10,6 +10,10 @@ for which a new license (GPL+exception) is in place.
     begin                : Sat Apr 7 2001
     copyright            : (C) 2001 by Franz Schmid
     email                : Franz.Schmid@altmuehlnet.de
+
+
+    Modified for Indic unicode support , Aug 2012 
+	by 	: Anilkumar KV,  Email: anilankv@gmail.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -45,6 +49,7 @@ for which a new license (GPL+exception) is in place.
 #include "scraction.h"
 #include "scribus.h"
 #include "scribusdoc.h"
+#include "text/shaper.h"
 #include "scribusstructs.h"
 #include "selection.h"
 #include "text/nlsconfig.h"
@@ -1295,6 +1300,7 @@ void PageItem_TextFrame::layout()
 {
 // 	qDebug()<<"==Layout==" << itemName() ;
 // 	printBacktrace(24);
+        Shaper *shaper = new Shaper( &itemText);
 	if (BackBox != NULL && BackBox->invalid) {
 //		qDebug("textframe: len=%d, going back", itemText.length());
 		// Why that invalid = false here? Calling prevInChain->layout() does
@@ -1418,6 +1424,7 @@ void PageItem_TextFrame::layout()
 
 		//automatic line spacing factor (calculated once)
 		double autoLS = static_cast<double>(m_Doc->typographicPrefs().autoLineSpacing) / 100.0;
+		shaper->shape(firstInFrame(), itemText.length() - 1 ) ;
 
 		// find start of first line
 		if (firstInFrame() < itemText.length())
@@ -1467,6 +1474,7 @@ void PageItem_TextFrame::layout()
 		for (int a = firstInFrame(); a < itemText.length(); ++a)
 		{
 			hl = itemText.item(a);
+			if (hl->gIdx < 0) continue ;
 			curStat = SpecialChars::getCJKAttr(hl->ch);
 			if (a > 0 && itemText.text(a-1) == SpecialChars::PARSEP)
 				style = itemText.paragraphStyle(a);
@@ -2817,6 +2825,7 @@ void PageItem_TextFrame::layout()
 		nextFrame->firstChar = MaxChars;
 		nextFrame = dynamic_cast<PageItem_TextFrame*>(nextFrame->NextBox);
 	}
+	delete shaper;
 //	qDebug("textframe: len=%d, done relayout", itemText.length());
 	return;
 			

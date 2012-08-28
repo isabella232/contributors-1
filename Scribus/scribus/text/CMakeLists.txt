@@ -15,6 +15,8 @@ storytext.cpp
 sctext_shared.cpp
 fsize.cpp
 frect.cpp
+shaper.cpp
+scbidi.cpp
 )
 
 

@@ -2,6 +2,7 @@ INCLUDE_DIRECTORIES(
 ${CMAKE_SOURCE_DIR}
 ${CMAKE_SOURCE_DIR}/scribus
 ${FREETYPE_INCLUDE_DIRS}
+${ICU_INCLUDE_DIRS}
 )
 
 
@@ -11,6 +12,9 @@ SET(SCRIBUS_FONTS_LIB_SOURCES
   scface_ps.cpp
   scface_ttf.cpp
   scfontmetrics.cpp
+  schbfunctions.cpp
+  fontfeatureset.cpp
+  scicufont.cpp
 )
 SET(SCRIBUS_FONTS_LIB "scribus_fonts_lib")
 ADD_LIBRARY(${SCRIBUS_FONTS_LIB} STATIC ${SCRIBUS_FONTS_LIB_SOURCES})
