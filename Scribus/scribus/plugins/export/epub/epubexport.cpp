@@ -43,6 +43,9 @@
 	- get zlib.h, add it to the sources and use it to create the epub
 	- get the document infos and put them into the epub
 	- show the document infos in the export dialog
+    - add the toc as soon as the styles based TOC is available (but not after the 1.6 release)
+    - add the footnotes as soon cezary's code is in the trunk (http://blog.epubbooks.com/183/creating-an-epub-document)
+    - images: get it from collect for output
 
  ***************************************************************************/
 
@@ -198,6 +201,8 @@ bool EPUBexport::doExport( QString dirname, EPUBExportOptions &Opts )
     if(!f.open(QIODevice::WriteOnly))
         return false;
 	QString wr = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	wr += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n";
+    wr += "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n";
     wr += epubdocument.toString();
     QByteArray utf8wr = wr.toUtf8();
     QDataStream s(&f);
@@ -213,6 +218,8 @@ bool EPUBexport::doExport( QString dirname, EPUBExportOptions &Opts )
 /**
   * The mimetype file must be a text document in ASCII that contains the string application/epub+zip.
   * It must also be uncompressed, unencrypted, and the first file in the ZIP archive.
+  * TODO:     mimetype must be the first file in the .zip. No compression is to be used on this file.
+  * zip -Z store mimetype
   */
 bool EPUBexport::exportMimetype()
 {
@@ -437,12 +444,12 @@ bool EPUBexport::exportOPF()
 	element = xmlDocument.createElement("item");
 	element.setAttribute("id", "chapter"); // TODO: set chapter name
 	element.setAttribute("href", "chapter.xhtml");
-	element.setAttribute("media-type", "appendChild/xhtml+xml");
+	element.setAttribute("media-type", "application/xhtml+xml");
 	manifest.appendChild(element);
 
 	element = xmlDocument.createElement("item");
 	element.setAttribute("id", "stylesheet");
-	element.setAttribute("href", "style.css");
+	element.setAttribute("href", "css/epub.css");
 	element.setAttribute("media-type", "text/css");
 	manifest.appendChild(element);
 
@@ -452,23 +459,25 @@ bool EPUBexport::exportOPF()
 	// TODO: dynamically add the fonts
 	// <item id="myfont" href="css/myfont.otf" media-type="application/x-font-opentype"/>
 
+    /* TODO: add the toc as soon as the styles based TOC is available (but not after the 1.6 release)
 	element = xmlDocument.createElement("item");
 	element.setAttribute("id", "ncx"); // TODO: set chapter name
 	element.setAttribute("href", "toc.ncx");
 	element.setAttribute("media-type", "application/x-dtbncx+xml");
 	manifest.appendChild(element);
+    */
 
 	QDomElement spine = xmlDocument.createElement("spine");
 	spine.setAttribute("toc", "ncx");
-	xmlroot.appendChild(manifest);
+	xmlroot.appendChild(spine);
 
 	// TODO: dynamically add the chapters
 	element = xmlDocument.createElement("itemref");
 	element.setAttribute("idref", "chapter"); // TODO: set chapter name
-	manifest.appendChild(element);
+	spine.appendChild(element);
 
 	QDomElement guide = xmlDocument.createElement("guide");
-	xmlroot.appendChild(manifest);
+	xmlroot.appendChild(guide);
 
 	// TODO: what goes into the reference?
 	/*
