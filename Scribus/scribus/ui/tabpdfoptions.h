@@ -318,8 +318,9 @@ private:
  	QLabel* ImpositionText;
 	QGroupBox* ImpositionGroup;
  	QGridLayout* ImpositionGroupLayout;
- 	QCheckBox* ImpOptAutoSheetSize;
- 	QComboBox* ImpositionCombo;
+ 	QLabel* AutoSheetSizeText;
+ 	QComboBox * AutoSheetSizeCombo;
+ 	QComboBox * ImpositionCombo;
  	QLabel* SheetSizeLabel;
  	QLabel* SheetRotationLabel;
  	QComboBox * SheetSizeComboBox;
