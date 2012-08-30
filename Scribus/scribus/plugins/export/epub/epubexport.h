@@ -22,6 +22,7 @@ class QString;
 class ScribusDoc;
 class ScPage;
 class ScLayer;
+class FileZip;
 
 
 class PageItem;
@@ -189,15 +190,20 @@ private:
     // QMap<int, ScLayer*> layerList;
     QList<int> layerNotPrintableList;
 
-	QDomDocument epubdocument;
-	QDomElement epubroot;
-	QDomElement epubbody;
+	FileZip *epubFile;
+
+	QDomDocument epubDocument;
+	QDomElement epubRoot;
+	QDomElement epubBody;
     bool exportMimetype();
     bool exportContainer();
     bool exportCSS();
+    bool exportContent();
     bool exportNCX();
     bool exportOPF();
-    void addTextItemToDOM(PageItem* docItem);
+    void addTextToDOM(PageItem* docItem);
+    void addImageToDOM(PageItem* docItem);
+    void addImageToEPUB(PageItem* docItem);
 
     // @todo: use the text/storytext methods as soon as they are implemented
     /*

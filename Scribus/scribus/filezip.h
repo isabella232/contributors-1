@@ -41,12 +41,15 @@ for which a new license (GPL+exception) is in place.
 class SCRIBUS_API FileZip
 {
 private:
+	bool open = false;
 	zipFile file;
+	QString filename;
 public:
-	FileZip(QString& zipFilePath);
+	FileZip(QString zipFilePath);
 	~FileZip();
-	bool add(QString fileName, QString content);
-	bool write();
+	bool create();
+	bool close();
+	bool add(QString fileName, QString content, bool compression);
 };
 
 #endif

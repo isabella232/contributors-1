@@ -28,24 +28,64 @@ for which a new license (GPL+exception) is in place.
 
 #include "scribusapi.h"
 #include <QString>
+#include <QDebug>
 
 #include "zip.h"
 
-FileZip::FileZip(QString& zipFilePath)
+FileZip::FileZip(QString zipFilePath)
 {
+	qDebug() << "filezip::zipFilePath :" << zipFilePath;
 	// TODO: does it still need a specific code for windows?
 	// (cf. fileunzip.cpp -> unzFile unzOpenFile(const QString& filename)
-	QByteArray fname(zipFilePath.toLocal8Bit());
-	file = zipOpen(fname.data(), APPEND_STATUS_CREATE);
-	// zipWriteInFileInZip(file, 
+	filename = zipFilePath;
+	file = 0;
 }
 
-bool FileZip::add(QString fileName, QString content)
+bool FileZip::create()
 {
+	qDebug() << "filezip::create filename :" << filename;
+	QByteArray filename(this->filename.toLocal8Bit());
+	file = zipOpen(filename.constData(), APPEND_STATUS_CREATE);
+	return true;
+}
+bool FileZip::close()
+{
+	if (!file)
+	{
+		qDebug() << "can't close  a closed zip";
+		return false;
+	}
+	zipClose(file, NULL);
 	return true;
 }
 
-bool FileZip::write()
+bool FileZip::add(QString filename, QString content, bool compression)
 {
+	if (!file)
+	{
+		qDebug() << "can't add to  a closed zip (" << filename << ")";
+		return false;
+	}
+    if (zipOpenNewFileInZip(file, filename.toUtf8().constData(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_NO_COMPRESSION) != Z_OK)
+	{
+		zipClose(file, NULL);
+		// QFile::remove(tempFile);
+		qDebug() << "Could not add to the zip file";
+		return false;
+	}
+
+	// qDebug() << "filezip::add content :" << content;
+	QByteArray contentEncoded = content.toUtf8();
+	qDebug() << "filezip::add contentEncoded :" << contentEncoded;
+	const char* contentData = contentEncoded.constData();
+	if (zipWriteInFileInZip(file, contentData, (unsigned int)strlen(contentData)) != Z_OK) {
+		zipCloseFileInZip(file);
+		zipClose(file, NULL);
+		// QFile::remove(tempFile);
+		qDebug() << "Could not write into the zip file";
+		return false;
+	}
+	zipCloseFileInZip(file);
+
 	return true;
 }
