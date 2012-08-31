@@ -76,7 +76,7 @@ bool FileZip::add(QString filename, QString content, bool compression)
 
 	// qDebug() << "filezip::add content :" << content;
 	QByteArray contentEncoded = content.toUtf8();
-	qDebug() << "filezip::add contentEncoded :" << contentEncoded;
+	// qDebug() << "filezip::add contentEncoded :" << contentEncoded;
 	const char* contentData = contentEncoded.constData();
 	if (zipWriteInFileInZip(file, contentData, (unsigned int)strlen(contentData)) != Z_OK) {
 		zipCloseFileInZip(file);
