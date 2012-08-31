@@ -33,8 +33,10 @@ for which a new license (GPL+exception) is in place.
 #ifndef FILEZIP_H
 #define FILEZIP_H
 
-#include "scribusapi.h"
 #include <QString>
+#include <QFile>
+#include <QFileInfo>
+#include "scribusapi.h"
 
 #include "zip.h"
 
@@ -44,12 +46,16 @@ private:
 	bool open = false;
 	zipFile file;
 	QString filename;
+	bool openInZip(QString filename, bool compression);
+	bool closeInZip();
 public:
 	FileZip(QString zipFilePath);
 	~FileZip();
 	bool create();
 	bool close();
 	bool add(QString fileName, QString content, bool compression);
+	bool add(QString fileName, QFile *file, bool compression);
+	bool add(QFile *file, bool compression);
 };
 
 #endif

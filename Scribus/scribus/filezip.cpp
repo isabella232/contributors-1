@@ -28,9 +28,13 @@ for which a new license (GPL+exception) is in place.
 
 #include "scribusapi.h"
 #include <QString>
+#include <QFile>
+#include <QFileInfo>
 #include <QDebug>
 
 #include "zip.h"
+
+#define BUFF_SIZE 8192
 
 FileZip::FileZip(QString zipFilePath)
 {
@@ -59,18 +63,34 @@ bool FileZip::close()
 	return true;
 }
 
-bool FileZip::add(QString filename, QString content, bool compression)
+bool FileZip::openInZip(QString filename, bool compression)
 {
 	if (!file)
 	{
 		qDebug() << "can't add to  a closed zip (" << filename << ")";
 		return false;
 	}
+
     if (zipOpenNewFileInZip(file, filename.toUtf8().constData(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_NO_COMPRESSION) != Z_OK)
 	{
 		zipClose(file, NULL);
 		// QFile::remove(tempFile);
 		qDebug() << "Could not add to the zip file";
+		return false;
+	}
+
+	return true;
+}
+
+bool FileZip::closeInZip()
+{
+	zipCloseFileInZip(file);
+	return true;
+}
+
+bool FileZip::add(QString filename, QString content, bool compression)
+{
+	if (!openInZip(filename, compression)) {
 		return false;
 	}
 
@@ -85,7 +105,45 @@ bool FileZip::add(QString filename, QString content, bool compression)
 		qDebug() << "Could not write into the zip file";
 		return false;
 	}
-	zipCloseFileInZip(file);
+	closeInZip();
 
 	return true;
+}
+
+/**
+ * add the content of file as filename to the currently open zip file
+ */
+bool FileZip::add(QString filename, QFile *file, bool compression)
+{
+	if (!openInZip(filename, compression)) {
+		return false;
+	}
+
+
+	if (!file->open(QIODevice::ReadOnly)) {
+		qDebug() << "could not open for read:" << filename;
+		closeInZip();
+		return false;
+	}
+	// Write the data from the file on disk into the archive.
+	char buff[BUFF_SIZE] = {0};
+	qint64 read = 0;
+	while ((read = file->read(buff, BUFF_SIZE)) > 0) {
+		if (zipWriteInFileInZip(this->file, buff, read) != Z_OK) {
+			qDebug() << "error while reading from:" << filename;
+			file->close();
+			closeInZip();
+			return false;
+		}
+	}
+	file->close();
+	closeInZip();
+
+	return true;
+}
+
+bool FileZip::add(QFile *file, bool compression)
+{
+	QString filename = file->fileName();
+	return add(filename, file, compression);
 }

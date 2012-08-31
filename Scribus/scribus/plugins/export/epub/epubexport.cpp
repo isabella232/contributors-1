@@ -45,7 +45,6 @@
 	- show the document infos in the export dialog
     - add the toc as soon as the styles based TOC is available (but not after the 1.6 release)
     - add the footnotes as soon cezary's code is in the trunk (http://blog.epubbooks.com/183/creating-an-epub-document)
-    - images: get it from collect for output
 	- add a checkbox to open the created epub with an application (sigil) and let it set in the preferences
 	- generate the cover as a jpg with 1400px height (generate a png and convert it to jpg)
 	- get the document info from the document settings!
@@ -62,6 +61,7 @@
 #include <QDebug>
 
 #include <QFile>
+#include <QFileInfo>
 #include <QDataStream>
 #include <QByteArray>
 
@@ -88,6 +88,7 @@
 #include "sclayer.h"
 #include "scpage.h"
 #include "scribus.h" // for ScribusMainWindow
+#include "util_formats.h" // for checking file extension
 
 /**
   * <?xml version="1.0" encoding="UTF-8" ?>
@@ -149,7 +150,7 @@ EPUBexport::EPUBexport( ScribusDoc* doc )
 
 	element = epubDocument.createElement("link");
 	element.setAttribute("rel", "stylesheet");
-	element.setAttribute("href", "css/style.css");
+	element.setAttribute("href", "Styles/style.css");
 	element.setAttribute("type", "text/css");
 	head.appendChild(element);
 
@@ -256,9 +257,14 @@ bool EPUBexport::doExport( QString filename, EPUBExportOptions &Opts )
 
 bool EPUBexport::exportContent()
 {
-    QString filename = targetDirectory + "OEBPS/chapter.xhtml";
+	// TODO: dynamically add the chapters
+	epubFile->add("OEBPS/Text/chapter.xhtml", epubDocument.toString(), true);
 
-	epubFile->add("OEBPS/chapter.xhtml", epubDocument.toString(), true);
+	struct EPUBExportContentItem contentItem;
+	contentItem.id = "chapter";
+	contentItem.href = "Text/chapter.xhtml";
+	contentItem.mediaType = "application/xhtml+xml";
+	contentItems.append(contentItem);
 
 	return true;
 }
@@ -310,7 +316,7 @@ bool EPUBexport::exportContainer()
 }
 
 /**
-  * add OEBPS/css/style.css to the current epub file
+  * add OEBPS/Styles/style.css to the current epub file
   */ 
 bool EPUBexport::exportCSS()
 {
@@ -387,7 +393,13 @@ bool EPUBexport::exportCSS()
         wr += "}\n";
     }
 
-	epubFile->add("OEBPS/css/style.css", wr, true);
+	epubFile->add("OEBPS/Styles/style.css", wr, true);
+
+	struct EPUBExportContentItem contentItem;
+	contentItem.id = "stylesheet";
+	contentItem.href = "Styles/style.css";
+	contentItem.mediaType = "text/css";
+	contentItems.append(contentItem);
 
     return true;
     /*
@@ -517,7 +529,7 @@ bool EPUBexport::exportNCX()
 	elementText.appendChild(text);
 
 	element = xmlDocument.createElement("content");
-	element.setAttribute("src", "chapter.xhtml"); // TODO: set the chapter file
+	element.setAttribute("src", "Text/chapter.xhtml"); // TODO: set the chapter file
 	nav.appendChild(element);
 
 	epubFile->add("OEBPS/toc.ncx", xmlDocument.toString(), true);
@@ -602,18 +614,17 @@ bool EPUBexport::exportOPF()
 	QDomElement manifest = xmlDocument.createElement("manifest");
 	xmlRoot.appendChild(manifest);
 
-	// TODO: dynamically add the chapters
-	element = xmlDocument.createElement("item");
-	element.setAttribute("id", "chapter"); // TODO: set chapter name
-	element.setAttribute("href", "chapter.xhtml");
-	element.setAttribute("media-type", "application/xhtml+xml");
-	manifest.appendChild(element);
+	int n = contentItems.count();
+	for (int i = 0; i < n; i++)
+	{
+		EPUBExportContentItem contentItem = contentItems[i];
 
-	element = xmlDocument.createElement("item");
-	element.setAttribute("id", "stylesheet");
-	element.setAttribute("href", "css/style.css");
-	element.setAttribute("media-type", "text/css");
-	manifest.appendChild(element);
+		element = xmlDocument.createElement("item");
+		element.setAttribute("id", contentItem.id);
+		element.setAttribute("href", contentItem.href);
+		element.setAttribute("media-type", contentItem.mediaType);
+		manifest.appendChild(element);
+	}
 
 	// TODO: dynamically add the images
 	// <item id="ch1-pic" href="ch1-pic.png" media-type="image/png"/>
@@ -732,9 +743,42 @@ void EPUBexport::addImageToDOM(PageItem* docItem)
 	qDebug() << "image file" << filename;
 	if (filename != "")
 	{
-		// test extension
-		// add the image to the dom
-		// copy the image into the zip
+		QFileInfo fileinfo = QFileInfo(filename);
+		QString ext = fileinfo.suffix().toLower();
+
+		int mediaType = 0;
+		if (ext == "png")
+			mediaType = FormatsManager::PNG;
+		else if (extensionIndicatesJPEG(ext))
+			mediaType = FormatsManager::JPEG;
+
+		if (mediaType > 0)
+		{
+			QString filepath = "Images/" + fileinfo.fileName();
+			// add the image to the dom
+			QDomElement div = epubDocument.createElement("div");
+			epubBody.appendChild(div);
+			QDomElement element = epubDocument.createElement("img");
+			// <image height="800" width="600" xlink:href="../Images/cover.jpeg"></image>
+			element.setAttribute("height", (int) docItem->height()); // TODO: use the real width of the visible part of the image (as a rectangle)
+			element.setAttribute("width", (int) docItem->width());
+			element.setAttribute("src", "../"+filepath); // TODO: make sure that the name is unique in the target! (if it already exists prefix the frame name?)
+			// TODO: set the width and height? from the docItem?
+			div.appendChild(element);
+			qDebug() << "add imae to the dom";
+			// copy the image into the zip
+			QFile file(fileinfo.filePath()); // TODO: if we already have a scimage we may have to change this
+			epubFile->add("OEBPS/"+filepath, &file, true);
+
+			struct EPUBExportContentItem contentItem;
+			contentItem.id = fileinfo.fileName();
+			contentItem.href = filepath;
+			contentItem.mediaType = FormatsManager::instance()->mimetypeOfFormat(mediaType).first();
+			contentItems.append(contentItem);
+		} else {
+			// TODO: convert the other "acceptable" image types to png or jpeg (how to choose?)
+				qDebug() << "image format not yet supported: " << filename;
+		}
 	}
 }
 

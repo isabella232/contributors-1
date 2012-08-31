@@ -157,6 +157,13 @@ struct EPUBExportCurrentFormatting
     QString language;
 };
 
+struct EPUBExportContentItem
+{
+    QString id;
+    QString href;
+    QString mediaType;
+};
+
 class EPUBexport : public QObject
 /*
  * Inspired by svgexplugin
@@ -191,6 +198,8 @@ private:
     QList<int> layerNotPrintableList;
 
 	FileZip *epubFile;
+
+    QVector<EPUBExportContentItem> contentItems;
 
 	QDomDocument epubDocument;
 	QDomElement epubRoot;
