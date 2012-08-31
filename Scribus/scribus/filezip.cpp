@@ -38,11 +38,13 @@ for which a new license (GPL+exception) is in place.
 
 FileZip::FileZip(QString zipFilePath)
 {
+	open = false;
+	file = 0;
+
 	qDebug() << "filezip::zipFilePath :" << zipFilePath;
 	// TODO: does it still need a specific code for windows?
 	// (cf. fileunzip.cpp -> unzFile unzOpenFile(const QString& filename)
 	filename = zipFilePath;
-	file = 0;
 }
 
 bool FileZip::create()

@@ -43,7 +43,7 @@ for which a new license (GPL+exception) is in place.
 class SCRIBUS_API FileZip
 {
 private:
-	bool open = false;
+	bool open;
 	zipFile file;
 	QString filename;
 	bool openInZip(QString filename, bool compression);
