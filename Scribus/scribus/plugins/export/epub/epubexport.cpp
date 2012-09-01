@@ -247,6 +247,10 @@ bool EPUBexport::doExport( QString filename, EPUBExportOptions &Opts )
 	return true;
 }
 
+/**
+ * read the metadata from the documentInfo() and ensure that all mandatory fields are filled.
+ * some values may be written back to the document information
+ */
 void EPUBexport::readMetadata()
 {
 	// read the document information
@@ -258,9 +262,15 @@ void EPUBexport::readMetadata()
 	if (documentMetadata.langInfo() == "")
 		documentMetadata.setLangInfo(ScCore->getGuiLanguage());
 	if (documentMetadata.langInfo() == "")
-		documentMetadata.setLangInfo("en"); // scribus' default language is english
+		documentMetadata.setLangInfo("en"); // scribus' default language is english (or rather en-GB?)
+	// TODO: store the generated uuid in the scribus document information?
 	if (documentMetadata.ident() == "")
-		documentMetadata.setIdent(QUuid::createUuid().toString().remove( "{" ).remove( "}" )); // Sigil/Misc/Utility.cpp -> Utility::CreateUUID()
+		documentMetadata.setIdent("urn:uuid:"+QUuid::createUuid().toString().remove( "{" ).remove( "}" )); // Sigil/Misc/Utility.cpp -> Utility::CreateUUID()
+	// TODO: store the generated date in the scribus document information?
+    // QDate now = QDate::currentDate();
+    // now.toString ("dd.MM.yyyy hh:mm")
+	if (documentMetadata.date() == "")
+		documentMetadata.setDate(QDate::currentDate().toString(Qt::ISODate)); // TODO: respect the document language or ISO? (this should also be done also to other parts of the code where yy.mm.dd (hh:tt) is used)
 }
 
 
@@ -619,6 +629,62 @@ bool EPUBexport::exportOPF()
 	text = xmlDocument.createTextNode(documentMetadata.author());
 	element.appendChild(text);
 	metadata.appendChild(element);
+
+	element = xmlDocument.createElement("dc:date");
+	element.setAttribute("opf:event", "publication");
+	text = xmlDocument.createTextNode(documentMetadata.date());
+	element.appendChild(text);
+	metadata.appendChild(element);
+
+	// non mandatory fields from the main screen
+	if (documentMetadata.subject() == "")
+	{
+	}
+
+	if (documentMetadata.keywords() == "")
+	{
+	}
+
+	if (documentMetadata.comments() == "") // labelled as description in scribus
+	{
+	}
+
+	// non mandatory fields from the further information screen
+	if (documentMetadata.publisher() == "")
+	{
+		element = xmlDocument.createElement("dc:publisher");
+		text = xmlDocument.createTextNode(documentMetadata.publisher());
+		element.appendChild(text);
+		metadata.appendChild(element);
+	}
+
+	if (documentMetadata.contrib() == "") // labelled as contributors in scribus
+	{
+	}
+
+	if (documentMetadata.type() == "")
+	{
+	}
+
+	if (documentMetadata.format() == "") // should be one of: event, image, interactive resource, moving image, physical object, service, software, sound, still image, text
+	{
+	}
+
+	if (documentMetadata.source() == "")
+	{
+	}
+
+	if (documentMetadata.relation() == "")
+	{
+	}
+
+	if (documentMetadata.cover() == "") // that's not the cover, but the coverage... space and time covered by the work
+	{
+	}
+
+	if (documentMetadata.rights() == "")
+	{
+	}
 
 	QDomElement manifest = xmlDocument.createElement("manifest");
 	xmlRoot.appendChild(manifest);
