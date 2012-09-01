@@ -56,8 +56,10 @@
 	  fields can be handy for epub in some cases
 	- we may need to obfuscate fonts on demand (or leave it to sigil?)
 	  (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
-	- fill the remaining metadata fields
+	- fill the missing metadata fields
 	- first implementation of char formatting
+	- create multiple files and add them to the ncx file
+	- create TOC
 
  ***************************************************************************/
 
@@ -99,7 +101,6 @@
 EPUBexport::EPUBexport(ScribusDoc* doc)
 {
 	this->doc = doc;
-
 }
 
 EPUBexport::~EPUBexport()
@@ -114,7 +115,7 @@ bool EPUBexport::isDocItemTopLeftLessThan(const PageItem *docItem1, const PageIt
 
 void EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
 {
-	Options = Opts;
+	Options = Opts; // what is this good for? (ale/20120901)
     targetFile = filename;
 
 	readMetadata();
@@ -129,7 +130,6 @@ void EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
 	exportContainer();
 
     exportCSS();
-
 
 	exportXhtml();
 
@@ -150,21 +150,19 @@ void EPUBexport::readMetadata()
 	// make sure that all mandatory fields are filled
 	if (documentMetadata.title() == "")
 		documentMetadata.setTitle(targetFile);
-	// if (documentMetadata.author() == "") // -> it's recommended not obligatory!
-	// if (documentMetadata.authorSort() == "") // -> it's recommended not obligatory!
+	// TODO: if (documentMetadata.author() == "") // -> it's recommended not obligatory!
+	// TODO: if (documentMetadata.authorSort() == "") // -> it's recommended not obligatory!
 	if (documentMetadata.langInfo() == "")
 		documentMetadata.setLangInfo(ScCore->getGuiLanguage());
 	if (documentMetadata.langInfo() == "")
 		documentMetadata.setLangInfo("en"); // scribus' default language is english (or rather en-GB?)
-		// doc->hyphLanguage()); the current hyphenation language could be a better guess for the language
+		// TODO: doc->hyphLanguage()); the current hyphenation language could be a better guess for the language
 	// TODO: store the generated uuid in the scribus document information?
 	if (documentMetadata.ident() == "")
 		documentMetadata.setIdent("urn:uuid:"+QUuid::createUuid().toString().remove("{" ).remove("}" )); // Sigil/Misc/Utility.cpp -> Utility::CreateUUID()
 	// TODO: store the generated date in the scribus document information?
-    // QDate now = QDate::currentDate();
-    // now.toString ("dd.MM.yyyy hh:mm")
 	if (documentMetadata.date() == "")
-		documentMetadata.setDate(QDate::currentDate().toString(Qt::ISODate)); // TODO: respect the document language or ISO? (this should also be done also to other parts of the code where yy.mm.dd (hh:tt) is used)
+		documentMetadata.setDate(QDate::currentDate().toString(Qt::ISODate));
 }
 
 void EPUBexport::readItems()
@@ -195,13 +193,10 @@ void EPUBexport::readItems()
         if (layerNotPrintableList.contains(docItem->LayerID))
             continue;
         itemList[docItem->OwnPage].append(docItem);
-        
-        qDebug() << "on page: " << docItem->OwnPage;
+        // qDebug() << "on page: " << docItem->OwnPage;
     }
-
-    qDebug() << "itemList: " << itemList;
+    // qDebug() << "itemList: " << itemList;
 }
-
 
 /**
  * add the content of xhtmlDocument to the current epub file
@@ -716,9 +711,6 @@ void EPUBexport::exportOPF()
 		manifest.appendChild(element);
 	}
 
-	// TODO: dynamically add the images
-	// <item id="ch1-pic" href="ch1-pic.png" media-type="image/png"/>
-
 	// TODO: dynamically add the fonts
 	// <item id="myfont" href="css/myfont.otf" media-type="application/x-font-opentype"/>
 
@@ -754,11 +746,11 @@ void EPUBexport::exportOPF()
 
 void EPUBexport::addText(PageItem* docItem)
 {
-                /*
-                //  example of use in svgexplugin.cpp 
-                const CharStyle& charStyle(docItem->itemText.charStyle(0));
-                qDebug() << "font size: " << charStyle.fontSize();
-                */
+	/*
+	//  example of use in svgexplugin.cpp 
+	const CharStyle& charStyle(docItem->itemText.charStyle(0));
+	qDebug() << "font size: " << charStyle.fontSize();
+	*/
     if ((docItem->prevInChain() == NULL) && (docItem->itemText.length() > 0))
     {
         // cf. short-words/parse.cpp

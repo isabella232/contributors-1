@@ -26,7 +26,6 @@ class ScPage;
 class ScLayer;
 class FileZip;
 
-
 class PageItem;
 
 struct EPUBExportOptions
@@ -241,4 +240,3 @@ private:
 
 };
 #endif // EPUBEXPORT_H
-
