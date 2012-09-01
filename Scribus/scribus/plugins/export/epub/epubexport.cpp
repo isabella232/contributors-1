@@ -154,7 +154,7 @@ EPUBexport::EPUBexport( ScribusDoc* doc )
 
 	element = epubDocument.createElement("link");
 	element.setAttribute("rel", "stylesheet");
-	element.setAttribute("href", "Styles/style.css");
+	element.setAttribute("href", "../Styles/style.css");
 	element.setAttribute("type", "text/css");
 	head.appendChild(element);
 
@@ -843,6 +843,7 @@ void EPUBexport::addImage(PageItem* docItem)
 			// <image height="800" width="600" xlink:href="../Images/cover.jpeg"></image>
 			element.setAttribute("height", (int) docItem->height()); // TODO: use the real width of the visible part of the image (as a rectangle)
 			element.setAttribute("width", (int) docItem->width());
+			element.setAttribute("alt", ""); // TODO do we have a way to define the metadata? eventually from the exif? epubcheck says it's mandatory... and it's not nice to leave it empty...
 			element.setAttribute("src", "../"+filepath); // TODO: make sure that the name is unique in the target! (if it already exists prefix the frame name?)
 			// TODO: set the width and height? from the docItem?
 			div.appendChild(element);
