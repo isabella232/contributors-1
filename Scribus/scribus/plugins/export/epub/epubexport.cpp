@@ -20,8 +20,9 @@
       on the other hand cross production (import / export of html) is made much easier!
 	- font sizes: 12 pt = 16px = 1 em = 100%
 	- convert colors to rgb
-	- for each section one file
-	- detect lists (option = glyph to look for); if we're on a list retain the indent
+	- for each section one file; optionally (?) use h1 to break into files
+	- implement TDC with the fix h\d.* style names until cezary implements a real TOC in 1.5
+	- detect lists (option = glyph to look for <- no use cezary's lists!); if we're on a list retain the indent 
 	- export images:
 	  - crop them
 	  - for images where the resolution is defined, keep the size (in px???)
@@ -34,20 +35,14 @@
 	- what happens if a style name has a space in it? replace by _?
 	- what happens if a char and a para style have the same name? always create a span to
 	  apply the character style?
-	- all files must have ASCII chars only (manage the clashes when renaming)
+	- all file names must have ASCII chars only (manage the clashes when renaming)
 	- Your filenames have spaces or encoded characters. If your EPUB has any spaces in filenames, be sure the spaces are properly encoded in the EPUB manifest by using "%20" in their place. Filenames may not contain periods (“.”) other than to separate the filename from its extension.
-	- workplan:
-	  - create multiple html files, one per section
-	  - check that the html files are epub compatible
-	  - add the html files
-	- get zlib.h, add it to the sources and use it to create the epub
-	- get the document infos and put them into the epub
+	- get the document info from the document settings!
 	- show the document infos in the export dialog
     - add the toc as soon as the styles based TOC is available (but not after the 1.6 release)
     - add the footnotes as soon cezary's code is in the trunk (http://blog.epubbooks.com/183/creating-an-epub-document)
 	- add a checkbox to open the created epub with an application (sigil) and let it set in the preferences
 	- generate the cover as a jpg with 1400px height (generate a png and convert it to jpg)
-	- get the document info from the document settings!
 	- cover:
 		  <div>
 			<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="100%" preserveAspectRatio="xMidYMid meet" version="1.1" viewBox="0 0 600 800" width="100%">
@@ -55,6 +50,12 @@
 			</svg>
 		  </div>
     - groups only containing shpaes (no text nor images) should be exported as svg
+	- patch scribus to enable an identifier type in the document information (#11055)
+	- patch scribus to enable an authorFileAs the document information (lastname, first,)
+	- should the document information also be in the preferences (mostly not needed, but some
+	  fields can be handy for epub in some cases
+	- we may need to obfuscate fonts on demand (or leave it to sigil?)
+	  (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
 
  ***************************************************************************/
 
@@ -73,11 +74,13 @@
 #include <QtAlgorithms>
 
 #include <QStack>
+#include <QUuid> // for generated the uuid if no isbn&co has been defined
 
 #include <QProgressBar>
 
 #include "epubexport.h"
 #include "scribusdoc.h"
+#include "scribuscore.h" // for reading the gui language
 
 #include "filezip.h"
 
@@ -89,6 +92,7 @@
 #include "scpage.h"
 #include "scribus.h" // for ScribusMainWindow
 #include "util_formats.h" // for checking file extension
+#include "documentinformation.h" // for filling the metadata
 
 /**
   * <?xml version="1.0" encoding="UTF-8" ?>
@@ -106,11 +110,11 @@
  */
 EPUBexport::EPUBexport( ScribusDoc* doc )
 {
-	m_Doc = doc;
+	this->doc = doc;
 
-	for (int i = 0; i < m_Doc->Layers.count(); i++)
+	for (int i = 0; i < doc->Layers.count(); i++)
     {
-        ScLayer layer = m_Doc->Layers.at(i);
+        ScLayer layer = doc->Layers.at(i);
         // qDebug() << "layer.ID: " << layer.ID;
         // qDebug() << "layer.name: " << layer.Name;
         // qDebug() << "layer.isPrintable: " << layer.isPrintable;
@@ -171,16 +175,11 @@ bool EPUBexport::isDocItemTopLeftLessThan(const PageItem *docItem1, const PageIt
 bool EPUBexport::doExport( QString filename, EPUBExportOptions &Opts )
 {
 	Options = Opts;
-    QString targetFile = filename;
-	QString targetDirectory = "/tmp/test/"; // FIXME: remove this!!!!
-	/*
-	if (!targetDirectory.endsWith("/"))
-		targetDirectory += "/";
-    qDebug() << "targetDirectory: " << targetDirectory;
-	*/
+    targetFile = filename;
 
-	// QString targetFile = "/tmp/test.epub"; // FIXME: remove this!!!!
 	targetFile = "/tmp/"+targetFile;
+	qDebug() << "forcing the output of the .epub file to /tmp";
+	readMetadata();
 	epubFile = new FileZip(targetFile);
 	epubFile->create();
 
@@ -190,15 +189,15 @@ bool EPUBexport::doExport( QString filename, EPUBExportOptions &Opts )
     exportCSS();
 
     int n, m;
-    n = m_Doc->DocPages.count();
+    n = doc->DocPages.count();
     // qDebug() << "n: " << n;
     QVector< QList<PageItem*> > itemList(n);
-    m = m_Doc->DocItems.count();
+    m = doc->DocItems.count();
     // qDebug() << "m: " << m;
     PageItem* docItem = NULL;
     for (int i = 0; i < m; ++i )
     {
-        docItem = m_Doc->DocItems[i];
+        docItem = doc->DocItems[i];
         // qDebug() << "i: " << i;
 		if (!docItem->printEnabled())
 			continue;
@@ -211,8 +210,8 @@ bool EPUBexport::doExport( QString filename, EPUBExportOptions &Opts )
 
     qDebug() << "itemList: " << itemList;
 
-    m_Doc->scMW()->setStatusBarInfoText( tr("Exporting to EPUB"));
-    m_Doc->scMW()->mainWindowProgressBar->setMaximum(m);
+    doc->scMW()->setStatusBarInfoText( tr("Exporting to EPUB"));
+    doc->scMW()->mainWindowProgressBar->setMaximum(m);
     int mm = 0;
     int jj = 0;
 	QString content = QString();
@@ -223,28 +222,21 @@ bool EPUBexport::doExport( QString filename, EPUBExportOptions &Opts )
         mm = itemList[i].count();
         jj = jj + mm;
 
-        m_Doc->scMW()->mainWindowProgressBar->setValue(jj);
+        doc->scMW()->mainWindowProgressBar->setValue(jj);
         for (int j = 0; j < mm; j++) {
             docItem = itemList[i].at(j);
             if (docItem->asTextFrame())
             {
-                /*
-                //  example of use in svgexplugin.cpp 
-                const CharStyle& charStyle(docItem->itemText.charStyle(0));
-                qDebug() << "font size: " << charStyle.fontSize();
-                */
-                addTextToDOM(docItem);
+                addText(docItem);
             }
             else if (docItem->asImageFrame())
             {
-                qDebug() << "image frame: ";
-                addImageToDOM(docItem);
-                addImageToEPUB(docItem);
+                addImage(docItem);
             }
         }
     }
-    m_Doc->scMW()->mainWindowProgressBar->setValue(mm);
-    m_Doc->scMW()->setStatusBarInfoText("");
+    doc->scMW()->mainWindowProgressBar->setValue(mm);
+    doc->scMW()->setStatusBarInfoText("");
 
 	exportContent();
 	exportNCX();
@@ -254,6 +246,23 @@ bool EPUBexport::doExport( QString filename, EPUBExportOptions &Opts )
 
 	return true;
 }
+
+void EPUBexport::readMetadata()
+{
+	// read the document information
+	documentMetadata = doc->documentInfo();
+	qDebug() << "author:" << documentMetadata.author();
+	// make sure that all mandatory fields are filled
+	if (documentMetadata.title() == "")
+		documentMetadata.setTitle(targetFile);
+	if (documentMetadata.langInfo() == "")
+		documentMetadata.setLangInfo(ScCore->getGuiLanguage());
+	if (documentMetadata.langInfo() == "")
+		documentMetadata.setLangInfo("en"); // scribus' default language is english
+	if (documentMetadata.ident() == "")
+		documentMetadata.setIdent(QUuid::createUuid().toString().remove( "{" ).remove( "}" )); // Sigil/Misc/Utility.cpp -> Utility::CreateUUID()
+}
+
 
 bool EPUBexport::exportContent()
 {
@@ -323,7 +332,7 @@ bool EPUBexport::exportCSS()
     int n = 0;
 	QString wr = QString();
 
-    const StyleSet<ParagraphStyle>* paragraphStyles = & m_Doc->paragraphStyles();
+    const StyleSet<ParagraphStyle>* paragraphStyles = & doc->paragraphStyles();
     n = paragraphStyles->count();
     // qDebug() << "n pstyle: " << n;
     for (int i = 0; i < n; ++i )
@@ -379,7 +388,7 @@ bool EPUBexport::exportCSS()
         wr += "}\n";
     }
 
-    const StyleSet<CharStyle>* charStyles = & m_Doc->charStyles();
+    const StyleSet<CharStyle>* charStyles = & doc->charStyles();
     n = charStyles->count();
     // qDebug() << "n cstyle: " << n;
     for (int i = 0; i < n; ++i )
@@ -403,28 +412,28 @@ bool EPUBexport::exportCSS()
 
     return true;
     /*
-	docu.writeAttribute("AUTHOR"      ,m_Doc->documentInfo().author());
-	docu.writeAttribute("COMMENTS"    ,m_Doc->documentInfo().comments());
-	docu.writeAttribute("KEYWORDS"    ,m_Doc->documentInfo().keywords());
-	docu.writeAttribute("PUBLISHER",m_Doc->documentInfo().publisher());
-	docu.writeAttribute("DOCDATE",m_Doc->documentInfo().date());
-	docu.writeAttribute("DOCTYPE",m_Doc->documentInfo().type());
-	docu.writeAttribute("DOCFORMAT",m_Doc->documentInfo().format());
-	docu.writeAttribute("DOCIDENT",m_Doc->documentInfo().ident());
-	docu.writeAttribute("DOCSOURCE",m_Doc->documentInfo().source());
-	docu.writeAttribute("DOCLANGINFO",m_Doc->documentInfo().langInfo());
-	docu.writeAttribute("DOCRELATION",m_Doc->documentInfo().relation());
-	docu.writeAttribute("DOCCOVER",m_Doc->documentInfo().cover());
-	docu.writeAttribute("DOCRIGHTS",m_Doc->documentInfo().rights());
-	docu.writeAttribute("DOCCONTRIB",m_Doc->documentInfo().contrib());
-	docu.writeAttribute("TITLE",m_Doc->documentInfo().title());
-	docu.writeAttribute("SUBJECT",m_Doc->documentInfo().subject());
-	docu.writeAttribute("VHOCH"  , m_Doc->typographicPrefs().valueSuperScript);
-	docu.writeAttribute("VHOCHSC", m_Doc->typographicPrefs().scalingSuperScript);
-	docu.writeAttribute("VTIEF"  , m_Doc->typographicPrefs().valueSubScript);
-	docu.writeAttribute("VTIEFSC", m_Doc->typographicPrefs().scalingSubScript);
-	docu.writeAttribute("VKAPIT" , m_Doc->typographicPrefs().valueSmallCaps);
-	docu.writeAttribute("LANGUAGE", m_Doc->hyphLanguage());
+	docu.writeAttribute("AUTHOR"      ,doc->documentInfo().author());
+	docu.writeAttribute("COMMENTS"    ,doc->documentInfo().comments());
+	docu.writeAttribute("KEYWORDS"    ,doc->documentInfo().keywords());
+	docu.writeAttribute("PUBLISHER",doc->documentInfo().publisher());
+	docu.writeAttribute("DOCDATE",doc->documentInfo().date());
+	docu.writeAttribute("DOCTYPE",doc->documentInfo().type());
+	docu.writeAttribute("DOCFORMAT",doc->documentInfo().format());
+	docu.writeAttribute("DOCIDENT",doc->documentInfo().ident());
+	docu.writeAttribute("DOCSOURCE",doc->documentInfo().source());
+	docu.writeAttribute("DOCLANGINFO",doc->documentInfo().langInfo());
+	docu.writeAttribute("DOCRELATION",doc->documentInfo().relation());
+	docu.writeAttribute("DOCCOVER",doc->documentInfo().cover());
+	docu.writeAttribute("DOCRIGHTS",doc->documentInfo().rights());
+	docu.writeAttribute("DOCCONTRIB",doc->documentInfo().contrib());
+	docu.writeAttribute("TITLE",doc->documentInfo().title());
+	docu.writeAttribute("SUBJECT",doc->documentInfo().subject());
+	docu.writeAttribute("VHOCH"  , doc->typographicPrefs().valueSuperScript);
+	docu.writeAttribute("VHOCHSC", doc->typographicPrefs().scalingSuperScript);
+	docu.writeAttribute("VTIEF"  , doc->typographicPrefs().valueSubScript);
+	docu.writeAttribute("VTIEFSC", doc->typographicPrefs().scalingSubScript);
+	docu.writeAttribute("VKAPIT" , doc->typographicPrefs().valueSmallCaps);
+	docu.writeAttribute("LANGUAGE", doc->hyphLanguage());
      */
 }
 
@@ -585,12 +594,12 @@ bool EPUBexport::exportOPF()
 	xmlRoot.appendChild(metadata);
 
 	element = xmlDocument.createElement("dc:title");
-	text = xmlDocument.createTextNode("The book title"); // TODO: set book title
+	text = xmlDocument.createTextNode(documentMetadata.title());
 	element.appendChild(text);
 	metadata.appendChild(element);
 
 	element = xmlDocument.createElement("dc:language");
-	text = xmlDocument.createTextNode("en"); // TODO: set langauge
+	text = xmlDocument.createTextNode(documentMetadata.langInfo());
 	element.appendChild(text);
 	metadata.appendChild(element);
 
@@ -599,21 +608,22 @@ bool EPUBexport::exportOPF()
 	// <dc:identifier id="BookId" opf:scheme="ISBN">123456789X</dc:identifier>
 	element = xmlDocument.createElement("dc:identifier");
 	element.setAttribute("id", "BookId");
-	element.setAttribute("opf:scheme", "ISBN"); // http://en.wikipedia.org/wiki/Uniform_resource_name
-	text = xmlDocument.createTextNode("123456789X"); // TODO: set isbn or optionally to Quuid?
+	element.setAttribute("opf:scheme", "UUID"); // TODO: add scheme to settings (http://en.wikipedia.org/wiki/Uniform_resource_name)
+	text = xmlDocument.createTextNode(documentMetadata.ident());
 	element.appendChild(text);
 	metadata.appendChild(element);
 
 	element = xmlDocument.createElement("dc:creator");
-	element.setAttribute("opf:file-as", "Author, Name"); // TODO: set author
+	element.setAttribute("opf:file-as", documentMetadata.author()); // TODO: use the to be created authorFileAs
 	element.setAttribute("opf:role", "aut");
-	text = xmlDocument.createTextNode("Name Author"); // TODO: set author
+	text = xmlDocument.createTextNode(documentMetadata.author());
 	element.appendChild(text);
 	metadata.appendChild(element);
 
 	QDomElement manifest = xmlDocument.createElement("manifest");
 	xmlRoot.appendChild(manifest);
 
+	// dynamically add the content items (contentItems.add(EPUBExportContentItem))
 	int n = contentItems.count();
 	for (int i = 0; i < n; i++)
 	{
@@ -664,8 +674,13 @@ bool EPUBexport::exportOPF()
 	return true;
 }
 
-void EPUBexport::addTextToDOM(PageItem* docItem)
+void EPUBexport::addText(PageItem* docItem)
 {
+                /*
+                //  example of use in svgexplugin.cpp 
+                const CharStyle& charStyle(docItem->itemText.charStyle(0));
+                qDebug() << "font size: " << charStyle.fontSize();
+                */
     if ((docItem->prevInChain() == NULL) && (docItem->itemText.length() > 0))
     {
         // cf. short-words/parse.cpp
@@ -737,7 +752,7 @@ void EPUBexport::addTextToDOM(PageItem* docItem)
     }
 }
 
-void EPUBexport::addImageToDOM(PageItem* docItem)
+void EPUBexport::addImage(PageItem* docItem)
 {
 	QString filename(docItem->Pfile);
 	qDebug() << "image file" << filename;
@@ -765,7 +780,6 @@ void EPUBexport::addImageToDOM(PageItem* docItem)
 			element.setAttribute("src", "../"+filepath); // TODO: make sure that the name is unique in the target! (if it already exists prefix the frame name?)
 			// TODO: set the width and height? from the docItem?
 			div.appendChild(element);
-			qDebug() << "add imae to the dom";
 			// copy the image into the zip
 			QFile file(fileinfo.filePath()); // TODO: if we already have a scimage we may have to change this
 			epubFile->add("OEBPS/"+filepath, &file, true);
@@ -780,10 +794,6 @@ void EPUBexport::addImageToDOM(PageItem* docItem)
 				qDebug() << "image format not yet supported: " << filename;
 		}
 	}
-}
-
-void EPUBexport::addImageToEPUB(PageItem* docItem)
-{
 }
 
 // @todo: use the text/storytext methods as soon as they are implemented

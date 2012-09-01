@@ -17,9 +17,11 @@
 #include <QDebug>
 
 #include "scribusapi.h" // for SCRIBUS_API
+#include "documentinformation.h" // for SCRIBUS_API
 
 class QString;
 class ScribusDoc;
+class DocumentInformation; // for the metadata
 class ScPage;
 class ScLayer;
 class FileZip;
@@ -191,8 +193,11 @@ public:
     static bool isDocItemTopLeftLessThan(const PageItem *docItem1, const PageItem *docItem2);
 
 private:
-    QString targetDirectory;
-	ScribusDoc* m_Doc;
+    QString targetFile;
+	ScribusDoc* doc;
+
+	DocumentInformation documentMetadata;
+	void readMetadata();
 
     // QMap<int, ScLayer*> layerList;
     QList<int> layerNotPrintableList;
@@ -210,9 +215,8 @@ private:
     bool exportContent();
     bool exportNCX();
     bool exportOPF();
-    void addTextToDOM(PageItem* docItem);
-    void addImageToDOM(PageItem* docItem);
-    void addImageToEPUB(PageItem* docItem);
+    void addText(PageItem* docItem);
+    void addImage(PageItem* docItem);
 
     // @todo: use the text/storytext methods as soon as they are implemented
     /*
