@@ -100,43 +100,6 @@ EPUBexport::EPUBexport(ScribusDoc* doc)
 {
 	this->doc = doc;
 
-	QDomText text;
-	QDomElement element;
-
-	// TODO: move the epub document creation to its own method... and allow creating multiple docs!
-    const QDomDocumentType doctype = (new QDomImplementation())->createDocumentType("html", "-//W3C//DTD XHTML 1.1//EN", "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd");
-    epubDocument = QDomDocument(doctype);
-
-	QDomProcessingInstruction xmlDeclaration = epubDocument.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
-	epubDocument.appendChild(xmlDeclaration);
-
-
-	QDomElement epubRoot = epubDocument.createElement("html");
-	epubRoot.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
-	epubRoot.setAttribute("xml:lang", "en"); // TODO: correctly set the document language
-	epubDocument.appendChild(epubRoot);
-
-    QDomElement head = epubDocument.createElement("head");
-    epubRoot.appendChild(head);
-
-	element = epubDocument.createElement("meta");
-	element.setAttribute("http-equiv", "Content-Type");
-	element.setAttribute("content", "application/xhtml+xml; charset=utf-8");
-	head.appendChild(element);
-
-	element = epubDocument.createElement("title");
-	head.appendChild(element);
-	text = epubDocument.createTextNode("The book title"); // TODO: set book title
-	element.appendChild(text);
-
-	element = epubDocument.createElement("link");
-	element.setAttribute("rel", "stylesheet");
-	element.setAttribute("href", "../Styles/style.css");
-	element.setAttribute("type", "text/css");
-	head.appendChild(element);
-
-    epubBody = epubDocument.createElement("body");
-    epubRoot.appendChild(epubBody);
 }
 
 EPUBexport::~EPUBexport()
@@ -149,7 +112,7 @@ bool EPUBexport::isDocItemTopLeftLessThan(const PageItem *docItem1, const PageIt
            ((docItem1->gXpos == docItem2->gXpos) && (docItem1->gYpos < docItem2->gYpos));
 }
 
-bool EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
+void EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
 {
 	Options = Opts;
     targetFile = filename;
@@ -166,17 +129,14 @@ bool EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
 	exportContainer();
 
     exportCSS();
-	exportItems();
 
 
+	exportXhtml();
 
-	exportContent();
 	exportNCX();
 	exportOPF();
 
 	epubFile->close();
-
-	return true;
 }
 
 /**
@@ -243,18 +203,19 @@ void EPUBexport::readItems()
 }
 
 
-bool EPUBexport::exportContent()
+/**
+ * add the content of xhtmlDocument to the current epub file
+ */
+void EPUBexport::addXhtml()
 {
 	// TODO: dynamically add the chapters
-	epubFile->add("OEBPS/Text/chapter.xhtml", epubDocument.toString(), true);
+	epubFile->add("OEBPS/Text/chapter.xhtml", xhtmlDocument.toString(), true);
 
 	struct EPUBExportContentItem contentItem;
 	contentItem.id = "chapter";
 	contentItem.href = "Text/chapter.xhtml";
 	contentItem.mediaType = "application/xhtml+xml";
 	contentItems.append(contentItem);
-
-	return true;
 }
 
 /**
@@ -262,10 +223,9 @@ bool EPUBexport::exportContent()
   * The mimetype file must be a text document in ASCII that contains the string application/epub+zip.
   * It must also be uncompressed, unencrypted, and the first file in the ZIP archive.
   */
-bool EPUBexport::exportMimetype()
+void EPUBexport::exportMimetype()
 {
 	epubFile->add("mimetype", "application/epub+zip", false);
-	return true;
 }
 
 /**
@@ -277,7 +237,7 @@ bool EPUBexport::exportMimetype()
   *   </rootfiles>
   * </container>
   */ 
-bool EPUBexport::exportContainer()
+void EPUBexport::exportContainer()
 {
 	QDomDocument xmlDocument = QDomDocument();
 	QDomElement element;
@@ -299,8 +259,6 @@ bool EPUBexport::exportContainer()
 	rootfiles.appendChild(element);
 
 	epubFile->add("META-INF/container.xml", xmlDocument.toString(), true);
-
-	return true;
 }
 
 /**
@@ -400,6 +358,9 @@ void EPUBexport::exportCSS()
 }
 
 /**
+  * create the xhtml document structure and give access to xhtmlBody where addText and addImage
+  * will add the content
+  *
   * <?xml version="1.0" encoding="UTF-8" ?>
   * <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
   * <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
@@ -409,14 +370,61 @@ void EPUBexport::exportCSS()
   *     <link rel="stylesheet" href="css/main.css" type="text/css" />
   *   </head>
   *   <body>
-  *     ...
   *   </body>
   * </html>
- */
-void EPUBexport::exportItems()
+  */
+void EPUBexport::initializeXhtml()
 {
+	QDomText text;
+	QDomElement element;
+
+    const QDomDocumentType doctype = (new QDomImplementation())->createDocumentType("html", "-//W3C//DTD XHTML 1.1//EN", "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd");
+    xhtmlDocument = QDomDocument(doctype);
+
+	QDomProcessingInstruction xmlDeclaration = xhtmlDocument.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
+	xhtmlDocument.appendChild(xmlDeclaration);
+
+
+	QDomElement xhtmlRoot = xhtmlDocument.createElement("html");
+	xhtmlRoot.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+	xhtmlRoot.setAttribute("xml:lang", documentMetadata.langInfo());
+	xhtmlDocument.appendChild(xhtmlRoot);
+
+    QDomElement head = xhtmlDocument.createElement("head");
+    xhtmlRoot.appendChild(head);
+
+	element = xhtmlDocument.createElement("meta");
+	element.setAttribute("http-equiv", "Content-Type");
+	element.setAttribute("content", "application/xhtml+xml; charset=utf-8");
+	head.appendChild(element);
+
+	element = xhtmlDocument.createElement("title");
+	head.appendChild(element);
+	text = xhtmlDocument.createTextNode(documentMetadata.title());
+	element.appendChild(text);
+
+	element = xhtmlDocument.createElement("link");
+	element.setAttribute("rel", "stylesheet");
+	element.setAttribute("href", "../Styles/style.css");
+	element.setAttribute("type", "text/css");
+	head.appendChild(element);
+
+    xhtmlBody = xhtmlDocument.createElement("body");
+    xhtmlRoot.appendChild(xhtmlBody);
+}
+
+void EPUBexport::exportXhtml()
+{
+	initializeXhtml();
+
     int n = doc->DocPages.count();
     int m = doc->DocItems.count();
+	if (m == 0)
+	{
+		addXhtml();
+		return;
+	}
+
     doc->scMW()->setStatusBarInfoText(tr("Exporting to EPUB"));
     doc->scMW()->mainWindowProgressBar->setMaximum(m);
     int mm = 0;
@@ -425,6 +433,12 @@ void EPUBexport::exportItems()
     PageItem* docItem;
     for (int i = 0; i < n; i++)
     {
+		// TODO: if the page is on a new section, create a new file
+		if (false)
+		{
+			addXhtml();
+			initializeXhtml();
+		}
         qSort(itemList[i].begin(), itemList[i].end(), EPUBexport::isDocItemTopLeftLessThan);
 
         mm = itemList[i].count();
@@ -445,6 +459,8 @@ void EPUBexport::exportItems()
     }
     doc->scMW()->mainWindowProgressBar->setValue(mm);
     doc->scMW()->setStatusBarInfoText("");
+
+	addXhtml();
 }
 
 /**
@@ -473,7 +489,7 @@ void EPUBexport::exportItems()
   *   </navMap>
   * </ncx>
   */ 
-bool EPUBexport::exportNCX()
+void EPUBexport::exportNCX()
 {
 	QDomElement element;
 	QDomElement elementText;
@@ -552,8 +568,6 @@ bool EPUBexport::exportNCX()
 	nav.appendChild(element);
 
 	epubFile->add("OEBPS/toc.ncx", xmlDocument.toString(), true);
-
-	return true;
 }
 
 /**
@@ -583,7 +597,7 @@ bool EPUBexport::exportNCX()
   *   </guide>
   * </package>
   */
-bool EPUBexport::exportOPF()
+void EPUBexport::exportOPF()
 {
 	QDomDocument xmlDocument = QDomDocument();
 	QDomElement element;
@@ -736,8 +750,6 @@ bool EPUBexport::exportOPF()
 	*/
 
 	epubFile->add("OEBPS/content.opf", xmlDocument.toString(), true);
-
-	return true;
 }
 
 void EPUBexport::addText(PageItem* docItem)
@@ -775,14 +787,14 @@ void EPUBexport::addText(PageItem* docItem)
 					elementCurrent.pop();
                 paragraphStyleName = docItem->itemText.paragraphStyle(run.pos + 1).parent();
                 // qDebug() << "p paragraphStyle: " << paragraphStyleName;
-                element = epubDocument.createElement("p");
+                element = xhtmlDocument.createElement("p");
                 element.setAttribute("class", paragraphStyleName);
-                epubBody.appendChild(element);
+                xhtmlBody.appendChild(element);
                 elementCurrent.push(element);
 
             }
 
-			element = epubDocument.createElement("span");
+			element = xhtmlDocument.createElement("span");
 
 			characterStyleName = docItem->itemText.charStyle(run.pos + 1).displayName();
 			// qDebug() << "p characterstyle: " << characterStyleName;
@@ -800,7 +812,7 @@ void EPUBexport::addText(PageItem* docItem)
 
             run_text = content.mid(run.pos, run.length);
 			// qDebug() << "run text: " << run_text;
-            QDomText t = epubDocument.createTextNode(run_text);
+            QDomText t = xhtmlDocument.createTextNode(run_text);
 			// qDebug() << "tag name: " << element.tagName();
 
 			if (hasCharacterStyle) {
@@ -837,9 +849,9 @@ void EPUBexport::addImage(PageItem* docItem)
 		{
 			QString filepath = "Images/" + fileinfo.fileName();
 			// add the image to the dom
-			QDomElement div = epubDocument.createElement("div");
-			epubBody.appendChild(div);
-			QDomElement element = epubDocument.createElement("img");
+			QDomElement div = xhtmlDocument.createElement("div");
+			xhtmlBody.appendChild(div);
+			QDomElement element = xhtmlDocument.createElement("img");
 			// <image height="800" width="600" xlink:href="../Images/cover.jpeg"></image>
 			element.setAttribute("height", (int) docItem->height()); // TODO: use the real width of the visible part of the image (as a rectangle)
 			element.setAttribute("width", (int) docItem->width());

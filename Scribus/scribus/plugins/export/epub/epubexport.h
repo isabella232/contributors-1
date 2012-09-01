@@ -182,7 +182,7 @@ public:
 	\brief Create the SVG exporter
 	\param doc QString file name
 	 */
-	bool doExport(QString fName, EPUBExportOptions &Opts);
+	void doExport(QString fName, EPUBExportOptions &Opts);
 	EPUBExportOptions Options;
 
     /*!
@@ -209,16 +209,18 @@ private:
 
     QVector<EPUBExportContentItem> contentItems;
 
-	QDomDocument epubDocument;
-	QDomElement epubRoot;
-	QDomElement epubBody;
-    bool exportMimetype();
-    bool exportContainer();
+	QDomDocument xhtmlDocument;
+	QDomElement xhtmlRoot;
+	QDomElement xhtmlBody;
+    void exportMimetype();
+    void exportContainer();
     void exportCSS();
     void exportItems();
-    bool exportContent();
-    bool exportNCX();
-    bool exportOPF();
+    void exportXhtml();
+    void exportNCX();
+    void exportOPF();
+    void initializeXhtml();
+    void addXhtml();
     void addText(PageItem* docItem);
     void addImage(PageItem* docItem);
 
