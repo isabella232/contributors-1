@@ -56,6 +56,8 @@
 	  fields can be handy for epub in some cases
 	- we may need to obfuscate fonts on demand (or leave it to sigil?)
 	  (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
+	- fill the remaining metadata fields
+	- first implementation of char formatting
 
  ***************************************************************************/
 
@@ -94,34 +96,9 @@
 #include "util_formats.h" // for checking file extension
 #include "documentinformation.h" // for filling the metadata
 
-/**
-  * <?xml version="1.0" encoding="UTF-8" ?>
-  * <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-  * <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
-  *   <head>
-  *     <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
-  *     <title>Pride and Prejudice</title>
-  *     <link rel="stylesheet" href="css/main.css" type="text/css" />
-  *   </head>
-  *   <body>
-  *     ...
-  *   </body>
-  * </html>
- */
-EPUBexport::EPUBexport( ScribusDoc* doc )
+EPUBexport::EPUBexport(ScribusDoc* doc)
 {
 	this->doc = doc;
-
-	for (int i = 0; i < doc->Layers.count(); i++)
-    {
-        ScLayer layer = doc->Layers.at(i);
-        // qDebug() << "layer.ID: " << layer.ID;
-        // qDebug() << "layer.name: " << layer.Name;
-        // qDebug() << "layer.isPrintable: " << layer.isPrintable;
-        if (!layer.isPrintable)
-            layerNotPrintableList.append(layer.ID);
-    }
-    // qDebug() << "layerNotPrintableList: " << layerNotPrintableList;
 
 	QDomText text;
 	QDomElement element;
@@ -172,14 +149,16 @@ bool EPUBexport::isDocItemTopLeftLessThan(const PageItem *docItem1, const PageIt
            ((docItem1->gXpos == docItem2->gXpos) && (docItem1->gYpos < docItem2->gYpos));
 }
 
-bool EPUBexport::doExport( QString filename, EPUBExportOptions &Opts )
+bool EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
 {
 	Options = Opts;
     targetFile = filename;
 
+	readMetadata();
+	readItems();
+
 	targetFile = "/tmp/"+targetFile;
 	qDebug() << "forcing the output of the .epub file to /tmp";
-	readMetadata();
 	epubFile = new FileZip(targetFile);
 	epubFile->create();
 
@@ -187,56 +166,9 @@ bool EPUBexport::doExport( QString filename, EPUBExportOptions &Opts )
 	exportContainer();
 
     exportCSS();
+	exportItems();
 
-    int n, m;
-    n = doc->DocPages.count();
-    // qDebug() << "n: " << n;
-    QVector< QList<PageItem*> > itemList(n);
-    m = doc->DocItems.count();
-    // qDebug() << "m: " << m;
-    PageItem* docItem = NULL;
-    for (int i = 0; i < m; ++i )
-    {
-        docItem = doc->DocItems[i];
-        // qDebug() << "i: " << i;
-		if (!docItem->printEnabled())
-			continue;
-        if (layerNotPrintableList.contains(docItem->LayerID))
-            continue;
-        itemList[docItem->OwnPage].append(docItem);
-        
-        qDebug() << "on page: " << docItem->OwnPage;
-    }
 
-    qDebug() << "itemList: " << itemList;
-
-    doc->scMW()->setStatusBarInfoText( tr("Exporting to EPUB"));
-    doc->scMW()->mainWindowProgressBar->setMaximum(m);
-    int mm = 0;
-    int jj = 0;
-	QString content = QString();
-    for (int i = 0; i < n; i++)
-    {
-        qSort(itemList[i].begin(), itemList[i].end(), EPUBexport::isDocItemTopLeftLessThan);
-
-        mm = itemList[i].count();
-        jj = jj + mm;
-
-        doc->scMW()->mainWindowProgressBar->setValue(jj);
-        for (int j = 0; j < mm; j++) {
-            docItem = itemList[i].at(j);
-            if (docItem->asTextFrame())
-            {
-                addText(docItem);
-            }
-            else if (docItem->asImageFrame())
-            {
-                addImage(docItem);
-            }
-        }
-    }
-    doc->scMW()->mainWindowProgressBar->setValue(mm);
-    doc->scMW()->setStatusBarInfoText("");
 
 	exportContent();
 	exportNCX();
@@ -255,22 +187,59 @@ void EPUBexport::readMetadata()
 {
 	// read the document information
 	documentMetadata = doc->documentInfo();
-	qDebug() << "author:" << documentMetadata.author();
 	// make sure that all mandatory fields are filled
 	if (documentMetadata.title() == "")
 		documentMetadata.setTitle(targetFile);
+	// if (documentMetadata.author() == "") // -> it's recommended not obligatory!
+	// if (documentMetadata.authorSort() == "") // -> it's recommended not obligatory!
 	if (documentMetadata.langInfo() == "")
 		documentMetadata.setLangInfo(ScCore->getGuiLanguage());
 	if (documentMetadata.langInfo() == "")
 		documentMetadata.setLangInfo("en"); // scribus' default language is english (or rather en-GB?)
+		// doc->hyphLanguage()); the current hyphenation language could be a better guess for the language
 	// TODO: store the generated uuid in the scribus document information?
 	if (documentMetadata.ident() == "")
-		documentMetadata.setIdent("urn:uuid:"+QUuid::createUuid().toString().remove( "{" ).remove( "}" )); // Sigil/Misc/Utility.cpp -> Utility::CreateUUID()
+		documentMetadata.setIdent("urn:uuid:"+QUuid::createUuid().toString().remove("{" ).remove("}" )); // Sigil/Misc/Utility.cpp -> Utility::CreateUUID()
 	// TODO: store the generated date in the scribus document information?
     // QDate now = QDate::currentDate();
     // now.toString ("dd.MM.yyyy hh:mm")
 	if (documentMetadata.date() == "")
 		documentMetadata.setDate(QDate::currentDate().toString(Qt::ISODate)); // TODO: respect the document language or ISO? (this should also be done also to other parts of the code where yy.mm.dd (hh:tt) is used)
+}
+
+void EPUBexport::readItems()
+{
+	for (int i = 0; i < doc->Layers.count(); i++)
+    {
+        ScLayer layer = doc->Layers.at(i);
+        // qDebug() << "layer.ID: " << layer.ID;
+        // qDebug() << "layer.name: " << layer.Name;
+        // qDebug() << "layer.isPrintable: " << layer.isPrintable;
+        if (!layer.isPrintable)
+            layerNotPrintableList.append(layer.ID);
+    }
+    // qDebug() << "layerNotPrintableList: " << layerNotPrintableList;
+
+    int n = doc->DocPages.count();
+    // qDebug() << "n: " << n;
+    itemList.resize(n);
+    int m = doc->DocItems.count();
+    // qDebug() << "m: " << m;
+    PageItem* docItem = NULL;
+    for (int i = 0; i < m; ++i )
+    {
+        docItem = doc->DocItems[i];
+        // qDebug() << "i: " << i;
+		if (!docItem->printEnabled())
+			continue;
+        if (layerNotPrintableList.contains(docItem->LayerID))
+            continue;
+        itemList[docItem->OwnPage].append(docItem);
+        
+        qDebug() << "on page: " << docItem->OwnPage;
+    }
+
+    qDebug() << "itemList: " << itemList;
 }
 
 
@@ -337,7 +306,7 @@ bool EPUBexport::exportContainer()
 /**
   * add OEBPS/Styles/style.css to the current epub file
   */ 
-bool EPUBexport::exportCSS()
+void EPUBexport::exportCSS()
 {
     int n = 0;
 	QString wr = QString();
@@ -420,24 +389,7 @@ bool EPUBexport::exportCSS()
 	contentItem.mediaType = "text/css";
 	contentItems.append(contentItem);
 
-    return true;
     /*
-	docu.writeAttribute("AUTHOR"      ,doc->documentInfo().author());
-	docu.writeAttribute("COMMENTS"    ,doc->documentInfo().comments());
-	docu.writeAttribute("KEYWORDS"    ,doc->documentInfo().keywords());
-	docu.writeAttribute("PUBLISHER",doc->documentInfo().publisher());
-	docu.writeAttribute("DOCDATE",doc->documentInfo().date());
-	docu.writeAttribute("DOCTYPE",doc->documentInfo().type());
-	docu.writeAttribute("DOCFORMAT",doc->documentInfo().format());
-	docu.writeAttribute("DOCIDENT",doc->documentInfo().ident());
-	docu.writeAttribute("DOCSOURCE",doc->documentInfo().source());
-	docu.writeAttribute("DOCLANGINFO",doc->documentInfo().langInfo());
-	docu.writeAttribute("DOCRELATION",doc->documentInfo().relation());
-	docu.writeAttribute("DOCCOVER",doc->documentInfo().cover());
-	docu.writeAttribute("DOCRIGHTS",doc->documentInfo().rights());
-	docu.writeAttribute("DOCCONTRIB",doc->documentInfo().contrib());
-	docu.writeAttribute("TITLE",doc->documentInfo().title());
-	docu.writeAttribute("SUBJECT",doc->documentInfo().subject());
 	docu.writeAttribute("VHOCH"  , doc->typographicPrefs().valueSuperScript);
 	docu.writeAttribute("VHOCHSC", doc->typographicPrefs().scalingSuperScript);
 	docu.writeAttribute("VTIEF"  , doc->typographicPrefs().valueSubScript);
@@ -445,6 +397,54 @@ bool EPUBexport::exportCSS()
 	docu.writeAttribute("VKAPIT" , doc->typographicPrefs().valueSmallCaps);
 	docu.writeAttribute("LANGUAGE", doc->hyphLanguage());
      */
+}
+
+/**
+  * <?xml version="1.0" encoding="UTF-8" ?>
+  * <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+  * <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+  *   <head>
+  *     <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+  *     <title>Pride and Prejudice</title>
+  *     <link rel="stylesheet" href="css/main.css" type="text/css" />
+  *   </head>
+  *   <body>
+  *     ...
+  *   </body>
+  * </html>
+ */
+void EPUBexport::exportItems()
+{
+    int n = doc->DocPages.count();
+    int m = doc->DocItems.count();
+    doc->scMW()->setStatusBarInfoText(tr("Exporting to EPUB"));
+    doc->scMW()->mainWindowProgressBar->setMaximum(m);
+    int mm = 0;
+    int jj = 0;
+	QString content = QString();
+    PageItem* docItem;
+    for (int i = 0; i < n; i++)
+    {
+        qSort(itemList[i].begin(), itemList[i].end(), EPUBexport::isDocItemTopLeftLessThan);
+
+        mm = itemList[i].count();
+        jj = jj + mm;
+
+        doc->scMW()->mainWindowProgressBar->setValue(jj);
+        for (int j = 0; j < mm; j++) {
+            docItem = itemList[i].at(j);
+            if (docItem->asTextFrame())
+            {
+                addText(docItem);
+            }
+            else if (docItem->asImageFrame())
+            {
+                addImage(docItem);
+            }
+        }
+    }
+    doc->scMW()->mainWindowProgressBar->setValue(mm);
+    doc->scMW()->setStatusBarInfoText("");
 }
 
 /**
@@ -624,7 +624,7 @@ bool EPUBexport::exportOPF()
 	metadata.appendChild(element);
 
 	element = xmlDocument.createElement("dc:creator");
-	element.setAttribute("opf:file-as", documentMetadata.author()); // TODO: use the to be created authorFileAs
+	element.setAttribute("opf:file-as", documentMetadata.author()); // TODO: use the to be created authorFileAs / authorSort
 	element.setAttribute("opf:role", "aut");
 	text = xmlDocument.createTextNode(documentMetadata.author());
 	element.appendChild(text);

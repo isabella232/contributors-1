@@ -174,7 +174,7 @@ class EPUBexport : public QObject
     Q_OBJECT
 
 public:
-	EPUBexport( ScribusDoc* doc );
+	EPUBexport(ScribusDoc* doc);
 	~EPUBexport();
 
 	/*!
@@ -182,7 +182,7 @@ public:
 	\brief Create the SVG exporter
 	\param doc QString file name
 	 */
-	bool doExport( QString fName, EPUBExportOptions &Opts );
+	bool doExport(QString fName, EPUBExportOptions &Opts);
 	EPUBExportOptions Options;
 
     /*!
@@ -198,6 +198,9 @@ private:
 
 	DocumentInformation documentMetadata;
 	void readMetadata();
+    QVector< QList<PageItem*> > itemList;
+
+	void readItems();
 
     // QMap<int, ScLayer*> layerList;
     QList<int> layerNotPrintableList;
@@ -211,7 +214,8 @@ private:
 	QDomElement epubBody;
     bool exportMimetype();
     bool exportContainer();
-    bool exportCSS();
+    void exportCSS();
+    void exportItems();
     bool exportContent();
     bool exportNCX();
     bool exportOPF();
