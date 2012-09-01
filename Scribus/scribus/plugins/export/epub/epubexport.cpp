@@ -499,7 +499,7 @@ void EPUBexport::exportNCX()
 
 	QDomElement ncx = xmlDocument.createElement("ncx");
 	ncx.setAttribute("version", "2005-1");
-	ncx.setAttribute("xml:lang", "en"); // TODO: correctly set the document language
+	ncx.setAttribute("xml:lang", documentMetadata.langInfo());
 	ncx.setAttribute("xmlns", "http://www.daisy.org/z3986/2005/ncx/");
 	xmlDocument.appendChild(ncx);
 
@@ -508,7 +508,7 @@ void EPUBexport::exportNCX()
 
 	element = xmlDocument.createElement("meta");
 	element.setAttribute("name", "dtb:uid");
-	element.setAttribute("content", "123456789X");  // same as in .odf // TODO: set it to the correct value
+	element.setAttribute("content", documentMetadata.ident());  // same as in .opf
 	head.appendChild(element);
 
 	element = xmlDocument.createElement("meta");
@@ -530,14 +530,14 @@ void EPUBexport::exportNCX()
     ncx.appendChild(element);
 	elementText = xmlDocument.createElement("text");
 	element.appendChild(elementText);
-	text = xmlDocument.createTextNode("The book title"); // TODO: set book title
+	text = xmlDocument.createTextNode(documentMetadata.title());
 	elementText.appendChild(text);
 
     element = xmlDocument.createElement("docAuthor");
     ncx.appendChild(element);
 	elementText = xmlDocument.createElement("text");
 	element.appendChild(elementText);
-	text = xmlDocument.createTextNode("The book author"); // TODO: set book author
+	text = xmlDocument.createTextNode(documentMetadata.author());
 	elementText.appendChild(text);
 
 	element = xmlDocument.createElement("navMap");
@@ -783,7 +783,6 @@ void EPUBexport::addText(PageItem* docItem)
                 element.setAttribute("class", paragraphStyleName);
                 xhtmlBody.appendChild(element);
                 elementCurrent.push(element);
-
             }
 
 			element = xhtmlDocument.createElement("span");
