@@ -105,7 +105,7 @@ for which a new license (GPL+exception) is in place.
 #include "ui/layers.h"
 #include "ui/scmessagebox.h"
 #include "ui/storyeditor.h"
-#include "imposer/imposeroptions.h"
+#include "imposition/impositionoptions.h"
 
 // static const bool FRAMESELECTION_EDITS_DEFAULTSTYLE = false;
 

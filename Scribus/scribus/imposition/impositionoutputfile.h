@@ -21,7 +21,7 @@
 #define IMPOSEOUTPUTFILE_H
 
 #include "podofo/podofo.h"
-#include "imposeinputfile.h"
+#include "impositioninputfile.h"
 
 #include <string>
 #include <map>

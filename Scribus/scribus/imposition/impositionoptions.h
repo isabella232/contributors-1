@@ -76,12 +76,6 @@ public:
 	 */
 	ImposerOptions::VerifyResults verify(QString* problemDescription);
 	ImposerOptions::VerifyResults verify();
-  ImposerOptions(ImposerStyle s=ImposerOptions::None, int sR=0, bool sAS=false, double sW=1.0, 
-                 double sH=1.0, double sF=1.0, int n_X=1, int n_Y=1, bool dS=false) {
-        style = s; sheetRotation = sR; sheetAutoSize=sAS; sheetWidth=sW, sheetHeight=sH;
-        scalingFactor=sF; nX=n_X; nY=n_Y; doubleSided=dS;
-        std::cerr<<"ImposerOptions::ImposerOptions"<<std::endl;
-      }
 	ImposerStyle style;
 	int  sheetRotation;
 	bool sheetAutoSize;

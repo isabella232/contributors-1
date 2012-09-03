@@ -17,7 +17,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "imposeoutputfile.h"
+#include "impositionoutputfile.h"
 
 #include <fstream>
 #include <stdexcept>
@@ -49,7 +49,6 @@ namespace PoDoFo
 
 		imposeOutputFile::imposeOutputFile ( )
 		{
-			std::cerr<<"imposeOutputFile::imposeOutputFile"<<std::endl;
 			targetDoc = 0;
 			sheet = NULL; 
 			//scaleFactor = 1.0;
@@ -57,7 +56,6 @@ namespace PoDoFo
 
 		PdfObject* imposeOutputFile::migrateResource ( PdfObject * obj, PoDoFo::Impose::imposeInputFile * input  )
 		{
-// 			std::cerr<<"imposeOutputFile::migrateResource"<<std::endl;
 			PdfObject *ret ( 0 );
 
 			if ( obj->IsDictionary() )
@@ -117,7 +115,6 @@ namespace PoDoFo
 
 		PdfObject* imposeOutputFile::getInheritedResources ( PdfPage* page, PoDoFo::Impose::imposeInputFile * input)
 		{
-// 			std::cerr<<"imposeOutputFile::getInheritedResources"<<std::endl;
 			PdfObject *res ( 0 ); // = new PdfObject;
 			PdfObject *rparent = page->GetObject();
 			while ( rparent && rparent->IsDictionary() )

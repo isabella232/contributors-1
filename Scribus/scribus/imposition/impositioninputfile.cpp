@@ -17,7 +17,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "imposeinputfile.h"
+#include "impositioninputfile.h"
 #define DEBUG
 
 #include <fstream>
@@ -94,9 +94,6 @@ namespace PoDoFo
 
 
 			pcount = sourceDoc->GetPageCount();
-#ifdef DEBUG
-		 	std::cerr << "Document has "<< pcount << " page(s) " << endl;
-#endif
 			if ( pcount > 0 ) // only here to avoid possible segfault, but PDF without page is not conform IIRC
 			{
 				PoDoFo::PdfRect rect ( sourceDoc->GetPage ( 0 )->GetMediaBox() );

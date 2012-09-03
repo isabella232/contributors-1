@@ -22,7 +22,6 @@ for which a new license (GPL+exception) is in place.
  ***************************************************************************/
 
 #include "pdflib_core.h"
-#include "imposer/imposer.h"
 #include "scconfig.h"
 
 #if defined(_MSC_VER) && !defined(_USE_MATH_DEFINES)
@@ -58,7 +57,8 @@ for which a new license (GPL+exception) is in place.
 
 #include "cmsettings.h"
 #include "commonstrings.h"
-#include "imposer/imposeroptions.h"
+#include "imposition/imposition.h"
+#include "imposition/impositionoptions.h"
 #include "pageitem.h"
 #include "pageitem_textframe.h"
 #include "pageitem_group.h"

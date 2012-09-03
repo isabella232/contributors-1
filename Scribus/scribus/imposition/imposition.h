@@ -2,9 +2,9 @@
 #define IMPOSER_H
 
 #include "podofo/podofo.h"
-#include "imposeroptions.h"
-#include "imposeinputfile.h"
-#include "imposeoutputfile.h"
+#include "impositionoptions.h"
+#include "impositioninputfile.h"
+#include "impositionoutputfile.h"
 #include <QString>
 
 namespace PoDoFo

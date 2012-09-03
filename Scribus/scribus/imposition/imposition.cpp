@@ -1,11 +1,11 @@
-#include "imposer.h"
+#include "imposition.h"
 
 #include <cstdlib>
 #include <iostream>
 #include <string>
 #include <cstdio>
 #include <stdexcept>
-
+#include <iomanip>
 using std::cerr;
 using std::strtod;
 using std::ostringstream;
@@ -17,14 +17,12 @@ using std::istream;
 using std::ostream;
 using std::endl;
 using std::runtime_error;
-
 namespace PoDoFo
 {
 	namespace Impose
 	{
 		imposer::imposer ( )
 		{
-			std::cerr<<"imposer::imposer"<<std::endl;
 		}
 
 		void imposer::imposeBirthdayCard (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
@@ -34,13 +32,11 @@ namespace PoDoFo
 			int currentPage;
 			int currentPageOnSheet;
 
-			double destWidth = input->sourceWidth * 2;
-			double destHeight = input->sourceHeight * 2;
-			double scaleFactor = 1.0;
+			double scalingFactor = options->scalingFactor;
+			double destWidth   = options->sheetWidth;
+			double destHeight  = options->sheetHeight;
 			std::string boundingBox = "";
 
- 			std::cerr<<"imposer::imposeBirthdayCard"<<std::endl;
-	
 			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
 			output->createTarget(target.toStdString(),input);
 	
@@ -48,13 +44,10 @@ namespace PoDoFo
 				throw std::invalid_argument ( "Output file is null" );
 
 			numberOfSheets = (input->pcount+3) / 4;
-#ifdef DEBUG
-			std::cerr<<"Creating " << numberOfSheets << " sheets from " << input->pcount << " pages." <<std::endl;
-#endif			
 			currentPage = 1;
 			for (currentSheet = 1; currentSheet <= numberOfSheets; currentSheet++) {
 				/* Create new sheet */
-				output->startSheet(destWidth, destHeight, scaleFactor);
+				output->startSheet(destWidth, destHeight, scalingFactor);
 				for (currentPageOnSheet = 1; currentPageOnSheet <= 4; currentPageOnSheet++) {
 					if (currentPage <= input->pcount) {
 						/* If there are still input pages left, add the next to the output */
@@ -114,19 +107,15 @@ namespace PoDoFo
 		{
 			int numberOfSheets = 0;
 			int currentSheet;
-			int currentPage;
 			
-			int nx = options->nX;
-      int ny = options->nY;
-			
+		  int cx, cy;
+
 			double tx,ty;
-			double destWidth = input->sourceWidth * nx;
-			double destHeight = input->sourceHeight * ny;
-			double scaleFactor = 1.0;
+			double scalingFactor = options->scalingFactor;
+			double destWidth   = options->sheetWidth;
+			double destHeight  = options->sheetHeight;
 			std::string boundingBox = "";
 
- 			std::cerr<<"imposer::imposeBusinessCard"<<std::endl;
-	
 			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
 			output->createTarget(target.toStdString(),input);
 	
@@ -134,20 +123,18 @@ namespace PoDoFo
 				throw std::invalid_argument ( "Output file is null" );
 
 			numberOfSheets = input->pcount;
-#ifdef DEBUG
-			std::cerr<<"Creating " << numberOfSheets << " sheets from " << input->pcount << " pages." <<std::endl;
-#endif			
-			currentPage = 1;
 			for (currentSheet = 1; currentSheet <= numberOfSheets; currentSheet++) {
-				/* Create new sheet */
-				output->startSheet(destWidth, destHeight, scaleFactor);
-				for (tx = 0.0; tx<destWidth; tx+=input->sourceWidth) {
-					for (ty = 0.0; ty<destHeight; ty+=input->sourceHeight) {
-						output->imposePage(currentPage, 1.0, 0.0, tx,ty);
+				output->startSheet(destWidth, destHeight, scalingFactor);
+				tx = 0.0;
+        for (cx = 0; cx<options->nX; cx++) {
+          ty = 0.0;
+          for (cy = 0; cy<options->nY; cy++) {
+						output->imposePage(currentSheet, 1.0, 0.0, tx,ty); /* Sheet number is page number */
+					  ty+=input->sourceHeight;
 					}
+          tx+=input->sourceWidth;
 				}
 				output->finishSheet();
-				currentPage++;
 
 			}
 			std::string tmpstr = target.toStdString();
@@ -159,9 +146,9 @@ namespace PoDoFo
 		{
 			int nPagesPerSheet = options->nX * options->nY;
 
-			double scaleFactor = 1.0;
-			double destWidth   = input->sourceWidth  * options->nX * scaleFactor;
-			double destHeight  = input->sourceHeight * options->nY * scaleFactor;
+			double scalingFactor = options->scalingFactor;
+			double destWidth   = options->sheetWidth;
+			double destHeight  = options->sheetHeight;
 
 			std::string boundingBox = "";
 			
@@ -176,8 +163,6 @@ namespace PoDoFo
 			double tx;
 			double ty;
 
- 			std::cerr<<"imposer::imposeMultiFold"<<std::endl;
-	
 			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
 			output->createTarget(target.toStdString(),input);
 	
@@ -195,13 +180,10 @@ namespace PoDoFo
 			  numberOfCreatedPages = (input->pcount+nPagesPerSheet-1); 
 			  numberOfCreatedPages -= numberOfCreatedPages % nPagesPerSheet;
 			}
-#ifdef DEBUG
-			std::cerr<<"Creating " << numberOfCreatedPages/nPagesPerSheet << " sheets from " << input->pcount << " pages." <<std::endl;
-#endif			
 			currentPage = 1; currentSide = 0;
 			while (currentPage <= numberOfCreatedPages) {
 				/* Create new sheet */
-				output->startSheet(destWidth, destHeight, scaleFactor);
+				output->startSheet(destWidth, destHeight, scalingFactor);
 				for (int pY = 1; pY <= options->nY; pY ++) {
           for (int pX = 1; pX <= options->nX; pX ++) {
             /* FIXME: Support rotation */
@@ -224,11 +206,10 @@ namespace PoDoFo
 		{
 			int numberOfCreatedPages = 0;
 			int leftPage, rightPage;
-			int doubleSided = 1; 		/* From configuration dialog */
 
-			double destWidth = input->sourceWidth * 2;
-			double destHeight = input->sourceHeight;
-			double scaleFactor = 1.0;
+			double scalingFactor = options->scalingFactor;
+			double destWidth   = options->sheetWidth;
+			double destHeight  = options->sheetHeight;
 			std::string boundingBox = "";
 					
 			/* cosR and sinR are fixed for now: no rotation supported yet */	
@@ -238,15 +219,13 @@ namespace PoDoFo
 			double tx;
 			double ty;
 
- 			std::cerr<<"imposer::imposeMagazine"<<std::endl;
-	
 			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
 			output->createTarget(target.toStdString(),input);
 	
 			if ( !output->targetDoc )
 				throw std::invalid_argument ( "Output file is null" );
 
-			if (doubleSided == 1) {
+			if (options->doubleSided == true) {
 			  /* The number of pages we create is the number of input pages rounded up to the nearest multiple of 4. 
 			   * Two pages per sheet, double sided */
 			  numberOfCreatedPages = (input->pcount+3) & ~3; 
@@ -255,9 +234,6 @@ namespace PoDoFo
 			   * Two pages per sheet, single sided */
 			  numberOfCreatedPages = (input->pcount+1) & ~1; 
 			}
-#ifdef DEBUG
-			std::cerr<<"Creating " << numberOfCreatedPages/2 << " sheets from " << input->pcount << " pages." <<std::endl;
-#endif			
 			/* Set starting pages. */
 			leftPage = 1;
 			rightPage = numberOfCreatedPages;
@@ -271,12 +247,9 @@ namespace PoDoFo
 			 */
 			for (; leftPage < rightPage; leftPage++, rightPage--) {
 				/* Create new sheet */
-#ifdef DEBUG
-		                std::cerr << "Creating sheet with pages" << leftPage << " and " <<  rightPage << std::endl;
-#endif
-				output->startSheet(destWidth, destHeight, scaleFactor);
+				output->startSheet(destWidth, destHeight, scalingFactor);
 				ty = 0.0;
-				if ((doubleSided == 1) && ((leftPage & 1)==1)) {
+				if ((options->doubleSided == 1) && ((leftPage & 1)==1)) {
 					/* If we impose double sided, and we are printing the odd pages,
 					   swap left and right */
 					tx = 0.0;
@@ -290,9 +263,6 @@ namespace PoDoFo
 					tx = input->sourceWidth;
 					if (rightPage <= input->pcount) output->imposePage(rightPage, cosR, sinR, tx,ty);
 				}
-#ifdef DEBUG
-                		std::cerr << "Finishing sheet" << std::endl;
-#endif
 		                output->finishSheet();
 
 			}
