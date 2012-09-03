@@ -8,6 +8,7 @@ ${FREETYPE_INCLUDE_DIRS}
 SET(SCRIBUS_IMPOSER_LIB_SOURCES
 imposeinputfile.cpp
 imposeoutputfile.cpp
+imposeroptions.cpp
 imposer.cpp
 )
 

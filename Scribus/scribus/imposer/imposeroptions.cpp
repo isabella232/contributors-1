@@ -7,12 +7,12 @@ for which a new license (GPL+exception) is in place.
 #include "imposeroptions.h"
 #include "scribusstructs.h"
 
-imposerOptions::VerifyResults imposerOptions::verify()
+ImposerOptions::VerifyResults ImposerOptions::verify()
 {
 	return verify(static_cast<QString*>(NULL));
 }
 
-imposerOptions::VerifyResults imposerOptions::verify(QString* /*problemDescription*/)
+ImposerOptions::VerifyResults ImposerOptions::verify(QString* /*problemDescription*/)
 {
 	// TODO: implement this method
 	return Verify_NoError;

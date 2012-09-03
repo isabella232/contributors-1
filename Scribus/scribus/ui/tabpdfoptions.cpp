@@ -44,6 +44,8 @@ for which a new license (GPL+exception) is in place.
 #include "util_icon.h"
 #include "scribuscore.h"
 #include "util.h"
+#include "pagesize.h"
+#include <iostream>
 
 TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
                                 const SCFonts &AllFonts,
@@ -905,73 +907,95 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	ImpositionGroupLayout->setMargin( 10 );
 	ImpositionGroupLayout->setAlignment( Qt::AlignTop );
 
-  ImpositionText  = new QLabel ( tr( "Imposition style") );
+	ImpositionText	= new QLabel ( tr( "Imposition style") );
 	ImpositionGroupLayout->addWidget(ImpositionText,0,0,1,4);
-  ImpositionCombo = new QComboBox( ImpositionGroup );
+	ImpositionCombo = new QComboBox( ImpositionGroup );
 	ImpositionCombo->addItem( tr( "No imposition" ) );
 	ImpositionCombo->addItem( tr( "Birthday Cards: Two-way 2x2 fold" ) );
-	ImpositionCombo->addItem( tr( "Business Cards: Grid of each page on a sheet" ) );
+	ImpositionCombo->addItem( tr( "Business Cards: Multiple copies of one page on a sheet" ) );
 	ImpositionCombo->addItem( tr( "Magazine: Two pages on one sheet, in magazine order" ) );
-	ImpositionCombo->addItem( tr( "Multi-fold: Two or more adjacent pages on one sheet" ) );
+	ImpositionCombo->addItem( tr( "Multi-fold: Two or more pages on one sheet" ) );
 	ImpositionCombo->addItem( tr( "Tiles: Split each page in a grid of sheets." ) );
-	ImpositionCombo->addItem( tr( "File: Load external imposition plan" ) );
+	//ImpositionCombo->addItem( tr( "File: Load external imposition plan" ) );
 	ImpositionCombo->setEditable(false);
 	ImpositionGroupLayout->addWidget(ImpositionCombo,1,0,1,4);
 	
-  AutoSheetSizeText  = new QLabel ( tr( "Sheet size and pages per sheet") );
+	AutoSheetSizeText	= new QLabel ( tr( "Sheet size and pages per sheet") );
 	ImpositionGroupLayout->addWidget(AutoSheetSizeText,3,0,1,4);
 	AutoSheetSizeCombo = new QComboBox( ImpositionGroup );
-  AutoSheetSizeCombo->addItem( tr( "Automatically calculate sheet size.") );
-  AutoSheetSizeCombo->addItem( tr( "Automatically calculate pages per sheet.") );
-  AutoSheetSizeCombo->addItem( tr( "Set sheet size and number of pages manually.") );
-  AutoSheetSizeCombo->setEditable(false);
+	AutoSheetSizeCombo->addItem( tr( "Automatically calculate sheet size.") );
+	AutoSheetSizeCombo->addItem( tr( "Automatically calculate pages per sheet.") );
+	AutoSheetSizeCombo->addItem( tr( "Set sheet size and number of pages manually.") );
+	AutoSheetSizeCombo->setEditable(false);
 	ImpositionGroupLayout->addWidget(AutoSheetSizeCombo,4,0,1,4);
 
 	SheetSizeLabel = new QLabel( tr( "&Size:" ), ImpositionGroup );
 	ImpositionGroupLayout->addWidget( SheetSizeLabel, 6, 0 );
-//	PageSize ss(prefsManager->appPrefs.docSetupPrefs.pageSize);
-	ImpDoubleSidedComboBox = new QComboBox( ImpositionGroup );
-	ImpDoubleSidedComboBox->addItem( tr("Single sided") );
-	ImpDoubleSidedComboBox->addItem( tr("Double sided") );
-	ImpDoubleSidedComboBox->setCurrentIndex(1/*prefsManager->appPrefs.docSetupPrefs.pageRotation*/);
-	ImpositionGroupLayout->addWidget(ImpDoubleSidedComboBox, 8, 1 );
+	PageSize sheetSizes(PrefsManager::instance()->appPrefs.docSetupPrefs.pageSize);
 	SheetSizeComboBox = new QComboBox( ImpositionGroup );
-//	SheetSizeComboBox->addItems(ss.activeSizeTRList());
+	SheetSizeComboBox->addItems(sheetSizes.activeSizeTRList());
 	SheetSizeComboBox->addItem( CommonStrings::trCustomPageSize );
 	SheetSizeComboBox->setEditable(false);
 	SheetSizeLabel->setBuddy(SheetSizeComboBox);
 	ImpositionGroupLayout->addWidget(SheetSizeComboBox, 6, 1 );
+
+	ImpSheetWidth = new ScrSpinBox( ImpositionGroup, unitIndex );
+	ImpSheetWidth->setSuffix( unit );
+	ImpSheetWidth->setMinimum(1 * unitRatio);
+	ImpSheetWidth->setMaximum(99999 * unitRatio);
+	ImpositionGroupLayout->addWidget( ImpSheetWidth, 7, 1);
+	ImpSheetWidthLabel = new QLabel ( tr( "Sheet width:") );
+	ImpSheetWidthLabel->setBuddy(ImpSheetWidth);
+	ImpositionGroupLayout->addWidget( ImpSheetWidthLabel, 7, 0 );
+
+	ImpSheetHeight = new ScrSpinBox( ImpositionGroup, unitIndex );
+	ImpSheetHeight->setSuffix( unit );
+	ImpSheetHeight->setMinimum(1 * unitRatio);
+	ImpSheetHeight->setMaximum(99999 * unitRatio);
+	ImpositionGroupLayout->addWidget( ImpSheetHeight, 7, 3 );
+	ImpSheetHeightLabel = new QLabel ( tr( "Sheet height:") );
+	ImpSheetHeightLabel->setBuddy(ImpSheetHeight);
+	ImpositionGroupLayout->addWidget( ImpSheetHeightLabel, 7, 2 );
+
 	SheetRotationLabel = new QLabel( tr( "&Rotation:" ), ImpositionGroup );
-	ImpositionGroupLayout->addWidget( SheetRotationLabel, 7, 0 );
+	ImpositionGroupLayout->addWidget( SheetRotationLabel, 8, 0 );
 	SheetRotationComboBox = new QComboBox( ImpositionGroup );
-	SheetRotationComboBox->addItem( tr( "0" ) );
-	SheetRotationComboBox->addItem( tr( "90" ) );
-	SheetRotationComboBox->addItem( tr( "180" ) );
-	SheetRotationComboBox->addItem( tr( "270" ) );
+	SheetRotationComboBox->addItem( QString::fromUtf8("0 °") );
+	SheetRotationComboBox->addItem( QString::fromUtf8("90 °") );
+	SheetRotationComboBox->addItem( QString::fromUtf8("180 °") );
+	SheetRotationComboBox->addItem( QString::fromUtf8("270 °") );
 	SheetRotationComboBox->setEditable(false);
 	SheetRotationComboBox->setEnabled(false);
 	SheetRotationComboBox->setCurrentIndex(0/*prefsManager->appPrefs.docSetupPrefs.pageRotation*/);
 	SheetRotationLabel->setBuddy(SheetRotationComboBox);
-  ImpositionGroupLayout->addWidget( SheetRotationComboBox, 7, 1 );
-  ImpNXSpinBox = new QSpinBox (ImpositionGroup);
-  ImpNXSpinBox->setRange(1,99);
-  ImpositionGroupLayout->addWidget( ImpNXSpinBox, 5, 1 );
+	ImpositionGroupLayout->addWidget( SheetRotationComboBox, 8, 1 );
+
+	ImpNXSpinBox = new QSpinBox (ImpositionGroup);
+	ImpNXSpinBox->setRange(1,99);
+	ImpositionGroupLayout->addWidget( ImpNXSpinBox, 5, 1 );
 	ImpNXLabel   = new QLabel( tr( "&Horizontal:" ), ImpositionGroup );
-  ImpNXSpinBox->setValue(1);
+	ImpNXSpinBox->setValue(1);
 	ImpNXLabel->setBuddy(ImpNXSpinBox);
 	ImpositionGroupLayout->addWidget( ImpNXLabel, 5, 0 );
-  ImpNYSpinBox = new QSpinBox (ImpositionGroup);
-  ImpNYSpinBox->setRange(1,99);
-  ImpNYSpinBox->setValue(1);
-  ImpositionGroupLayout->addWidget( ImpNYSpinBox, 5, 3 );
+	ImpNYSpinBox = new QSpinBox (ImpositionGroup);
+	ImpNYSpinBox->setRange(1,99);
+	ImpNYSpinBox->setValue(1);
+	ImpositionGroupLayout->addWidget( ImpNYSpinBox, 5, 3 );
 	ImpNYLabel   = new QLabel( tr( "&Vertical:" ), ImpositionGroup );
 	ImpNYLabel->setBuddy(ImpNYSpinBox);
 	ImpositionGroupLayout->addWidget( ImpNYLabel, 5, 2 );
 
+	ImpDoubleSidedComboBox = new QComboBox( ImpositionGroup );
+	ImpDoubleSidedComboBox->addItem( tr("Single sided") );
+	ImpDoubleSidedComboBox->addItem( tr("Double sided") );
+	ImpDoubleSidedComboBox->setCurrentIndex(1/*prefsManager->appPrefs.docSetupPrefs.pageRotation*/);
+	
+	ImpositionGroupLayout->addWidget(ImpDoubleSidedComboBox, 9, 1 );
 	tabImpositionLayout->addWidget( ImpositionGroup );
 
 	addTab( tabImposition, tr( "Imposition" ) );
-	restoreDefaults(Optionen, AllFonts, PDFXProfiles, DocFonts, Eff, unitIndex, PageH, PageB, doc, pdfExport);
+  
+  restoreDefaults(Optionen, AllFonts, PDFXProfiles, DocFonts, Eff, unitIndex, PageH, PageB, doc, pdfExport);
 
 	if (doc != 0 && exporting)
 	{
@@ -1036,7 +1060,11 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	connect(LPIcolor, SIGNAL(activated(int)), this, SLOT(SelLPIcol(int)));
 	connect(ImpositionCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionStyle(int)));
 	connect(ImpDoubleSidedComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionSheetSides(int)));
-	//connect(ImpOptAutoSheetSize, SIGNAL(stateChanged(int)), this, SLOT(ImpositionSheetSize(int)));
+    connect(AutoSheetSizeCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionSheetSizeI(int)));
+    connect(SheetSizeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionSheetSizeI(int)));
+    connect(ImpSheetWidth,  SIGNAL(valueChanged(double)), this, SLOT(ImpositionSheetSizeD(double)));
+    connect(ImpSheetHeight, SIGNAL(valueChanged(double)), this, SLOT(ImpositionSheetSizeD(double)));
+    //connect(ImpOptAutoSheetSize, SIGNAL(stateChanged(int)), this, SLOT(ImpositionSheetSize(int)));
 	connect(ImpNXSpinBox, SIGNAL(valueChanged(int)), this, SLOT(ImpositionNXNY(int)));
 	connect(ImpNYSpinBox, SIGNAL(valueChanged(int)), this, SLOT(ImpositionNXNY(int)));
 	//tooltips
@@ -1529,9 +1557,23 @@ void TabPDFOptions::restoreDefaults(PDFOptions & Optionen,
 		}
 		
 	}
+	
 	ImpositionCombo->setCurrentIndex(Opts.imposerOptions.style);
   ImpNXSpinBox->setValue(Opts.imposerOptions.nX);
   ImpNYSpinBox->setValue(Opts.imposerOptions.nY);
+  SheetSizeComboBox->setCurrentIndex(SheetSizeComboBox->count()-1);
+  AutoSheetSizeCombo->setCurrentIndex(AutoSheetSizeCombo->count()-1);
+  SheetRotationComboBox->setCurrentIndex(0);
+	std::cerr << "sheetWidth & Height " << Opts.imposerOptions.sheetWidth << Opts.imposerOptions.sheetHeight;
+	if ((Opts.imposerOptions.sheetWidth <= 0) || (Opts.imposerOptions.sheetHeight <= 0)) {
+		/* If the sheet size was not set before, we do it here */
+		Opts.imposerOptions.sheetWidth  = ImpNXSpinBox->value() * pts2value(pageB,ImpSheetWidth->getUnit());
+		Opts.imposerOptions.sheetHeight = ImpNYSpinBox->value() * pts2value(pageB,ImpSheetHeight->getUnit());
+  	AutoSheetSizeCombo->setCurrentIndex(0);
+	}
+	ImpSheetWidth->setValue (pts2value(Opts.imposerOptions.sheetWidth,  ImpSheetWidth->getUnit() ));
+ 	ImpSheetHeight->setValue(pts2value(Opts.imposerOptions.sheetHeight, ImpSheetHeight->getUnit()));
+	updateImpositionTab();
 }
 
 void TabPDFOptions::doDocBleeds()
@@ -2287,6 +2329,8 @@ void TabPDFOptions::unitChange(QString unit, int docUnitIndex, double invUnitCon
 	BleedRight->setNewUnit(docUnitIndex);
 	BleedLeft->setNewUnit(docUnitIndex);
 	markOffset->setNewUnit(docUnitIndex);
+    ImpSheetWidth->setNewUnit(docUnitIndex);
+    ImpSheetHeight->setNewUnit(docUnitIndex);
 }
 
 void TabPDFOptions::createPageNumberRange( )
@@ -2305,8 +2349,9 @@ void TabPDFOptions::createPageNumberRange( )
 	PageNr->setText(QString::null);
 }
 
-void TabPDFOptions::ImpositionStyle(int i) {
-  ImposerOptions::ImposerStyle style = (ImposerOptions::ImposerStyle) i;
+void TabPDFOptions::updateImpositionTab() {
+	/* FIXME: Ensure all the setValues don't keep on triggering signals forever... */
+  ImposerOptions::ImposerStyle style = (ImposerOptions::ImposerStyle) ImpositionCombo->currentIndex();
   Opts.imposerOptions.style = style;
   bool impositionEnabled = style != ImposerOptions::None; // Imposition is enabled except when the first style is selected (No imposition)
 
@@ -2314,29 +2359,81 @@ void TabPDFOptions::ImpositionStyle(int i) {
   SheetSizeComboBox->setEnabled(impositionEnabled && AutoSheetSizeCombo->currentIndex()!=0);
   SheetRotationComboBox->setEnabled(impositionEnabled);
   ImpDoubleSidedComboBox->setEnabled(impositionEnabled);
-  /* Disable the NX NY boxes when no imposition is used or magazine/file style is used */
-  ImpNXSpinBox->setEnabled(style != ImposerOptions::None && style != ImposerOptions::Magazine && style != ImposerOptions::File);
-  ImpNYSpinBox->setEnabled(style != ImposerOptions::None && style != ImposerOptions::Magazine && style != ImposerOptions::File);
-//  AutoSheetSizeCombo->
+  /* Disable the NX NY boxes when no imposition is used or birthdaycard/magazine/file style is used */
+  ImpNXSpinBox->setEnabled(style != ImposerOptions::None && style != ImposerOptions::Magazine && style != ImposerOptions::BirthdayCard && style != ImposerOptions::File && AutoSheetSizeCombo->currentIndex() != 1);
+  ImpNYSpinBox->setEnabled(style != ImposerOptions::None && style != ImposerOptions::Magazine && style != ImposerOptions::BirthdayCard && style != ImposerOptions::File && AutoSheetSizeCombo->currentIndex() != 1);
+  Opts.imposerOptions.sheetAutoSize = AutoSheetSizeCombo->currentIndex() == 0;
+  SheetSizeComboBox->setEnabled(impositionEnabled && (AutoSheetSizeCombo->currentIndex() != 0));
+
+  /* Allow manual control to the sheet size parameters when the sheet size is not calculated
+   * automatically AND the sheet size is set to custom
+   */
+  ImpSheetWidth->setEnabled(impositionEnabled && (AutoSheetSizeCombo->currentIndex() != 0) && (SheetSizeComboBox->currentIndex() == SheetSizeComboBox->count()-1));
+  ImpSheetHeight->setEnabled(impositionEnabled && (AutoSheetSizeCombo->currentIndex() != 0) && (SheetSizeComboBox->currentIndex() == SheetSizeComboBox->count()-1));
+
   /* If the imposition style is Magazine, NX and NY are fixed */
   if (style == ImposerOptions::Magazine) {
     ImpNXSpinBox->setValue(2);
     ImpNYSpinBox->setValue(1);
   }
+
+  /* If the sheet size is calculated automatically, we force the sheet size selector
+   * to manual and update the width and height.
+   */
+  if ((AutoSheetSizeCombo->currentIndex() == 0)) { /* NX NY set sheet size */
+      /* Manual sheet size is forced */
+      SheetSizeComboBox->setCurrentIndex(SheetSizeComboBox->count()-1);
+      ImpSheetWidth->setValue(ImpNXSpinBox->value()  * pts2value(pageB,ImpSheetWidth->getUnit()));
+      ImpSheetHeight->setValue(ImpNYSpinBox->value() * pts2value(pageH,ImpSheetWidth->getUnit()));
+  } else if (SheetSizeComboBox->currentIndex() != SheetSizeComboBox->count()-1)
+  {
+				/* If the sheet size selector is not on manual, look up the page size.  */
+        PageSize sheetSize(SheetSizeComboBox->currentText());
+        ImpSheetWidth->setValue (pts2value(sheetSize.width(),  ImpSheetWidth->getUnit() ));
+        ImpSheetHeight->setValue(pts2value(sheetSize.height(), ImpSheetHeight->getUnit()));
+  }
+
+  if (style == ImposerOptions::None) { 
+    /* If the imposition style is None, NX and NY are fixed to (1,1)*/
+    ImpNXSpinBox->setValue(1);
+    ImpNYSpinBox->setValue(1);
+  } else if (style == ImposerOptions::Magazine) {
+    /* If the imposition style is Magazine, NX and NY are fixed to (2,1)*/
+    ImpNXSpinBox->setValue(2);
+    ImpNYSpinBox->setValue(1);
+  } else if (style == ImposerOptions::BirthdayCard) {
+    /* If the imposition style is Birthday Card, NX and NY are fixed to (2,2)*/
+    ImpNXSpinBox->setValue(2);
+    ImpNYSpinBox->setValue(2);
+  } else if ((AutoSheetSizeCombo->currentIndex() == 1)) { 
+    /* Otherwise if NX / NY are calculated automatically, we calculate them here. */
+    int x=(int)(ImpSheetWidth->value()/pts2value (pageB,ImpSheetWidth->getUnit()));
+    int y=(int)(ImpSheetHeight->value()/pts2value(pageH,ImpSheetHeight->getUnit()));
+    ImpNXSpinBox->setValue(x>=1?x:1);
+    ImpNYSpinBox->setValue(y>=1?y:1);
+  }
+	Opts.imposerOptions.sheetWidth  = value2pts(ImpSheetWidth->value(),ImpSheetWidth->getUnit());
+	Opts.imposerOptions.sheetHeight = value2pts(ImpSheetHeight->value(),ImpSheetHeight->getUnit());
+  Opts.imposerOptions.nX = ImpNXSpinBox->value();
+  Opts.imposerOptions.nY = ImpNYSpinBox->value();
+  Opts.imposerOptions.doubleSided = (ImpDoubleSidedComboBox->currentIndex() == 1);
+}
+void TabPDFOptions::ImpositionStyle(int i) {
+  updateImpositionTab();
 }
 
-void TabPDFOptions::ImpositionSheetSize(int i) {
-  Opts.imposerOptions.sheetAutoSize = AutoSheetSizeCombo->currentIndex() == 0;
-  SheetSizeComboBox->setEnabled(AutoSheetSizeCombo->currentIndex() != 0);
+void TabPDFOptions::ImpositionSheetSizeI(int i) {
+  updateImpositionTab();
+}
+
+void TabPDFOptions::ImpositionSheetSizeD(double d) {
+  updateImpositionTab();
 }
 
 void TabPDFOptions::ImpositionSheetSides(int i) {
-  Opts.imposerOptions.doubleSided = (ImpDoubleSidedComboBox->currentIndex() == 1);
-
+	updateImpositionTab();
 }
 
 void TabPDFOptions::ImpositionNXNY(int i) {
-  Opts.imposerOptions.nX = ImpNXSpinBox->value();
-  Opts.imposerOptions.nY = ImpNYSpinBox->value();
-
+	updateImpositionTab();
 }
