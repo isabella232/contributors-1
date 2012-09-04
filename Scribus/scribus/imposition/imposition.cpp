@@ -1,3 +1,9 @@
+/*
+For general Scribus (>=1.3.2) copyright and licensing information please refer
+to the COPYING file provided with the program. Following this notice may exist
+a copyright and/or license notice that predates the release of Scribus 1.3.2
+for which a new license (GPL+exception) is in place.
+*/
 #include "imposition.h"
 
 #include <cstdlib>
@@ -17,15 +23,13 @@ using std::istream;
 using std::ostream;
 using std::endl;
 using std::runtime_error;
-namespace PoDoFo
+namespace Imposition
 {
-	namespace Impose
-	{
 		imposer::imposer ( )
 		{
 		}
 
-		void imposer::imposeBirthdayCard (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
+		void imposer::imposeBirthdayCard (const QString & target, imposeInputFile * input, ImposerOptions * options )
 		{
 			int numberOfSheets = 0;
 			int currentSheet;
@@ -37,7 +41,7 @@ namespace PoDoFo
 			double destHeight  = options->sheetHeight;
 			std::string boundingBox = "";
 
-			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
+			imposeOutputFile * output      = new imposeOutputFile();
 			output->createTarget(target.toStdString(),input);
 	
 			if ( !output->targetDoc )
@@ -103,7 +107,7 @@ namespace PoDoFo
 
 		}
 
-		void imposer::imposeBusinessCard (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
+		void imposer::imposeBusinessCard (const QString & target, imposeInputFile * input, ImposerOptions * options )
 		{
 			int numberOfSheets = 0;
 			int currentSheet;
@@ -116,7 +120,7 @@ namespace PoDoFo
 			double destHeight  = options->sheetHeight;
 			std::string boundingBox = "";
 
-			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
+			imposeOutputFile * output      = new imposeOutputFile();
 			output->createTarget(target.toStdString(),input);
 	
 			if ( !output->targetDoc )
@@ -142,7 +146,7 @@ namespace PoDoFo
 
 		}
 		
-		void imposer::imposeMultiFold (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
+		void imposer::imposeMultiFold (const QString & target, imposeInputFile * input, ImposerOptions * options )
 		{
 			int nPagesPerSheet = options->nX * options->nY;
 
@@ -163,7 +167,7 @@ namespace PoDoFo
 			double tx;
 			double ty;
 
-			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
+			imposeOutputFile * output      = new imposeOutputFile();
 			output->createTarget(target.toStdString(),input);
 	
 			if ( !output->targetDoc )
@@ -202,7 +206,7 @@ namespace PoDoFo
 
 		}
 
-		void imposer::imposeMagazine (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
+		void imposer::imposeMagazine (const QString & target, imposeInputFile * input, ImposerOptions * options )
 		{
 			int numberOfCreatedPages = 0;
 			int leftPage, rightPage;
@@ -219,7 +223,7 @@ namespace PoDoFo
 			double tx;
 			double ty;
 
-			PoDoFo::Impose::imposeOutputFile * output      = new PoDoFo::Impose::imposeOutputFile();
+			imposeOutputFile * output      = new imposeOutputFile();
 			output->createTarget(target.toStdString(),input);
 	
 			if ( !output->targetDoc )
@@ -271,11 +275,11 @@ namespace PoDoFo
 
 		}
 
-		void imposer::imposeTiles (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
+		void imposer::imposeTiles (const QString & target, imposeInputFile * input, ImposerOptions * options )
 		{
 		}
 
-		void imposer::imposeFile (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options )
+		void imposer::imposeFile (const QString & target, imposeInputFile * input, ImposerOptions * options )
 		{
 		}
 		
@@ -288,7 +292,7 @@ namespace PoDoFo
 					return -1;
 				}
 				
-				PoDoFo::Impose::imposeInputFile * input = new PoDoFo::Impose::imposeInputFile(in.toStdString());
+				imposeInputFile * input = new imposeInputFile(in.toStdString());
 				switch (options->style) {
 					case ImposerOptions::BirthdayCard:
 						imposeBirthdayCard (out,input,options);
@@ -326,6 +330,5 @@ namespace PoDoFo
 
 			return 0;
 		}
-	}
 }
 

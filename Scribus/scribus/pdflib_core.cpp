@@ -96,7 +96,6 @@ for which a new license (GPL+exception) is in place.
 
 using namespace std;
 using namespace TableUtils;
-using namespace PoDoFo::Impose;
 
 #if defined(_WIN32)
 #undef GetObject
@@ -280,7 +279,7 @@ bool PDFLibCore::doExport(const QString& fn, const QString& nam, int Components,
 				ret = PDF_End_Doc();
 
 			if   (doc.pdfOptions().imposerOptions.style != ImposerOptions::None) {
-				PoDoFo::Impose::imposer * imposer = new PoDoFo::Impose::imposer();
+				Imposition::imposer * imposer = new Imposition::imposer();
 				imposer->impose(fileName, fn, &doc.pdfOptions().imposerOptions);
 				delete (imposer);
 				delete (tempPdfFile); 

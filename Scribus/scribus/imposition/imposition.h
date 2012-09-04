@@ -7,9 +7,7 @@
 #include "impositionoutputfile.h"
 #include <QString>
 
-namespace PoDoFo
-{
-	namespace Impose
+namespace Imposition
 	{
 		class imposer
 		{
@@ -18,14 +16,13 @@ namespace PoDoFo
 			~imposer() { }
 			int  impose (QString in, QString out, ImposerOptions * options);
 		private:
-			void imposeBirthdayCard (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
-			void imposeBusinessCard (const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
-			void imposeMagazine 	(const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
-			void imposeMultiFold 	(const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
-			void imposeTiles 	(const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
-			void imposeFile 	(const QString & target, PoDoFo::Impose::imposeInputFile * input, ImposerOptions * options );
+			void imposeBirthdayCard (const QString & target, imposeInputFile * input, ImposerOptions * options );
+			void imposeBusinessCard (const QString & target, imposeInputFile * input, ImposerOptions * options );
+			void imposeMagazine 	(const QString & target, imposeInputFile * input, ImposerOptions * options );
+			void imposeMultiFold 	(const QString & target, imposeInputFile * input, ImposerOptions * options );
+			void imposeTiles 	(const QString & target, imposeInputFile * input, ImposerOptions * options );
+			void imposeFile 	(const QString & target, imposeInputFile * input, ImposerOptions * options );
 		};
 
-	};
 }; // end of namespace
 #endif

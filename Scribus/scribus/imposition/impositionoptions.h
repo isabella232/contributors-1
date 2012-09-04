@@ -53,29 +53,6 @@ public:
 		File
 	};
 
-
-	/**
-	 * @author Craig Ringer
-	 * @brief Sanity check the options defined.
-	 *
-	 * Unimplemented, always returns Verify_NoError
-	 *
-	 * Checks the imposer option structure for conflicts between mututally
-	 * exclusive options, ensures all options are within sane ranges,
-	 * and that there are no nonsensical options values set. If nothing
-	 * is wrong, returns Verify_NoError, otherwise returns error code from
-	 * imposerOptions::VerifyResults. If problemDescription is not NULL,
-	 * it will contain a human-readable description of the error on return.
-	 *
-	 * @warning DO NOT *EVER* TEST THE VALUE OF problemDescription. Rely on the
-	 *          return code instead. problemDescription is subject to
-	 *          translation and its contents may change without notice.
-	 *
-	 * @param problemDescription Error description
-	 * @return Verify_NoError for sane options, otherwise error code.
-	 */
-	ImposerOptions::VerifyResults verify(QString* problemDescription);
-	ImposerOptions::VerifyResults verify();
 	ImposerStyle style;
 	int  sheetRotation;
 	bool sheetAutoSize;
