@@ -437,11 +437,6 @@ IF(WIN32)
                   -DCOMPILE_PLUGIN_AS_DLL
   )
   SET(BUILD_WINDOWS_VERSION 1)
-  SET(SC_USE_GDI 1)
-  IF(NOT SC_SHOULD_NOT_USE_GDIPLUS)
-    SET(SC_USE_GDIPLUS 1)
-  ENDIF(NOT SC_SHOULD_NOT_USE_GDIPLUS)
-
   SET(DLL_USE_NATIVE_API 1)
 ENDIF(WIN32)
 
@@ -618,23 +613,27 @@ IF(NOT WANT_PRIVATE_CAIRO)
   ENDIF(CAIRO_FOUND)
  ENDIF (WANT_SYSTEM_CAIRO OR RENDER_LIB STREQUAL "CAIRO_SYSTEM")
 
- IF (OLDRENDERLIBLOST OR NOT RENDER_LIB OR RENDER_LIB STREQUAL "CAIRO_PRIVATE")
-  SET(RENDER_LIB "CAIRO_PRIVATE" CACHE TYPE STRING)
-  SET(HAVE_CAIRO 1)
-  SET(HAVE_PRIVATE_CAIRO 1)
-  SET(WANT_PRIVATE_CAIRO 1)
-  SET( CAIRO_FOUND "YES" )
-  MESSAGE("Cairo private branch selected for renderer")
-  IF (OLDRENDERLIBLOST)
-   MESSAGE("Old render lib could no longer be found, replaced by cairo private branch")
-  ENDIF (OLDRENDERLIBLOST)
- ENDIF (OLDRENDERLIBLOST OR NOT RENDER_LIB OR RENDER_LIB STREQUAL "CAIRO_PRIVATE")
+ #IF (OLDRENDERLIBLOST OR NOT RENDER_LIB OR RENDER_LIB STREQUAL "CAIRO_PRIVATE")
+ # SET(RENDER_LIB "CAIRO_PRIVATE" CACHE TYPE STRING)
+ # SET(HAVE_CAIRO 1)
+ # SET(HAVE_PRIVATE_CAIRO 1)
+ # SET(WANT_PRIVATE_CAIRO 1)
+ # SET( CAIRO_FOUND "YES" )
+ # MESSAGE("Cairo private branch selected for renderer")
+ # IF (OLDRENDERLIBLOST)
+ #  MESSAGE("Old render lib could no longer be found, replaced by cairo private branch")
+ # ENDIF (OLDRENDERLIBLOST)
+ #ENDIF (OLDRENDERLIBLOST OR NOT RENDER_LIB OR RENDER_LIB STREQUAL "CAIRO_PRIVATE")
  
  #Cairo is required on Windows for printing system
  IF (WIN32)
   IF (NOT HAVE_CAIRO)
    MESSAGE(FATAL_ERROR "Cairo >= 1.5.16 is required for Windows build")  
   ENDIF (NOT HAVE_CAIRO)
+ ELSE (WIN32)
+  IF (NOT CAIRO_FOUND)
+   MESSAGE(FATAL_ERROR "Cairo >= 1.5.16 is required for all builds now")  
+  ENDIF (NOT CAIRO_FOUND)
  ENDIF (WIN32)
 ENDIF(NOT WANT_PRIVATE_CAIRO)
 #>>Render Library
@@ -787,6 +786,7 @@ ELSE (POPPLER_FOUND)
 ENDIF (POPPLER_FOUND)
 #>>Poppler for PDF import
 
+
 #<<ICU for text shaping (required)
 FIND_PACKAGE(ICU)
 IF(ICU_FOUND)
@@ -795,7 +795,6 @@ ELSE(ICU_FOUND)
   MESSAGE(FATAL_ERROR "ICU NOT Found!")
 ENDIF(ICU_FOUND)
 #>>ICU for text shaping
-
 
 ##############################################################################################################
 ########## Include Setup                                                                            ##########

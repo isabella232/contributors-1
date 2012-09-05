@@ -1778,7 +1778,7 @@ FRect StoryText::boundingBox(int pos, uint len) const
 
 int StoryText::layout(int startItem)
 {
-printf ( "(%s)(%d)(%s) (%X)  \n", __FILE__, __LINE__, __func__,startItem) ;
+//printf ( "(%s)(%d)(%s) (%X)  \n", __FILE__, __LINE__, __func__,startItem) ;
 	//FIXME:NLS
 	return -1;
 }
@@ -2294,7 +2294,7 @@ uint StoryText::addItem(int pos, uint len)
 
 void StoryText::clearItem(uint i)
 {
-printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
 	m_items[i].glyphCount = 0;
 }
 
@@ -2316,14 +2316,14 @@ void StoryText::clearAllItems(uint firstItem)
 
 void StoryText::deleteItem(uint i)
 {
-printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
 	clearItem(i);
 	m_items.removeAt(i);
 }
 
 void StoryText::deleteItems(QList<uint> li)
 {
-printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
 	foreach(uint it,  li)
 	{
 		clearItem(it);
@@ -2352,7 +2352,7 @@ uint StoryText::findItem(int pos) const
 
 QList<uint> StoryText::findItems(int start, int end) const
 {
-printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
+//printf ( "(%s)(%d)(%s)  \n", __FILE__, __LINE__, __func__ ) ;
 	QList<uint> ret;
 	bool first(true);
 	for (uint i=0; i < unsigned(m_items.count()); ++i)

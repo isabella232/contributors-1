@@ -85,7 +85,6 @@ public:
 
 	bool writeRGBDataToFilter(ScStreamFilter* filter);
 	bool writeGrayDataToFilter(ScStreamFilter* filter, bool precal);
-	bool writeMonochromeDataToFilter(ScStreamFilter* filter, bool fromCmyk);
 	bool writeCMYKDataToFilter(ScStreamFilter* filter);
 
 	bool writePSImageToFilter(ScStreamFilter* filter, int pl);

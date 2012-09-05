@@ -385,6 +385,10 @@ int ScFace_ttf::shapeText(void* stry, unsigned int item) const
 	unsigned int itemCount(st->itemCount());
 	if(item >= itemCount)
 		return -1;
+if (item >= st->length()) {
+printf ( "FIXME :: (%s)(%d)(%s) pos(%d) length(%d)  \n", __FILE__, __LINE__, __func__,item, st->length()) ;
+return -1 ;
+}
 	LanguageManager * lm(LanguageManager::instance());
 	QString language(lm->getAbbrevFromLang(st->itemStyle(st->startOfItem(item)).language(), false, false));
 	double fSize(st->itemStyle(st->startOfItem(item)).fontSize() /10.0);
@@ -436,11 +440,6 @@ int ScFace_ttf::shapeText(void* stry, unsigned int item) const
 			glCnt = 0 ;
 		}
 		st->nOfGlyphs++ ;
-//qDebug()<< "(" << __FILE__ << ")(" << __LINE__ << __func__ << ") (" << bIdx << ")(" << bLen << ") text len (" << st->length() << ")(" << st->nOfGlyphs << ")" ;
-if ((long)curGlyph < 0x1000 ){
-qDebug()<< "FIXME (" << __FILE__ << ")(" << __LINE__ << __func__ << ") (" << bIdx << ")(" << bLen << ") text len (" << st->length() << ") glyph len(" << st->nOfGlyphs << ") adr Glyph(" << curGlyph << ")" ;
-   continue ;
-}
 		gp.x_advance = 0 ;
 		curGlyph->xadvance = glyphWidth(gi.codepoint, fSize) ; // + (double(gp.x_advance) / 1000.0);
 		curGlyph->xoffset = gp.x_offset;

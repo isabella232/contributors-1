@@ -575,7 +575,7 @@ hb_buffer_destroy (hb_buffer_t *buffer)
 //printf ( "(%s)(%d)(%s) (%X)  \n", __FILE__, __LINE__, __func__) ;
   free (buffer->info);
 //printf ( "(%s)(%d)(%s) (%X)  \n", __FILE__, __LINE__, __func__) ;
-//  free (buffer->pos);
+  free (buffer->pos);
 //printf ( "(%s)(%d)(%s) (%X)  \n", __FILE__, __LINE__, __func__) ;
 
   free (buffer);

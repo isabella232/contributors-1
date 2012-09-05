@@ -118,8 +118,7 @@ typedef enum
 	ColorSpaceRGB  = 0,
 	ColorSpaceCMYK = 1,
 	ColorSpaceGray = 2,
-	ColorSpaceDuotone = 3,
-	ColorSpaceMonochrome = 4
+	ColorSpaceDuotone = 3
 } ColorSpaceEnum;
 
 class ImageInfoRecord

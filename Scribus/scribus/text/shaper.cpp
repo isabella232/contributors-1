@@ -85,6 +85,7 @@ printf ( "(%s)(%d)(%s) start (%d) end (%d)\n", __FILE__, __LINE__, __func__, sta
 	bool first(true);
 	bool currentRTL( bidi.isRTL(0));
 	bool previousRTL(currentRTL);
+        story->deleteItems( story->findItems(start, end)) ;
 	for(int cursor(start); cursor <= end; ++cursor )
 	{
 //printf ( "(%s)(%d)(%s) start (%d) end (%d) cursor (%d)\n", __FILE__, __LINE__, __func__, start, end, cursor ) ;

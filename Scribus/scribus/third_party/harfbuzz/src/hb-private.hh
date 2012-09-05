@@ -29,10 +29,6 @@
 #ifndef HB_PRIVATE_HH
 #define HB_PRIVATE_HH
 
-#ifdef HAVE_CONFIG_H
-//#include "scconfig.h"
-#endif
-
 #include "hb.h"
 #define HB_H_IN
 #ifdef HAVE_OT
