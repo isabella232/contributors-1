@@ -765,6 +765,7 @@ void ScribusDoc::setup(const int unitIndex, const int fp, const int firstLeft, c
 	docPrefsData.pdfPrefs.Intent2 = docPrefsData.colorPrefs.DCMSset.DefaultIntentImages;
 
   /* Imposition defaults */
+  /*
  	docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::None;
 	docPrefsData.pdfPrefs.imposerOptions.sheetRotation = 0;
 	docPrefsData.pdfPrefs.imposerOptions.sheetAutoSize = 0;
@@ -774,6 +775,7 @@ void ScribusDoc::setup(const int unitIndex, const int fp, const int firstLeft, c
   docPrefsData.pdfPrefs.imposerOptions.nX = 1;
 	docPrefsData.pdfPrefs.imposerOptions.nY = 1;
 	docPrefsData.pdfPrefs.imposerOptions.doubleSided = 0;
+  */
 	/* Imposition settings for multi-fold documents */
 	if ((fp == 1) || (fp == 2) || (fp == 3) ) {
      docPrefsData.pdfPrefs.imposerOptions.style = ImposerOptions::MultiFold;

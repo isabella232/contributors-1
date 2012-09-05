@@ -1564,15 +1564,17 @@ void TabPDFOptions::restoreDefaults(PDFOptions & Optionen,
   SheetSizeComboBox->setCurrentIndex(SheetSizeComboBox->count()-1);
   AutoSheetSizeCombo->setCurrentIndex(AutoSheetSizeCombo->count()-1);
   SheetRotationComboBox->setCurrentIndex(0);
-	std::cerr << "sheetWidth & Height " << Opts.imposerOptions.sheetWidth << Opts.imposerOptions.sheetHeight;
 	if ((Opts.imposerOptions.sheetWidth <= 0) || (Opts.imposerOptions.sheetHeight <= 0)) {
 		/* If the sheet size was not set before, we do it here */
 		Opts.imposerOptions.sheetWidth  = ImpNXSpinBox->value() * pts2value(pageB,ImpSheetWidth->getUnit());
 		Opts.imposerOptions.sheetHeight = ImpNYSpinBox->value() * pts2value(pageB,ImpSheetHeight->getUnit());
   	AutoSheetSizeCombo->setCurrentIndex(0);
 	}
-	ImpSheetWidth->setValue (pts2value(Opts.imposerOptions.sheetWidth,  ImpSheetWidth->getUnit() ));
- 	ImpSheetHeight->setValue(pts2value(Opts.imposerOptions.sheetHeight, ImpSheetHeight->getUnit()));
+  /* Safety catch to check whether the scalingFactor was set correctly */
+	if (Opts.imposerOptions.scalingFactor <= 0.25) {
+	  Opts.imposerOptions.scalingFactor = 1.0;
+    std::cerr << "TabPDFOptions: Imposition scaling factor was not set correctly, setting to default of 1.0. Please report." <<std::endl; 
+  }
 	updateImpositionTab();
 }
 
