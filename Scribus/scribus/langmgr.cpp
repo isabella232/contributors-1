@@ -20,7 +20,7 @@ for which a new license (GPL+exception) is in place.
  ***************************************************************************/
  
 #include <iostream>
-
+#include <QDebug>
 #include <QDir>
 #include <QFileInfo>
 #include <QMap>
@@ -56,55 +56,64 @@ void LanguageManager::generateLangList()
 	// TODO get rid of the redundant key, the english name.
 	// So internally language would always be manipulated as a code and otherwise presented translated.
 	langList.insert("af",       langPair("Afrikaans",           QObject::tr( "Afrikaans" )) );
+	langList.insert("af_ZA",    langPair("Afrikaans",           QObject::tr( "Afrikaans" )) );
+	langList.insert("an_ES",    langPair("Aragonese",           QObject::tr( "Aragonese" )) );
 	langList.insert("ar",       langPair("Arabic",              QObject::tr( "Arabic" )) );
-	langList.insert("sq",       langPair("Albanian",            QObject::tr( "Albanian" )) );
-	langList.insert("eu",       langPair("Basque",              QObject::tr( "Basque" )) );
+	langList.insert("be_BY",    langPair("Belarusian",          QObject::tr( "Belarusian" )) );
+	langList.insert("bg",       langPair("Bulgarian",           QObject::tr( "Bulgarian" )) );
+	langList.insert("bg_BG",    langPair("Bulgarian",           QObject::tr( "Bulgarian" )) );
 	langList.insert("bn",       langPair("Bengali",             QObject::tr( "Bengali" )) );
 	langList.insert("br",       langPair("Breton",              QObject::tr( "Breton" )) );
-	langList.insert("bg",       langPair("Bulgarian",           QObject::tr( "Bulgarian" )) );
 	langList.insert("ca",       langPair("Catalan",             QObject::tr( "Catalan" )) );
-	langList.insert("zh",       langPair("Chinese",             QObject::tr( "Chinese" )) );
-	langList.insert("zh_TW",    langPair("Chinese (Trad.)",     QObject::tr( "Chinese (Trad.)" )) );
-	langList.insert("hr",       langPair("Croatian",            QObject::tr( "Croatian" )) );
 	langList.insert("cs",       langPair("Czech",               QObject::tr( "Czech" )) );
 	langList.insert("cs_CZ",    langPair("Czech",               QObject::tr( "Czech" )) );
+	langList.insert("cy",       langPair("Welsh",               QObject::tr( "Welsh" )) );
 	langList.insert("da",       langPair("Danish",              QObject::tr( "Danish" )) );
 	langList.insert("da_DK",    langPair("Danish",              QObject::tr( "Danish" )) );
-	langList.insert("dz",       langPair("Dzongkha",            QObject::tr( "Dzongkha" )) );
-	langList.insert("nl",       langPair("Dutch",               QObject::tr( "Dutch" )) );
-	langList.insert("en",       langPair("English",             QObject::tr( "English" )) );
-	langList.insert("en_AU",    langPair("English (Australian)",QObject::tr( "English (Australian)" )) );
-	langList.insert("en_GB",    langPair("English (British)",   QObject::tr( "English (British)" )) );
-	langList.insert("en_US",    langPair("English (American)",  QObject::tr( "English (American)" )) );
-	langList.insert("eo",       langPair("Esperanto",           QObject::tr( "Esperanto" )) );
-	langList.insert("et",       langPair("Estonian",            QObject::tr( "Estonian" )) );
 	langList.insert("de",       langPair("German",              QObject::tr( "German" )) );
-	langList.insert("de_CH",    langPair("German (Swiss)",      QObject::tr( "German (Swiss)" )) );
 	langList.insert("de_1901",  langPair("German (Trad.)",      QObject::tr( "German (Trad.)" )) );
+	langList.insert("de_CH",    langPair("German (Swiss)",      QObject::tr( "German (Swiss)" )) );
+	langList.insert("de_DE",    langPair("German",              QObject::tr( "German" )) );
+	langList.insert("dz",       langPair("Dzongkha",            QObject::tr( "Dzongkha" )) );
+	langList.insert("el",       langPair("Greek",               QObject::tr( "Greek" )) );
+	langList.insert("en",       langPair("English",             QObject::tr( "English" )) );
+	langList.insert("en_AU",    langPair("English (Australia)", QObject::tr( "English (Australia)" )) );
+	langList.insert("en_CA",    langPair("English (Canada)",    QObject::tr( "English (Canada)" )) );
+	langList.insert("en_GB",    langPair("English (UK)",        QObject::tr( "English (UK)" )) );
+	langList.insert("en_NZ",    langPair("English (New Zealand)", QObject::tr( "English (New Zealand)" )) );
+	langList.insert("en_US",    langPair("English (USA)",       QObject::tr( "English (USA)" )) );
+	langList.insert("en_ZA",    langPair("English (South Africa)", QObject::tr( "English (South Africa)" )) );
+	langList.insert("eo",       langPair("Esperanto",           QObject::tr( "Esperanto" )) );
+	langList.insert("es",       langPair("Spanish",             QObject::tr( "Spanish" )) );
+	langList.insert("es_AR",    langPair("Spanish (Argentina)", QObject::tr( "Spanish (Argentina)" )) );
+	langList.insert("es_ES",    langPair("Spanish",             QObject::tr( "Spanish" )) );
+	langList.insert("es_LA",    langPair("Spanish (Latin)",     QObject::tr( "Spanish (Latin)" )) );
+	langList.insert("et",       langPair("Estonian",            QObject::tr( "Estonian" )) );
+	langList.insert("eu",       langPair("Basque",              QObject::tr( "Basque" )) );
 	langList.insert("fi",       langPair("Finnish",             QObject::tr( "Finnish" )) );
 	langList.insert("fr",       langPair("French",              QObject::tr( "French" )) );
 	langList.insert("fr_FR",    langPair("French",              QObject::tr( "French" )) );
 	langList.insert("gl",       langPair("Galician",            QObject::tr( "Galician" )) );
-	langList.insert("el",       langPair("Greek",               QObject::tr( "Greek" )) );
 	langList.insert("he",       langPair("Hebrew",              QObject::tr( "Hebrew" )) );
-	langList.insert("hi",       langPair("Hindi",              QObject::tr( "Hindi" )) );
+	langList.insert("hr",       langPair("Croatian",            QObject::tr( "Croatian" )) );
 	langList.insert("hu",       langPair("Hungarian",           QObject::tr( "Hungarian" )) );
 	langList.insert("ia",       langPair("Latin",               QObject::tr( "Latin" )) );
-	langList.insert("is",       langPair("Icelandic",           QObject::tr( "Icelandic" )) );
 	langList.insert("id",       langPair("Indonesian",          QObject::tr( "Indonesian" )) );
+	langList.insert("is",       langPair("Icelandic",           QObject::tr( "Icelandic" )) );
 	langList.insert("it",       langPair("Italian",             QObject::tr( "Italian" )) );
+	langList.insert("it_IT",    langPair("Italian",             QObject::tr( "Italian" )) );
 	langList.insert("ja",       langPair("Japanese",            QObject::tr( "Japanese" )) );
 	langList.insert("km",       langPair("Khmer",               QObject::tr( "Khmer" )) );
 	langList.insert("ko",       langPair("Korean",              QObject::tr( "Korean" )) );
 	langList.insert("ku",       langPair("Kurdish",             QObject::tr( "Kurdish" )) );
-	langList.insert("lo",       langPair("Lao",                 QObject::tr( "Lao" )) );
 	langList.insert("la",       langPair("Latin",               QObject::tr( "Latin" )) );
+	langList.insert("lb",       langPair("Luxembourgish",       QObject::tr( "Luxembourgish" )) );
+	langList.insert("lo",       langPair("Lao",                 QObject::tr( "Lao" )) );
 	langList.insert("lt",       langPair("Lithuanian",          QObject::tr( "Lithuanian" )) );
 	langList.insert("lt_LT",    langPair("Lithuanian",          QObject::tr( "Lithuanian" )) );
-	langList.insert("lu",       langPair("Luxembourgish",       QObject::tr( "Luxembourgish" )) );
-	//We might need &#00E5; for this accented a
 	langList.insert("nb",       langPair("Norwegian (Bokmål)",  QObject::trUtf8( "Norwegian (Bokm\303\245l)" )) );
 	langList.insert("nb_NO",    langPair("Norwegian (Bokmål)",  QObject::trUtf8( "Norwegian (Bokm\303\245l)" )) );
+	langList.insert("nl",       langPair("Dutch",               QObject::tr( "Dutch" )) );
 	langList.insert("nn",       langPair("Norwegian (Nnyorsk)", QObject::tr( "Norwegian (Nnyorsk)" )) );
 	langList.insert("nn_NO",    langPair("Norwegian (Nnyorsk)", QObject::tr( "Norwegian (Nnyorsk)" )) );
 	langList.insert("no",       langPair("Norwegian",           QObject::tr( "Norwegian" )) );
@@ -116,12 +125,10 @@ void LanguageManager::generateLangList()
 	langList.insert("ro",       langPair("Romanian",            QObject::tr( "Romanian" )) );
 	langList.insert("ru",       langPair("Russian",             QObject::tr( "Russian" )) );
 	langList.insert("sa",       langPair("Sanskrit",            QObject::tr( "Sanskrit" )) );
-	langList.insert("es",       langPair("Spanish",             QObject::tr( "Spanish" )) );
-	langList.insert("es_ES",    langPair("Spanish",             QObject::tr( "Spanish" )) );
-	langList.insert("es_LA",    langPair("Spanish (Latin)",     QObject::tr( "Spanish (Latin)" )) );
 	langList.insert("sk",       langPair("Slovak",              QObject::tr( "Slovak" )) );
 	langList.insert("sk_SK",    langPair("Slovak",              QObject::tr( "Slovak" )) );
 	langList.insert("sl",       langPair("Slovenian",           QObject::tr( "Slovenian" )) );
+	langList.insert("sq",       langPair("Albanian",            QObject::tr( "Albanian" )) );
 	langList.insert("sr",       langPair("Serbian",             QObject::tr( "Serbian" )) );
 	langList.insert("sv",       langPair("Swedish",             QObject::tr( "Swedish" )) );
 	langList.insert("th",       langPair("Thai",                QObject::tr( "Thai" )) );
@@ -129,8 +136,11 @@ void LanguageManager::generateLangList()
 	langList.insert("tr",       langPair("Turkish",             QObject::tr( "Turkish" )) );
 	langList.insert("tr_TR",    langPair("Turkish",             QObject::tr( "Turkish" )) );
 	langList.insert("uk",       langPair("Ukranian",            QObject::tr( "Ukranian" )) );
+	langList.insert("uk_UA",    langPair("Ukranian",            QObject::tr( "Ukranian" )) );
 	langList.insert("vi",       langPair("Vietnamese",          QObject::tr( "Vietnamese" )) );
-	langList.insert("cy",       langPair("Welsh",               QObject::tr( "Welsh" )) );
+	langList.insert("zh",       langPair("Chinese",             QObject::tr( "Chinese" )) );
+	langList.insert("zh_TW",    langPair("Chinese (Trad.)",     QObject::tr( "Chinese (Trad.)" )) );
+
 
 
 	isoLang.insert(QString("aa"), QString("aar"));
@@ -337,7 +347,6 @@ void LanguageManager::generateLangList()
 	langTag.insert(QString("hi"), QString("HIN "));
 	// TODO_OIF ...continue
 
-
 }
 
 void LanguageManager::generateInstalledLangList()
@@ -360,7 +369,6 @@ void LanguageManager::generateInstalledLangList()
 		}
 	}
 }
-
 const QStringList LanguageManager::getAllLangs(bool getTranslated)
 {
 	QStringList ret;
@@ -380,6 +388,7 @@ const QStringList LanguageManager::getAllLangs(bool getTranslated)
 	return ret;
 }
 
+
 const QString LanguageManager::getLangFromAbbrev(QString langAbbrev, bool getTranslated)
 {
 	QMap<QString, langPair>::Iterator it;
@@ -393,6 +402,7 @@ const QString LanguageManager::getLangFromAbbrev(QString langAbbrev, bool getTra
 	else
 		return "";	
 }
+
 
 const QString LanguageManager::getAbbrevFromLang(QString lang, bool getFromTranslated, bool useInstalled)
 {
@@ -572,11 +582,26 @@ bool LanguageManager::isRightToLeft(const QString &langAbbr)
 	return RTLLang.contains(langAbbr);
 }
 
+
 LanguageManager::~LanguageManager()
 {
 	langList.clear();
 	installedLangList.clear();
 	hyphLangList.clear();
+}
+
+const QString LanguageManager::getScriptTag(const QString &abbr)
+{
+	if(scriptTag.contains(abbr))
+		return scriptTag.value(abbr);
+	return QString("latn");
+}
+
+const QString LanguageManager::getLangTag(const QString &abbr)
+{
+	if(langTag.contains(abbr))
+		return langTag.value(abbr);
+	return QString("DFLT");
 }
 
 void LanguageManager::addHyphLang(const QString & lang, const QString & filename)
@@ -597,18 +622,6 @@ const QStringList LanguageManager::hyphLangs()
 }
 
 
-const QString LanguageManager::getScriptTag(const QString &abbr)
-{
-	if(scriptTag.contains(abbr))
-		return scriptTag.value(abbr);
-	return QString("latn");
-}
 
-const QString LanguageManager::getLangTag(const QString &abbr)
-{
-	if(langTag.contains(abbr))
-		return langTag.value(abbr);
-	return QString("DFLT");
-}
 
 

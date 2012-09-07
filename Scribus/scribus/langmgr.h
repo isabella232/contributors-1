@@ -36,19 +36,19 @@ typedef std::pair<QString, QString> langPair;
 class SCRIBUS_API LanguageManager
 {
 	static LanguageManager* m_instance;
-	LanguageManager(){}
+	LanguageManager() {};
 	~LanguageManager();
 	void init(bool generateInstalledList = true);
 	
 public:
 	static LanguageManager* instance();
-
+	
 	const QStringList getAllLangs(bool getTranslated=true);
 	const QString getLangFromAbbrev(QString, bool getTranslated=true);
 	const QString getAbbrevFromLang(QString, bool getFromTranslated=true, bool useInstalled=true);
 	const QString getLangFromTransLang(QString lang);
-	const QString getTransLangFromLang(QString lang);
 	const QString getIsoLangFromAbbr(QString abbr);
+	const QString getTransLangFromLang(QString lang);
 	void fillInstalledStringList(QStringList *stringListToFill, bool addDefaults);
 	void printInstalledList();
 	QString numericSequence(QString seq);
@@ -57,7 +57,6 @@ public:
 	bool isRightToLeft(const QString& langAbbr);
 	const QString getScriptTag(const QString& abbr);
 	const QString getLangTag(const QString& abbr);
-
 	
 	void addHyphLang(const QString& lang, const QString& filename);
 	const QString getHyphFilename(const QString& lang, bool langIsAbbreviated = true);

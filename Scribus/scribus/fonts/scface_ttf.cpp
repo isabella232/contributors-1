@@ -207,73 +207,69 @@ void ScFace_ttf::unload() const
 }
 
 
-void ScFace_ttf::RawData ( QByteArray & bb ) const
+void ScFace_ttf::RawData(QByteArray & bb) const
 {
 	if ( formatCode == ScFace::TTCF )
 	{
 		QByteArray coll;
-		FtFace::RawData ( coll );
+		FtFace::RawData(coll);
 		// access table for faceIndex
-		if ( faceIndex >= static_cast<int> ( word ( coll, 8 ) ) )
+		if (faceIndex >= static_cast<int>(word(coll, 8)))
 		{
-			bb.resize ( 0 );
+			bb.resize(0);
 			return;
 		}
 		static const uint OFFSET_TABLE_LEN = 12;
 		static const uint   TDIR_ENTRY_LEN = 16;
-		uint faceOffset = word ( coll, 12 + 4 * faceIndex );
-		uint nTables    = word16 ( coll, faceOffset + 4 );
-		sDebug ( QObject::tr ( "extracting face %1 from font %2 (offset=%3, nTables=%4)" ).arg ( faceIndex ).arg ( fontFile ).arg ( faceOffset ).arg ( nTables ) );
+		uint faceOffset = word(coll, 12 + 4 * faceIndex);
+		uint nTables    = word16(coll, faceOffset + 4);
+		sDebug(QObject::tr("extracting face %1 from font %2 (offset=%3, nTables=%4)").arg(faceIndex).arg(fontFile).arg(faceOffset).arg(nTables));
 		uint headerLength = OFFSET_TABLE_LEN + TDIR_ENTRY_LEN * nTables;
 		uint tableLengths = 0;
 		// sum table lengths incl padding
-		for ( uint i=0; i < nTables; ++i )
+		for (uint i=0; i < nTables; ++i)
 		{
-			tableLengths += word ( coll, faceOffset + OFFSET_TABLE_LEN + TDIR_ENTRY_LEN * i + 12 );
-			tableLengths = ( tableLengths+3 ) & ~3;
+			tableLengths += word(coll, faceOffset + OFFSET_TABLE_LEN + TDIR_ENTRY_LEN * i + 12);
+			tableLengths = (tableLengths+3) & ~3;
 		}
-		bb.resize ( headerLength + tableLengths );
-		if ( ! bb.data() )
+		bb.resize(headerLength + tableLengths);
+		if (! bb.data())
 			return;
 		// write header
-		sDebug ( QObject::tr ( "memcpy header: %1 %2 %3" ).arg ( 0 ).arg ( faceOffset ).arg ( headerLength ) );
-		if ( !copy ( bb, 0, coll, faceOffset, headerLength ) )
+		sDebug(QObject::tr("memcpy header: %1 %2 %3").arg(0).arg(faceOffset).arg(headerLength));
+		if (!copy(bb, 0, coll, faceOffset, headerLength))
 			return;
 
 		uint pos = headerLength;
-		for ( uint i=0; i < nTables; ++i )
+		for (uint i=0; i < nTables; ++i)
 		{
-			uint tableSize  = word ( coll, faceOffset + OFFSET_TABLE_LEN + TDIR_ENTRY_LEN * i + 12 );
-			uint tableStart = word ( coll, faceOffset + OFFSET_TABLE_LEN + TDIR_ENTRY_LEN * i + 8 );
-			sDebug ( QObject::tr ( "table '%1'" ).arg ( tag ( coll, tableStart ) ) );
-			sDebug ( QObject::tr ( "memcpy table: %1 %2 %3" ).arg ( pos ).arg ( tableStart ).arg ( tableSize ) );
-			if ( !copy ( bb, pos, coll, tableStart, tableSize ) ) break;
+			uint tableSize  = word(coll, faceOffset + OFFSET_TABLE_LEN + TDIR_ENTRY_LEN * i + 12);
+			uint tableStart = word(coll, faceOffset + OFFSET_TABLE_LEN + TDIR_ENTRY_LEN * i + 8);
+			sDebug(QObject::tr("table '%1'").arg(tag(coll, tableStart)));
+			sDebug(QObject::tr("memcpy table: %1 %2 %3").arg(pos).arg(tableStart).arg(tableSize));
+			if (!copy(bb, pos, coll, tableStart, tableSize)) break;
 			// write new offset to table entry
-			sDebug ( QObject::tr ( "memcpy offset: %1 %2 %3" ).arg ( OFFSET_TABLE_LEN + TDIR_ENTRY_LEN*i + 8 ).arg ( pos ).arg ( 4 ) );
-			memcpy ( bb.data() + OFFSET_TABLE_LEN + TDIR_ENTRY_LEN * i + 8, &pos, 4 );
+			sDebug(QObject::tr("memcpy offset: %1 %2 %3").arg(OFFSET_TABLE_LEN + TDIR_ENTRY_LEN*i + 8).arg(pos).arg(4));
+			memcpy(bb.data() + OFFSET_TABLE_LEN + TDIR_ENTRY_LEN * i + 8, &pos, 4);
 			pos += tableSize;
 			// pad
-			while ( ( pos & 3 ) != 0 )
-				bb.data() [pos++] = '\0';
+			while ((pos & 3) != 0)
+				bb.data()[pos++] = '\0';
 		}
 	}
-	else if ( formatCode == ScFace::TYPE42 )
-	{
-		FtFace::RawData ( bb );
-	}
+	else if (formatCode == ScFace::TYPE42)
+		FtFace::RawData(bb);
 	else
-	{
-		FtFace::RawData ( bb );
-	}
+		FtFace::RawData (bb);
 }
 
-bool ScFace_ttf::EmbedFont ( QString &str ) const
+bool ScFace_ttf::EmbedFont(QString &str) const
 {
-	if ( formatCode == ScFace::TYPE42 )
+	if (formatCode == ScFace::TYPE42)
 	{
 		//easy:
 		QByteArray bb;
-		FtFace::RawData ( bb );
+		FtFace::RawData(bb);
 		str += bb;
 		return true;
 	}
@@ -285,15 +281,11 @@ bool ScFace_ttf::EmbedFont ( QString &str ) const
 	FT_ULong  charcode;
 	FT_UInt   gindex;
 	FT_Face face = ftFace();
-	if ( !face )
-	{
+	if (!face)
 		return false;
-	}
 	const FT_Stream fts = face->stream;
-	if ( ftIOFunc ( fts, 0L, NULL, 0 ) )
-	{
-		return ( false );
-	}
+	if (ftIOFunc(fts, 0L, NULL, 0))
+		return(false);
 	str+="%!PS-TrueTypeFont\n";
 	str+="11 dict begin\n";
 	str+="/FontName /" + psName + " def\n";
@@ -313,24 +305,22 @@ bool ScFace_ttf::EmbedFont ( QString &str ) const
 	{
 		int posi=0;
 		length= fts->size - fts->pos;
-		if ( length > 65534 )
-		{
+		if (length > 65534)
 			length = 65534;
-		}
-		if ( !ftIOFunc ( fts, 0L, tmp, length ) )
+		if (!ftIOFunc(fts, 0L, tmp, length))
 		{
 			str+="\n<\n";
-			for ( int j = 0; j < length; j++ )
+			for (int j = 0; j < length; j++)
 			{
 				unsigned char u=tmp[posi];
-				linebuf[poso]= ( ( u >> 4 ) & 15 ) + '0';
-				if ( u>0x9f ) linebuf[poso]+='a'-':';
+				linebuf[poso] = ((u >> 4) & 15) + '0';
+				if (u>0x9f) linebuf[poso]+='a'-':';
 				++poso;
 				u&=15; linebuf[poso]=u + '0';
-				if ( u>0x9 ) linebuf[poso]+='a'-':';
+				if (u>0x9) linebuf[poso]+='a'-':';
 				++posi;
 				++poso;
-				if ( poso > 70 )
+				if (poso > 70)
 				{
 					linebuf[poso++]='\n';
 					linebuf[poso++]=0;
@@ -347,28 +337,28 @@ bool ScFace_ttf::EmbedFont ( QString &str ) const
 		{
 			sDebug ( QObject::tr ( "Font %1 is broken (read stream), no embedding" ).arg ( fontFile ) );
 			str += "\n] def\n";
-			status = qMax ( status,ScFace::BROKENGLYPHS );
+			status = qMax(status,ScFace::BROKENGLYPHS);
 			return false;
 		}
 	}
-	while ( length==65534 );
+	while (length == 65534);
 
 	str += "\n] def\n";
 	delete[] tmp;
 	gindex = 0;
-	charcode = FT_Get_First_Char ( face, &gindex );
-	while ( gindex != 0 )
+	charcode = FT_Get_First_Char(face, &gindex);
+	while (gindex != 0)
 	{
-		FT_Get_Glyph_Name ( face, gindex, buf, 50 );
-		tmp2 += "/"+QString ( reinterpret_cast<char*> ( buf ) ) +" "+tmp3.setNum ( gindex ) +" def\n";
-		charcode = FT_Get_Next_Char ( face, charcode, &gindex );
+		FT_Get_Glyph_Name(face, gindex, buf, 50);
+		tmp2 += "/"+QString(reinterpret_cast<char*>(buf))+" "+tmp3.setNum(gindex)+" def\n";
+		charcode = FT_Get_Next_Char(face, charcode, &gindex);
 		counter++;
 	}
-	tmp4.setNum ( counter );
+	tmp4.setNum(counter);
 	str += "/CharStrings " + tmp4 + " dict dup begin\n"+tmp2;
 	str += "end readonly def\n";
 	str += "FontName currentdict end definefont pop\n";
-	return ( true );
+	return(true);
 }
 
 qreal ScFace_ttf::glyphKerning ( uint gl1, uint gl2, qreal sz ) const
