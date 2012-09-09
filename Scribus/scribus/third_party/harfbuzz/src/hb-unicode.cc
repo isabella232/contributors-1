@@ -114,6 +114,16 @@ hb_unicode_decompose_nil (hb_unicode_funcs_t *ufuncs    HB_UNUSED,
          *a = 0xd57 ;
          return TRUE;
        break ;
+     case 0xb4b : 
+         *a = 0xb47 ;
+         *b = 0xb3e ;
+         return TRUE;
+       break ;
+     case 0xb4c : 
+         *a = 0xb47 ;
+         *b = 0xb57 ;
+         return TRUE;
+       break ;
   }
   return FALSE;
 }

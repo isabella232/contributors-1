@@ -43,12 +43,14 @@ QChar SpecialChars::BLANK        = QChar(32);      // SPACE is some macro on my 
 
 bool SpecialChars::isBreakingSpace(QChar c)
 {
-	return c == BLANK || c == ZWSPACE;
+//	return c == BLANK || c == ZWSPACE;
+	return c.isSpace() && (c != NBSPACE);
 }
 
 bool SpecialChars::isExpandingSpace(QChar c)
 {
-	return c == BLANK || c == NBSPACE;
+//	return c == BLANK || c == NBSPACE;
+	return c.isSpace() && (c != ZWSPACE);
 }
 
 bool SpecialChars::isBreak(QChar c, bool includeColBreak)

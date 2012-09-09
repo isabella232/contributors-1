@@ -1663,9 +1663,9 @@ void PageItem_TextFrame::layout()
 			{
 				wide = hl->glyph.wide();
 				// apply kerning
-				if (a+1 < itemText.length())
+				if (a+1 < itemText.nOfGlyphs)
 				{
-					uint glyph2 = font.char2CMap(itemText.text(a+1));
+					uint glyph2 = itemText.item(a+1)->glyph.glyph;
 					double kern= font.glyphKerning(hl->glyph.glyph, glyph2, chs / 10.0) * hl->glyph.scaleH;
 					wide += kern;
 					hl->glyph.xadvance += kern;
@@ -2133,7 +2133,7 @@ void PageItem_TextFrame::layout()
 							if (tglyph)
 							{
 								tglyph->fillChar = tabs.fillChar;
-								tglyph->glyph    = font.char2CMap(tabs.fillChar);
+								//tglyph->glyph    = font.char2CMap(tabs.fillChar);
 								tglyph->yoffset  = hl->glyph.yoffset;
 								tglyph->scaleV   = tglyph->scaleH = chs / charStyle.fontSize();
 								tglyph->xadvance = 0;
@@ -2273,7 +2273,7 @@ void PageItem_TextFrame::layout()
 				}
 				if (legacy &&
 						(((hl->ch == '-' || (hl->effects() & ScStyle_HyphenationPossible)) && (current.hyphenCount < m_Doc->hyphConsecutiveLines() || m_Doc->hyphConsecutiveLines() == 0))
-						 || hl->ch == SpecialChars::SHYPHEN))
+						 || hl->ch == SpecialChars::SHYPHEN || hl->glyph.glyph == font.char2CMap(QChar(SpecialChars::SHYPHEN)) ))
 				{
 					if (hl->effects() & ScStyle_HyphenationPossible || hl->ch == SpecialChars::SHYPHEN)
 					{
@@ -2385,7 +2385,7 @@ void PageItem_TextFrame::layout()
 			}
 
 			// hyphenation
-			if (((hl->effects() & ScStyle_HyphenationPossible) || (hl->ch == '-') || hl->ch == SpecialChars::SHYPHEN) && (!outs) && !itemText.text(a-1).isSpace() )
+			if (((hl->effects() & ScStyle_HyphenationPossible) || (hl->ch == '-') || (hl->glyph.glyph != font.char2CMap(QChar(SpecialChars::SHYPHEN))) && (!outs) && !itemText.text(a-1).isSpace() ))
 			{
 				breakPos = current.xPos;
 				if (hl->ch != '-')
@@ -2400,7 +2400,7 @@ void PageItem_TextFrame::layout()
 				
 				if (legacy || (breakPos - rightHang < current.colRight - style.rightMargin()))
 				{
-					if ((current.hyphenCount < m_Doc->hyphConsecutiveLines()) || (m_Doc->hyphConsecutiveLines() == 0) || hl->ch == SpecialChars::SHYPHEN)
+					if ((current.hyphenCount < m_Doc->hyphConsecutiveLines()) || (m_Doc->hyphConsecutiveLines() == 0) || (hl->glyph.glyph != font.char2CMap(QChar(SpecialChars::SHYPHEN))))
 					{
 						current.rememberBreak(a, breakPos, style.rightMargin() + hyphWidth);
 					}
@@ -2546,17 +2546,19 @@ void PageItem_TextFrame::layout()
 								//increase hyphen count only for hyphens a the end of text row, omit hyphens before overflow
 								current.hyphenCount++;
 							hl->setEffects(hl->effects() | ScStyle_SoftHyphenVisible);
-							hl->glyph.grow();
-							hl->glyph.more->glyph = font.char2CMap(QChar('-'));
-							hl->glyph.more->xadvance = font.charWidth('-', itemText.charStyle(a).fontSize() / 10.0) * scaleH; //FIX ME - hyphen is not rendered with proper width - check yhis with large glyphs horizontal scaling eg. 20%
-							hyphWidth = hl->glyph.more->xadvance;
+							GlyphLayout gl = hl->glyph ;
+							while ( gl.more ) gl = *gl.more ;
+							gl.grow();
+							gl.more->glyph = font.char2CMap(QChar(SpecialChars::SHYPHEN));
+							gl.more->xadvance = font.charWidth(SpecialChars::SHYPHEN, itemText.charStyle(a).fontSize() / 10.0) * scaleH; //FIX ME - hyphen is not rendered with proper width - check yhis with large glyphs horizontal scaling eg. 20%
+							hyphWidth = gl.more->xadvance;
 						}
 						else
 						{
-							if (hl->ch != '-')
+							if (hl->glyph.glyph != font.char2CMap(QChar(SpecialChars::SHYPHEN)))
 								current.hyphenCount = 0;
 							hl->setEffects(hl->effects() & ~ScStyle_SoftHyphenVisible);
-							hl->glyph.shrink();
+							//hl->glyph.shrink();
 						}
 						
 						// Justification
@@ -3137,10 +3139,14 @@ void PageItem_TextFrame::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 					{
 						p->save();//SA4
 						p->translate(CurX, ls.y);
-						if ((hl->ch == SpecialChars::OBJECT) && (hl->hasObject(m_Doc)))
+						if ((hl->ch == SpecialChars::OBJECT) && (hl->hasObject(m_Doc))) 
+						{
 							DrawObj_Embedded(p, cullingArea, charStyle, hl->getItem(m_Doc));
+						}
 						else
-							drawGlyphs(p, charStyle, hl->glyph);
+						{
+							if (hl->glyph.glyph) drawGlyphs(p, charStyle, hl->glyph);
+						}
 						p->restore();//RE4
 					}
 					// Unneeded now that glyph xadvance is set appropriately for inline objects by layout() - JG

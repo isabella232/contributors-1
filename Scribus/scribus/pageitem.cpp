@@ -2323,7 +2323,7 @@ double PageItem::layoutGlyphs(const CharStyle& style, const QString& chars, Glyp
 	}
 	else */
 	{
-		layout.glyph = font.char2CMap(chars[0].unicode());
+		//layout.glyph = font.char2CMap(chars[0].unicode());
 	}
 	double tracking = 0.0;
 	if ( (style.effects() & ScStyle_StartOfLine) == 0)
@@ -2352,7 +2352,7 @@ double PageItem::layoutGlyphs(const CharStyle& style, const QString& chars, Glyp
 		layout.scaleV *= style.scaleV() / 1000.0;
 		if (chst & ScStyle_AllCaps)
 		{
-			layout.glyph = font.char2CMap(chars[0].toUpper().unicode());
+			//layout.glyph = font.char2CMap(chars[0].toUpper().unicode());
 		}
 		if (chst & ScStyle_SmallCaps)
 		{
@@ -2599,9 +2599,9 @@ void PageItem::drawGlyphs(ScPainter *p, const CharStyle& style, GlyphLayout& gly
 			}
 			if (glyph == 0)
 			{
-				p->setPen(PrefsManager::instance()->appPrefs.displayPrefs.controlCharColor, 1, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
-				p->setLineWidth(style.fontSize() * glyphs.scaleV * style.outlineWidth() * 2 / 10000.0);
-				p->strokePath();
+//				p->setPen(PrefsManager::instance()->appPrefs.displayPrefs.controlCharColor, 1, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
+//				p->setLineWidth(style.fontSize() * glyphs.scaleV * style.outlineWidth() * 2 / 10000.0);
+//				p->strokePath();
 			}
 			else if ((font.isStroked()) && (style.strokeColor() != CommonStrings::None) && ((style.fontSize() * glyphs.scaleV * style.outlineWidth() / 10000.0) != 0))
 			{

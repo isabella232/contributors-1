@@ -4885,6 +4885,7 @@ QString PDFLibCore::setTextSt(PageItem *ite, uint PNr, const ScPage* pag)
 			{
 				ScText *hl = ite->itemText.item(d);
 				const QChar ch = hl->ch;
+			        if (hl->gIdx < 0) continue ;
 				const CharStyle& chstyle(ite->itemText.charStyle(d));
 				const ParagraphStyle& pstyle(ite->itemText.paragraphStyle(d));
 				if (SpecialChars::isBreak(ch, true) || (ch == QChar(10)))
