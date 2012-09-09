@@ -36,7 +36,6 @@ public:
 	static QChar TAB;
 	static QChar END_TAG;
 	static QChar EMPTY_TAG;
-	static QChar TAB;
 	static QChar PARSEP;
 	static QChar LINEBREAK;
 	static QChar COLBREAK;
@@ -53,6 +52,7 @@ public:
 	static QChar BLANK;
 	
 	static bool isBreak(QChar c, bool includeColBreak = true);
+    int getCJKAttr(QChar c);
 	static bool isBreakingSpace(QChar c);
 	static bool isExpandingSpace(QChar c);
 };
