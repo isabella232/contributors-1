@@ -19,13 +19,11 @@ for which a new license (GPL+exception) is in place.
 
 #include "fonts/scface_ttf.h"
 #include "fonts/scfontmetrics.h"
-#include "fonts/fontfeatureset.h"
 #include "fonts/schbfunctions.h"
 #include "util.h"
 #include "scconfig.h"
 #include "sctextstruct.h"
 #include "langmgr.h"
-#include "fonts/scicufont.h"
 
 #include <layout/LETypes.h>
 #include <layout/LEFontInstance.h>
@@ -89,96 +87,10 @@ hb_tag_t stringToTag(const QString& tag)
 
 void releaseFaceForHB(void *){} // HB hassle
 
-TTFFeatureSet::TTFFeatureSet(FT_Face ftface)
-	:FontFeatureSet()
-{
-	// on prend son souffle :)
-	hb_face_t * face = hb_ft_face_create(ftface, releaseFaceForHB );
-	QList<hb_tag_t> tables;
-	tables << HB_TAG('G','P','O','S') << HB_TAG('G','S','U','B');
-	unsigned int script_index = 0;
-	unsigned int language_index = 0;
-	foreach(hb_tag_t table, tables)
-	{
-		unsigned int script_count = hb_ot_layout_table_get_script_count(face, table);
-		// unsigned int script_count ;
-		bool hastDFLTScript(hb_ot_layout_table_find_script(face,table,HB_OT_TAG_DEFAULT_SCRIPT, &script_index));
-		hb_tag_t     * script_tags = new hb_tag_t[(hastDFLTScript ? script_count + 1 : script_count)];
-		if(hastDFLTScript)
-			script_tags[0] = HB_OT_TAG_DEFAULT_SCRIPT;
-		else
-//			qDebug()<< "(" << __FILE__ << ")(" << __LINE__  <<") No default script for "<< tagToString(table) <<ftface->family_name<<ftface->style_name ;
-		hb_ot_layout_table_get_script_tags (face, table, 0, &script_count, (hastDFLTScript ? script_tags + 1 :  script_tags));
-//		qDebug()<< "(" << __FILE__ << ")(" << __LINE__ << __func__ << ") " <<"Table:"<<tagToString(table)<<"ScriptCount:"<<script_count;
-
-		for(unsigned int scIdx(0); scIdx < script_count; ++scIdx)
-		{
-			script_index = 0;
-			hb_ot_layout_table_find_script (face, table, script_tags[scIdx], &script_index);
-			unsigned int language_count = hb_ot_layout_script_get_language_count(face, table, script_index);
-			// unsigned int language_count ;
-			bool hasDFLTLang(hb_ot_layout_script_find_language(face, table, script_index, HB_OT_TAG_DEFAULT_LANGUAGE, &language_index));
-			hb_tag_t * language_tags =  new hb_tag_t[(hasDFLTLang ? language_count + 1: language_count)];
-			if(hasDFLTLang)
-				language_tags[0] =  HB_OT_TAG_DEFAULT_LANGUAGE;
-			else
-//				qDebug()<< "(" << __FILE__ << ")(" << __LINE__  <<") No default lang for"<< tagToString(table) <<tagToString(script_tags[scIdx]) <<ftface->family_name<<ftface->style_name ;
-			hb_ot_layout_script_get_language_tags(face, table, script_index, 0, &language_count , (hasDFLTLang ? language_tags + 1 : language_tags) );
-//			qDebug()<< "(" << __FILE__ << ")(" << __LINE__  <<") \tScript:"<<tagToString(script_tags[scIdx])<<"LanguageCount:"<<language_count;
-
-			for(unsigned int laIdx(0); laIdx < language_count; ++laIdx)
-			{
-				language_index = 0;
-				hb_ot_layout_script_find_language (face, table,  script_index, language_tags[laIdx], &language_index);
-				unsigned int feature_count = hb_ot_layout_language_get_feature_count(face, table, script_index, language_index);
-				// unsigned int feature_count = 0;
-				hb_tag_t * feature_tags = new hb_tag_t[feature_count];
-				hb_ot_layout_language_get_feature_tags (face, table, script_index, language_index , 0, &feature_count, feature_tags );
-				qDebug()<<"\t\tLanguage:"<<tagToString(language_tags[laIdx])<<"FeatureCount:"<<feature_count;
-
-				for(unsigned int feIdx(0); feIdx < feature_count; ++feIdx)
-				{
-					QString feName(tagToString(feature_tags[feIdx]));
-					qDebug()<<"\t\t\tFeature:"<<feName;
-					FontFeatureSet::Feature f;
-
-					f.name = feName;
-					f.type = (table == HB_TAG('G','P','O','S')) ? FontFeatureSet::Pos :  FontFeatureSet::Sub;
-					f.lang = tagToString(language_tags[laIdx]);
-					f.script = tagToString(script_tags[scIdx]);
-					featuresList << f;
-				}
-				delete[] feature_tags;
-			}
-			delete[] language_tags;
-		}
-		delete[] script_tags;
-	}
-
-}
-
-QList<FontFeatureSet::Feature> TTFFeatureSet::features(FeatureType type) const
-{
-	QList<FontFeatureSet::Feature> ret;
-	foreach(FontFeatureSet::Feature f, featuresList)
-	{
-		if(f.type == type)
-			ret << f;
-	}
-	return ret;
-}
-
-QMap<QString, LanguageCodes> ScFace_ttf::icuLangList;
-QMap<QString, ScriptCodes> ScFace_ttf::scriptTagToICUCode;
-QMap<QString, hb_tag_t > ScFace_ttf::scLangToTags ;
-
 ScFace_ttf::ScFace_ttf ( QString fam, QString sty, QString alt, QString scname, QString psname, QString path, int face )
 	: FtFace ( fam, sty, alt, scname, psname, path, face )
 {
 	formatCode = ScFace::SFNT;
-	featureSet = 0;
-	icuFont = 0;
-	fillLangToTag();
 }
 
 ScFace_ttf::~ ScFace_ttf()
@@ -189,20 +101,10 @@ ScFace_ttf::~ ScFace_ttf()
 void ScFace_ttf::load() const
 {
 	FtFace::load();
-	if(!featureSet)
-		featureSet = new TTFFeatureSet( ftFace() );
-	if(!icuFont)
-		icuFont = new ScICUFont(ftFace());
 }
 
 void ScFace_ttf::unload() const
 {
-	if(featureSet)
-		delete featureSet;
-	if(icuFont)
-		delete icuFont;
-	icuFont = 0;
-	featureSet = 0;
 	FtFace::unload();
 }
 
@@ -447,171 +349,3 @@ return -1 ;
 	return 0;
 }
 
-void ScFace_ttf::icuShape(StoryText* st, unsigned int item, LayoutEngine *le, const QString &text, QList<GlyphLayout> &glList, QList<le_int32> &charList, QList<le_int32> &baseCharList) const
-{
-	//bool isRTL(st->charAttributes(st->startOfItem(item)).testFlag(TextFlag_RightToLeft));
-	bool isRTL = 0 ;
-	double fSize(st->charStyle(st->startOfItem(item)).fontSize() /10.0);
-        unsigned int strt = st->startOfItem(item) ;
-        unsigned int end = st->endOfItem(item) ;
-	const QString text2(text.isEmpty() ? st->text(strt, end - strt ) : text);
-	// const bool textBased(!text.isEmpty());
-	const int sCount (text2.length());
-	LEUnicode16 *ts = new LEUnicode[sCount];
-	LEErrorCode err(LE_NO_ERROR);
-	qDebug()<< "(" << __FILE__ << ")(" << __LINE__ << __func__ << ") " <<"Shaping:"<<text2;
-	unsigned int ci(0);
-	foreach(const QChar& c, text2)
-	{
-		ts[ci] = c.unicode();
-		++ci;
-	}
-	le->reset();
-	/*int glAllocated = */le->layoutChars( ts, 0, sCount , sCount, isRTL, 0, 0, err );
-
-	le_int32 gCount(le->getGlyphCount());
-	LEGlyphID *glyphs    = new LEGlyphID[gCount];
-	le_int32 *indices   = new le_int32[gCount];
-	le->getGlyphs ( glyphs, err );
-	le->getCharIndices ( indices, err );
-	float xShift(0.0);
-
-	double sFactor(fSize / m_uniEM);
-	float icuX(0);
-	float icuY(0);
-	float icuFwdX(0);
-	float icuFwdY(0);
-	for ( le_int32 gIdx ( 0 ); gIdx < gCount ; ++gIdx )
-	{
-		if((glyphs[gIdx] != 0xFFFF)
-			&& (glyphs[gIdx] != 0xFFFE))
-		{
-			le->getGlyphPosition(gIdx, icuX, icuY, err);
-			le_int32 nextIdx(gIdx + 1);
-			while((glyphs[nextIdx] == 0xFFFF) && (nextIdx < gCount))
-				++nextIdx;
-			le->getGlyphPosition(nextIdx, icuFwdX, icuFwdY, err);
-			icuX *= sFactor;
-			icuY *= sFactor;
-			icuFwdX *= sFactor;
-			icuFwdY *= sFactor;
-			if(err != LE_NO_ERROR)
-				continue;
-			bool isCombining(text2.at(indices[gIdx]).isMark());
-			GlyphLayout curGlyph;
-			curGlyph.glyph = glyphs[gIdx];
-			curGlyph.xadvance = glyphWidth(curGlyph.glyph, fSize);
-			curGlyph.xoffset = isRTL ? (icuFwdX - icuX) - curGlyph.xadvance : xShift;
-			curGlyph.yoffset = icuY;
-			curGlyph.yadvance = 0;
-			xShift =  (icuFwdX - icuX) - curGlyph.xadvance;
-			if(isRTL)
-			{
-				glList.prepend( curGlyph );
-				charList.prepend(indices[gIdx]);
-				if(!isCombining)
-					baseCharList.prepend(indices[gIdx]);
-			}
-			else
-			{
-				glList << curGlyph;
-				charList << indices[gIdx];
-				if(!isCombining)
-					baseCharList << indices[gIdx];
-			}
-//			qDebug()<< "(" << __FILE__ << ")(" << __LINE__ << __func__ << ") " <<"icu"<<indices[gIdx] << curGlyph.glyph << sHeight << icuY << icuFwdY;
-		}
-	}
-	le->reset();
-
-	delete[]  ts;
-	delete[]  glyphs;
-	delete[]  indices;
-}
-
-QList<unsigned int> ScFace_ttf::getlookupIndex(const QString &table, const QString &language, const QString &feature) const
-{
-qDebug()<< "(" << __FILE__ << ")(" << __LINE__ << __func__ << ") Table (" << table  << ") Lang (" << language << " ) Featu ( " << feature ;
-	hb_tag_t t = (table == QString("GSUB")) ? HB_OT_TAG_GSUB : HB_OT_TAG_GPOS;
-	LanguageManager * lm(LanguageManager::instance());
-//	if(scLangToTags.contains(language))
-	{
-		hb_tag_t scriptTag = stringToTag(lm->getScriptTag( language ));
-		hb_tag_t langTag = stringToTag(lm->getLangTag( language ));
-		if(feature.isEmpty())
-		{
-			// If no specific feature has been asked for, we return required feature for this language.
-			hb_face_t * face = hb_ft_face_create(ftFace(), releaseFaceForHB );
-			unsigned int scriptIndex(0);
-			unsigned int languageIndex(0);
-			unsigned int featureIndex(0);
-			hb_ot_layout_table_find_script(face, t,scriptTag, &scriptIndex);
-			if(!hb_ot_layout_script_find_language(face, t, scriptIndex, langTag, &languageIndex))
-				hb_ot_layout_script_find_language(face, t, scriptIndex, HB_OT_TAG_DEFAULT_LANGUAGE, &languageIndex);
-			hb_ot_layout_language_get_required_feature_index(face, t, scriptIndex, languageIndex, &featureIndex);
-			unsigned int lookupCount(hb_ot_layout_feature_get_lookup_indexes (face,t,  featureIndex,0, 0 ,0));
-			unsigned int * lookup_indexes = new unsigned int[lookupCount];
-			hb_ot_layout_feature_get_lookup_indexes (face,t,  featureIndex,0, &lookupCount, lookup_indexes);
-
-			QList<unsigned int> ret;
-			for(unsigned int ui(0); ui < lookupCount; ++ui)
-				ret << lookup_indexes[ui];
-			delete lookup_indexes;
-			return ret;
-		}
-		else
-		{
-			hb_tag_t featureTag = stringToTag(feature);
-			bool haveIt(false);
-			QList<FontFeatureSet::Feature> ff = featureSet->features(t == HB_OT_TAG_GSUB ? FontFeatureSet::Sub :FontFeatureSet::Pos );
-			foreach(const FontFeatureSet::Feature& f, ff)
-			{
-				if((f.name == feature)
-					/* FIXME_OIF && (f.lang.contains( tagToString(langTag) ))*/ )
-					{
-					haveIt = true;
-					break;
-				}
-			}
-			if(haveIt)
-			{
-				hb_face_t * face = hb_ft_face_create(ftFace(), releaseFaceForHB );
-				unsigned int scriptIndex(0);
-				unsigned int languageIndex(0);
-				unsigned int featureIndex(0);
-				hb_ot_layout_table_find_script(face, t,scriptTag, &scriptIndex);
-				if(!hb_ot_layout_script_find_language(face, t, scriptIndex, langTag, &languageIndex))
-					hb_ot_layout_script_find_language(face, t, scriptIndex, HB_OT_TAG_DEFAULT_LANGUAGE, &languageIndex);
-				hb_ot_layout_language_find_feature(face, t,scriptIndex, languageIndex, featureTag, &featureIndex);
-				unsigned int lookupCount(hb_ot_layout_feature_get_lookup_indexes (face,t,  featureIndex,0, 0 ,0));
-				unsigned int * lookup_indexes = new unsigned int[lookupCount];
-				hb_ot_layout_feature_get_lookup_indexes (face,t,  featureIndex,0, &lookupCount, lookup_indexes);
-				QList<unsigned int> ret;
-				for(unsigned int ui(0); ui < lookupCount; ++ui)
-					ret << lookup_indexes[ui];
-				delete lookup_indexes;
-				return ret;
-			}
-		}
-	}
-	return QList<unsigned int>();
-}
-
-void ScFace_ttf::fillLangToTag()
-{
-//qDebug() << "(" << __FILE__ << ")(" << __LINE__ << __func__ << ")" ;
-//	if(!icuLangList.isEmpty())
-//		return;
-
-//qDebug() << "(" << __FILE__ << ")(" << __LINE__ << __func__ << ")" ;
-	LanguageManager *lm(LanguageManager::instance());
-	QStringList langs;
-	lm->fillInstalledStringList(&langs, false);
-	// Latin scripts
-	foreach(const QString& lang, langs)
-	{
-		QString abbr(lm->getAbbrevFromLang(lang));
-//		scLangToTags[lm->getLangFromTransLang(lang)] = qMakePair(HB_TAG('l','a','t','n'), hb_ot_tag_from_language(hb_language_from_string(abbr.toAscii().data(), -1)));
-		scLangToTags[lm->getLangFromTransLang(lang)] = hb_ot_tag_from_language(hb_language_from_string(abbr.toAscii().data(), -1));
-	}
-}

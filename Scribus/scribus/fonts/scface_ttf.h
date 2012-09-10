@@ -12,7 +12,6 @@ for which a new license (GPL+exception) is in place.
 
 #include "scribusapi.h"
 #include "fonts/ftface.h"
-#include "fonts/fontfeatureset.h"
 #include "text/storytext.h"
 
 #include "third_party/harfbuzz/src/hb.h"
@@ -23,34 +22,12 @@ for which a new license (GPL+exception) is in place.
 #include <QMap>
 #include <QPair>
 
-class ScICUFont;
-
-//#include FT_TRUETYPE_TABLES_H
-//#include FT_TRUETYPE_TAGS_H
 
 
 ///** Deprecated, will do regular OpenType processing
 //	An object holding a table of kerning pairs extracted from
 //	a kern feature such as found in a GPOS table
 // */
-
-class SCRIBUS_API TTFFeatureSet : public FontFeatureSet
-{
-	QList<Feature> featuresList;
-
-public:
-	TTFFeatureSet( FT_Face ftface );
-	QList<Feature> features(FeatureType type) const;
-	bool hasFeature(const QString& f);
-	Feature getFeature(const QString& f);
-};
-
-/*
-	Class ScFace_ttf
-	Subclass of ScFace, specifically for TrueType fonts.
-	Implements: RealName() and EmbedFont().
-*/
-
 
 
 class SCRIBUS_API ScFace_ttf : public FtFace
@@ -67,18 +44,8 @@ class SCRIBUS_API ScFace_ttf : public FtFace
 		
 		qreal glyphKerning ( uint gl1, uint gl2, qreal sz ) const;
 
-		TTFFeatureSet * features(FontFeatureSet::FeatureType type) const {return featureSet;}
 		int shapeText( void* stry, unsigned int item) const;
 
-	private:
-		void icuShape(StoryText* st, unsigned int item, LayoutEngine * le, const QString& text, QList<GlyphLayout>& glList, QList<le_int32>& charList, QList<le_int32>& baseCharList) const;
-		static QMap<QString, LanguageCodes> icuLangList;
-		static QMap<QString, ScriptCodes> scriptTagToICUCode;
-                static QMap<QString, hb_tag_t> scLangToTags ;
-		void fillLangToTag();
-		QList<unsigned int> getlookupIndex(const QString& table, const QString& language, const QString& feature = QString()) const;
-		mutable TTFFeatureSet * featureSet;
-		mutable ScICUFont * icuFont;
 };
 
 #endif

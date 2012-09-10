@@ -24,9 +24,12 @@ pageitem.cpp  -  description
 #include "specialchars.h"
 
 QChar SpecialChars::OBJECT       = QChar(25);
+QChar SpecialChars::START_TAG    = QChar(1);
+QChar SpecialChars::END_TAG      = QChar(2);
+QChar SpecialChars::EMPTY_TAG    = QChar(3);
 QChar SpecialChars::TAB          = QChar(9);
 QChar SpecialChars::PARSEP       = QChar(13);
-QChar SpecialChars::LINEBREAK    = QChar(28);
+QChar SpecialChars::LINEBREAK    = QChar(0x2028);
 QChar SpecialChars::COLBREAK     = QChar(26);
 QChar SpecialChars::FRAMEBREAK   = QChar(27);
 QChar SpecialChars::SHYPHEN      = QChar(0xAD);

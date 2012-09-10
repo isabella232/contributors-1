@@ -23,7 +23,6 @@ hb-ot-tag.cc
 hb-ot-layout.cc
 hb-fallback-shape.cc
 hb-font.cc
-#hb-graphite2.cc
 hb-icu.cc
 hb-ot-layout.cc
 hb-ot-map.cc
@@ -33,9 +32,7 @@ hb-ot-shape-complex-indic.cc
 hb-ot-shape-complex-misc.cc
 hb-ot-shape-normalize.cc
 hb-tt-font.cc
-# hb-uniscribe.cc
 hb-warning.cc
-#hbotlayout_class.cpp
 ${HBSOURCES_FT}
 )
 
