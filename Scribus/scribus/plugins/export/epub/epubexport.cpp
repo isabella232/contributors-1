@@ -56,7 +56,6 @@
 	  fields can be handy for epub in some cases
 	- we may need to obfuscate fonts on demand (or leave it to sigil?)
 	  (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
-	- fill the missing metadata fields
 	- first implementation of char formatting
 	- create multiple files and add them to the ncx file
 	- create TOC
@@ -569,6 +568,8 @@ void EPUBexport::exportNCX()
   * add OEBPS/content.opf to the current epub file
   * The OPF file, traditionally named content.opf, houses the EPUB book's metadata,
   * file manifest, and linear reading order.
+  * on the IDPF site you can find the full list of the possible metadata
+  * http://idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.2
   * <?xml version="1.0"?>
   * <package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId">
   *   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
@@ -632,6 +633,19 @@ void EPUBexport::exportOPF()
 	element.appendChild(text);
 	metadata.appendChild(element);
 
+    /*
+     * Publications with multiple co-authors should provide multiple creator elements,
+     * each containing one author. The order of creator elements is presumed
+     * to define the order in which the creators' names should be presented by the Reading System.
+     *
+     * This specification recommends that the content of the creator elements hold the text
+     * for a single name as it would be presented to the Reader.
+     *
+     * This specification adds to the creator element two optional attributes: role and file-as.
+     * The set of values for role are identical to those defined in Section 2.2.6
+     * for the contributor element. The file-as attribute should be used
+     * to specify a normalized form of the contents, suitable for machine processing.
+     */
 	element = xmlDocument.createElement("dc:creator");
 	element.setAttribute("opf:file-as", documentMetadata.author()); // TODO: use the to be created authorFileAs / authorSort
 	element.setAttribute("opf:role", "aut");
@@ -646,20 +660,35 @@ void EPUBexport::exportOPF()
 	metadata.appendChild(element);
 
 	// non mandatory fields from the main screen
-	if (documentMetadata.subject() == "")
+	if (documentMetadata.subject() != "")
 	{
+        // multiple instances are allowed
+        element = xmlDocument.createElement("dc:subject");
+        text = xmlDocument.createTextNode(documentMetadata.subject());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
-	if (documentMetadata.keywords() == "")
+	if (documentMetadata.keywords() != "")
 	{
+        // it seems that keywords are treated as subjects in epub...
+        // sould we separate the keywords by ","? (ale/20120912)
+        element = xmlDocument.createElement("dc:subject");
+        text = xmlDocument.createTextNode(documentMetadata.keywords());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
-	if (documentMetadata.comments() == "") // labelled as description in scribus
+	if (documentMetadata.comments() != "") // labelled as description in scribus
 	{
+        element = xmlDocument.createElement("dc:description");
+        text = xmlDocument.createTextNode(documentMetadata.comments());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
 	// non mandatory fields from the further information screen
-	if (documentMetadata.publisher() == "")
+	if (documentMetadata.publisher() != "")
 	{
 		element = xmlDocument.createElement("dc:publisher");
 		text = xmlDocument.createTextNode(documentMetadata.publisher());
@@ -667,32 +696,63 @@ void EPUBexport::exportOPF()
 		metadata.appendChild(element);
 	}
 
-	if (documentMetadata.contrib() == "") // labelled as contributors in scribus
+	if (documentMetadata.contrib() != "") // labelled as contributors in scribus
 	{
+        // A party whose contribution to the publication is secondary to those named in creator elements. 
+        element = xmlDocument.createElement("dc:contributor");
+        text = xmlDocument.createTextNode(documentMetadata.contrib());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
-	if (documentMetadata.type() == "")
+	if (documentMetadata.type() != "")
 	{
+        element = xmlDocument.createElement("dc:type");
+        text = xmlDocument.createTextNode(documentMetadata.type());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
-	if (documentMetadata.format() == "") // should be one of: event, image, interactive resource, moving image, physical object, service, software, sound, still image, text
+	if (documentMetadata.format() != "") // should be one of: event, image, interactive resource, moving image, physical object, service, software, sound, still image, text
 	{
+        element = xmlDocument.createElement("dc:format");
+        text = xmlDocument.createTextNode(documentMetadata.format());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
-	if (documentMetadata.source() == "")
+	if (documentMetadata.source() != "")
 	{
+        // Information regarding a prior resource from which the publication was derived;
+        element = xmlDocument.createElement("dc:source");
+        text = xmlDocument.createTextNode(documentMetadata.source());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
-	if (documentMetadata.relation() == "")
+	if (documentMetadata.relation() != "")
 	{
+        element = xmlDocument.createElement("dc:relation");
+        text = xmlDocument.createTextNode(documentMetadata.relation());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
-	if (documentMetadata.cover() == "") // that's not the cover, but the coverage... space and time covered by the work
+	if (documentMetadata.cover() != "") // that's not the cover, but the coverage... space and time covered by the work
 	{
+        element = xmlDocument.createElement("dc:coverage");
+        text = xmlDocument.createTextNode(documentMetadata.cover());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
-	if (documentMetadata.rights() == "")
+	if (documentMetadata.rights() != "")
 	{
+        // A statement about rights, or a reference to one. In this specification, the copyright notice and any further rights description should appear directly.
+        element = xmlDocument.createElement("dc:rights");
+        text = xmlDocument.createTextNode(documentMetadata.rights());
+        element.appendChild(text);
+        metadata.appendChild(element);
 	}
 
 	QDomElement manifest = xmlDocument.createElement("manifest");
