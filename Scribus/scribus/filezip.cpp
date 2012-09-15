@@ -73,7 +73,8 @@ bool FileZip::openInZip(QString filename, bool compression)
 		return false;
 	}
 
-    if (zipOpenNewFileInZip(file, filename.toUtf8().constData(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_NO_COMPRESSION) != Z_OK)
+    if (zipOpenNewFileInZip(file, filename.toUtf8().constData(), NULL, NULL, 0, NULL, 0, NULL, (compression ? Z_DEFLATED : 0), (compression ? 8 : Z_NO_COMPRESSION)) != Z_OK)
+    //if (zipOpenNewFileInZip(file, filename.toUtf8().constData(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_NO_COMPRESSION) != Z_OK)
 	{
 		zipClose(file, NULL);
 		// QFile::remove(tempFile);
