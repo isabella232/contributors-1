@@ -120,8 +120,8 @@ void EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
 	readMetadata();
 	readItems();
 
-	targetFile = "/tmp/"+targetFile;
-	qDebug() << "forcing the output of the .epub file to /tmp";
+	// targetFile = "/tmp/"+targetFile;
+	// qDebug() << "forcing the output of the .epub file to /tmp";
 	epubFile = new FileZip(targetFile);
 	epubFile->create();
 
@@ -189,6 +189,9 @@ void EPUBexport::readItems()
         // qDebug() << "i: " << i;
 		if (!docItem->printEnabled())
 			continue;
+		//Item not on a page, continue
+		if (docItem->OwnPage == -1)
+			continue;
         if (layerNotPrintableList.contains(docItem->LayerID))
             continue;
         itemList[docItem->OwnPage].append(docItem);
@@ -202,12 +205,17 @@ void EPUBexport::readItems()
  */
 void EPUBexport::addXhtml()
 {
-	// TODO: dynamically add the chapters
-	epubFile->add("OEBPS/Text/chapter.xhtml", xhtmlDocument.toString(), true);
+	EPUBExportXhtmlFile file;
+	file.section = section;
+	file.filename = QString("Section%1.xhtml").arg(section + 1, 4, 10, QChar('0'));
+	// qDebug() << "file.filename" << file.filename;
+	file.title = QString("Section %1").arg(section + 1, 4, 10, QChar('0')); // TODO: as soon as we have a TOC, take the title from the text
+	epubFile->add("OEBPS/Text/" + file.filename, xhtmlDocument.toString(), true);
+	xhtmlFile.append(file);
 
 	struct EPUBExportContentItem contentItem;
-	contentItem.id = "chapter";
-	contentItem.href = "Text/chapter.xhtml";
+	contentItem.id = file.filename;
+	contentItem.href = "Text/" + file.filename;
 	contentItem.mediaType = "application/xhtml+xml";
 	contentItems.append(contentItem);
 }
@@ -425,12 +433,20 @@ void EPUBexport::exportXhtml()
     int jj = 0;
 	QString content = QString();
     PageItem* docItem;
+	section = 0;
     for (int i = 0; i < n; i++)
     {
 		// TODO: if the page is on a new section, create a new file
-		if (false)
+		if (itemList[i].count() == 0)
+			continue;
+		int sectionId = doc->getSectionKeyForPageIndex(itemList[i][0]->OwnPage);
+		// TODO: create the file as Section0001 ... check the name from sigil
+        // qDebug() << "sectionId" << sectionId;
+        // qDebug() << "section" << section;
+		if (section < sectionId)
 		{
 			addXhtml();
+			section = sectionId;
 			initializeXhtml();
 		}
         qSort(itemList[i].begin(), itemList[i].end(), EPUBexport::isDocItemTopLeftLessThan);
@@ -539,27 +555,28 @@ void EPUBexport::exportNCX()
 	text = xmlDocument.createTextNode(documentMetadata.author());
 	elementText.appendChild(text);
 
-	element = xmlDocument.createElement("navMap");
-	ncx.appendChild(element);
+	QDomElement nav = xmlDocument.createElement("navMap");
+	ncx.appendChild(nav);
 
-	// TODO: iterate through the chapters
+	for (int i = 0;  i < xhtmlFile.count(); i++) {
+		EPUBExportXhtmlFile file = xhtmlFile[i];
+		QDomElement navPoint = xmlDocument.createElement("navPoint");
+		navPoint.setAttribute("class", "chapter");
+		navPoint.setAttribute("id", file.filename);
+		navPoint.setAttribute("playOrder", i);
+		nav.appendChild(navPoint);
 
-	QDomElement nav = xmlDocument.createElement("navPoint");
-	nav.setAttribute("class", "chapter");
-	nav.setAttribute("id", "chapter1"); // TODO: set it correctly
-	nav.setAttribute("playOrder", "1"); // TODO: set it correctly
-	element.appendChild(nav);
+		element = xmlDocument.createElement("navLabel");
+		navPoint.appendChild(element);
+		elementText = xmlDocument.createElement("text");
+		element.appendChild(elementText);
+		text = xmlDocument.createTextNode(file.title);
+		elementText.appendChild(text);
 
-	element = xmlDocument.createElement("navLabel");
-	nav.appendChild(element);
-	elementText = xmlDocument.createElement("text");
-	element.appendChild(elementText);
-	text = xmlDocument.createTextNode("Chapter 1"); // TODO: set chapter title
-	elementText.appendChild(text);
-
-	element = xmlDocument.createElement("content");
-	element.setAttribute("src", "Text/chapter.xhtml"); // TODO: set the chapter file
-	nav.appendChild(element);
+		element = xmlDocument.createElement("content");
+		element.setAttribute("src", "Text/" + file.filename);
+		navPoint.appendChild(element);
+	}
 
 	epubFile->add("OEBPS/toc.ncx", xmlDocument.toString(), true);
 }
@@ -784,10 +801,11 @@ void EPUBexport::exportOPF()
 	spine.setAttribute("toc", "ncx");
 	xmlRoot.appendChild(spine);
 
-	// TODO: dynamically add the chapters
-	element = xmlDocument.createElement("itemref");
-	element.setAttribute("idref", "chapter"); // TODO: set chapter name
-	spine.appendChild(element);
+	for (int i = 0;  i < xhtmlFile.count(); i++) {
+		element = xmlDocument.createElement("itemref");
+		element.setAttribute("idref", xhtmlFile[i].filename);
+		spine.appendChild(element);
+	}
 
 	QDomElement guide = xmlDocument.createElement("guide");
 	xmlRoot.appendChild(guide);

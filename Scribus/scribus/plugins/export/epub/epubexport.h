@@ -139,6 +139,12 @@ struct EPUBExportRuns
     }
 };
 */
+struct EPUBExportXhtmlFile
+{
+    int section;
+    QString title;
+    QString filename;
+};
 
 struct EPUBExportCurrentFormatting
 {
@@ -208,9 +214,11 @@ private:
 
     QVector<EPUBExportContentItem> contentItems;
 
+    int section;
 	QDomDocument xhtmlDocument;
 	QDomElement xhtmlRoot;
 	QDomElement xhtmlBody;
+    QVector<EPUBExportXhtmlFile> xhtmlFile; // list of the xhtml files for the toc
     void exportMimetype();
     void exportContainer();
     void exportCSS();
