@@ -37,7 +37,6 @@
 	  apply the character style?
 	- all file names must have ASCII chars only (manage the clashes when renaming)
 	- Your filenames have spaces or encoded characters. If your EPUB has any spaces in filenames, be sure the spaces are properly encoded in the EPUB manifest by using "%20" in their place. Filenames may not contain periods (“.”) other than to separate the filename from its extension.
-	- get the document info from the document settings!
 	- show the document infos in the export dialog
     - add the toc as soon as the styles based TOC is available (but not after the 1.6 release)
     - add the footnotes as soon cezary's code is in the trunk (http://blog.epubbooks.com/183/creating-an-epub-document)
@@ -49,7 +48,7 @@
 			  <image height="800" width="600" xlink:href="../Images/cover.jpeg"></image>
 			</svg>
 		  </div>
-    - groups only containing shpaes (no text nor images) should be exported as svg
+    - groups only containing shapes (no text nor images) should be exported as svg
 	- patch scribus to enable an identifier type in the document information (#11055)
 	- patch scribus to enable an authorFileAs the document information (lastname, first,)
 	- should the document information also be in the preferences (mostly not needed, but some
@@ -57,8 +56,6 @@
 	- we may need to obfuscate fonts on demand (or leave it to sigil?)
 	  (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
 	- first implementation of char formatting
-	- create multiple files and add them to the ncx file
-	- create TOC
 
  ***************************************************************************/
 
