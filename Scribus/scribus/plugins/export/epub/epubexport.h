@@ -221,6 +221,7 @@ private:
     QVector<EPUBExportXhtmlFile> xhtmlFile; // list of the xhtml files for the toc
     void exportMimetype();
     void exportContainer();
+    QString getStylenameSanitized(QString stylename);
     void exportCSS();
     void exportItems();
     void exportXhtml();

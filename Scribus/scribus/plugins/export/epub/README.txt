@@ -1,8 +1,12 @@
 120812	concept for spans 2
-130814	start implementing char formatting	3
-130814	read and set char styles + first draft for char formatting stack	3
-130815	char formatting as enum	1
-130815	packaging for epub	1
+120814	start implementing char formatting	3
+120814	read and set char styles + first draft for char formatting stack	3
+120815	char formatting as enum	1
+120815	packaging for epub	1
+120913	writing all metadata	2
+120915	fix the compression for epub (mimetype!)	2
+120915	export each section as an xhtml filex	 4
+120916	css clean up + correctly appy css styles	4
 
 #Other possible formats
 - Epub

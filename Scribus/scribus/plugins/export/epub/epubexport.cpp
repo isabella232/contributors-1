@@ -207,6 +207,7 @@ void EPUBexport::addXhtml()
 	file.filename = QString("Section%1.xhtml").arg(section + 1, 4, 10, QChar('0'));
 	// qDebug() << "file.filename" << file.filename;
 	file.title = QString("Section %1").arg(section + 1, 4, 10, QChar('0')); // TODO: as soon as we have a TOC, take the title from the text
+	// XXX: passing false to toString() would remove all indenting and line breaks (ale/20120917)
 	epubFile->add("OEBPS/Text/" + file.filename, xhtmlDocument.toString(), true);
 	xhtmlFile.append(file);
 
@@ -260,6 +261,11 @@ void EPUBexport::exportContainer()
 	epubFile->add("META-INF/container.xml", xmlDocument.toString(), true);
 }
 
+QString EPUBexport::getStylenameSanitized(QString stylename)
+{
+	return stylename.replace(' ', '_');
+}
+
 /**
   * add OEBPS/Styles/style.css to the current epub file
   */ 
@@ -278,7 +284,7 @@ void EPUBexport::exportCSS()
         // see fileloader/scribus150format/scribus150format_save.cpp
         ParagraphStyle paragraphStyle = (*paragraphStyles)[i];
         CharStyle charStyle = paragraphStyle.charStyle();
-        wr += paragraphStyle.name().replace(' ', '_') + "{\n";
+        wr += "p." + getStylenameSanitized(paragraphStyle.name()) + "{\n";
         // qDebug() << "style name: " << paragraphStyle.name();
         // qDebug() << "style alignment: " << paragraphStyle.alignment();
         // qDebug() << "style font: " << charStyle.font().scName();
@@ -330,7 +336,7 @@ void EPUBexport::exportCSS()
     for (int i = 0; i < n; ++i )
     {
         CharStyle charStyle = (*charStyles)[i];
-        wr += charStyle.name().replace(' ', '_') + "{\n";
+        wr += "span." + getStylenameSanitized(charStyle.name()) + "{\n";
         // qDebug() << "style name: " << charStyle.name();
         // qDebug() << "style font: " << charStyle.font().scName();
         wr += "    font-size:" + QString::number(charStyle.fontSize() / 10) + "pt;\n";
@@ -836,7 +842,8 @@ void EPUBexport::addText(PageItem* docItem)
         QString content = docItem->itemText.text(0, docItem->itemText.length());
         // qDebug() << "content: " << content;
         QDomElement element;
-        QStack <QDomElement> elementCurrent;
+        QDomElement elementCurrent;
+        QDomElement elementParagraph;
         QString paragraphStyleName;
         QString characterStyleName;
         QString run_text;
@@ -850,19 +857,20 @@ void EPUBexport::addText(PageItem* docItem)
 			hasCharacterStyle = false;
 
             if (run.type == 'p') {
-				while (!elementCurrent.isEmpty())
-					elementCurrent.pop();
                 paragraphStyleName = docItem->itemText.paragraphStyle(run.pos + 1).parent();
-                // qDebug() << "p paragraphStyle: " << paragraphStyleName;
-                element = xhtmlDocument.createElement("p");
-                element.setAttribute("class", paragraphStyleName);
-                xhtmlBody.appendChild(element);
-                elementCurrent.push(element);
+				paragraphStyleName = getStylenameSanitized(paragraphStyleName);
+                qDebug() << "paragraphStyle: " << paragraphStyleName;
+                elementParagraph = xhtmlDocument.createElement("p");
+				if (paragraphStyleName != "")
+					elementParagraph.setAttribute("class", paragraphStyleName);
+                xhtmlBody.appendChild(elementParagraph);
+				elementCurrent = elementParagraph;
             }
 
 			element = xhtmlDocument.createElement("span");
 
 			characterStyleName = docItem->itemText.charStyle(run.pos + 1).displayName();
+			characterStyleName = getStylenameSanitized(characterStyleName);
 			// qDebug() << "p characterstyle: " << characterStyleName;
 
 			if (characterStyleName != "")
@@ -871,27 +879,91 @@ void EPUBexport::addText(PageItem* docItem)
 				hasCharacterStyle = true;
 			}
 
+			/*
 			if (run.type == 'f')
 			{
-				hasCharacterStyle = true;
+				// hasCharacterStyle = true;
 			}
+			*/
 
             run_text = content.mid(run.pos, run.length);
 			// qDebug() << "run text: " << run_text;
-            QDomText t = xhtmlDocument.createTextNode(run_text);
-			// qDebug() << "tag name: " << element.tagName();
+            const CharStyle& style(docItem->itemText.charStyle(run.pos));
 
-			if (hasCharacterStyle) {
-				elementCurrent.top().appendChild(element);
-				element.appendChild(t);
-			}
-			else
+			QString fontname = style.font().scName();
+			qDebug() << "fontname:" << fontname;
+
+			QStringList featureList = style.features();
+			// qDebug() << "featureList" << featureList;
+			// as long as bold and italic are not in the features list, get the property
+			// by guessing from the font name (ale/20120916)
+			// rule.pattern = QRegExp("[\\\\|\\<|\\>|\\=|\\!|\\+|\\-|\\*|\\/|\\%]+");
+			QRegExp regexpItalic("(\\bitalic\\b)");
+			regexpItalic.setCaseSensitivity(Qt::CaseInsensitive);
+			if (regexpItalic.indexIn(fontname) >= 0)
 			{
-				elementCurrent.top().appendChild(t);
+				featureList << CharStyle::ITALIC;
 			}
+			QRegExp regexpBold("(\\bbold\\b)");
+			regexpBold.setCaseSensitivity(Qt::CaseInsensitive);
+			if (regexpBold.indexIn(fontname) >= 0)
+			{
+				featureList << CharStyle::BOLD;
+			}
+			QStringList::ConstIterator it;
+			for (it = featureList.begin(); it != featureList.end(); ++it)
+			{
+				QString feature = it->trimmed();
+				// qDebug() << "feature" << feature;
+				if (feature == CharStyle::BOLD)
+				{
+					qDebug() << "bold";
+					QDomElement bElement = xhtmlDocument.createElement("b");
+					elementCurrent.appendChild(bElement);
+					elementCurrent = bElement;
+				}
+				else if (feature == CharStyle::ITALIC)
+				{
+					qDebug() << "italic";
+					QDomElement iElement = xhtmlDocument.createElement("i");
+					elementCurrent.appendChild(iElement);
+					elementCurrent = iElement;
+				}
+				else if ((feature == CharStyle::UNDERLINE) || (feature == CharStyle::UNDERLINEWORDS))
+				{
+					qDebug() << "underline";
+					element.setAttribute("text-decoration", "underline");
+					hasCharacterStyle = true;
+				}
+				else if (feature != CharStyle::INHERIT)
+				{
+					qDebug() << "else feature" << feature;
+					hasCharacterStyle = true;
+				}
+		/*
+		else if (feature == STRIKETHROUGH)
+		else if (feature == SUPERSCRIPT)
+		else if (feature == SUBSCRIPT)
+		else if (feature == OUTLINE)
+		else if (feature == SHADOWED)
+		else if (feature == ALLCAPS)
+		else if (feature == SMALLCAPS)
+		else if (feature == SHYPHEN)
+			*/
+			}
+			// qDebug() << "tag name: " << element.tagName();
+			if (hasCharacterStyle)
+			{
+				elementCurrent.appendChild(element);
+				elementCurrent = element;
+			}
+
+            QDomText t = xhtmlDocument.createTextNode(run_text);
+			elementCurrent.appendChild(t);
             // run_text = subString(content, run.pos, run.length);
 			// qDebug() << "next round ";
             // lineStart += line.length() + 1;
+			elementCurrent = elementParagraph;
         }
     }
 }
