@@ -90,16 +90,14 @@ bool FileZip::closeInZip()
 	return true;
 }
 
-bool FileZip::add(QString filename, QString content, bool compression)
+bool FileZip::add(QString filename, QByteArray content, bool compression)
 {
 	if (!openInZip(filename, compression)) {
 		return false;
 	}
 
 	// qDebug() << "filezip::add content :" << content;
-	QByteArray contentEncoded = content.toUtf8();
-	// qDebug() << "filezip::add contentEncoded :" << contentEncoded;
-	const char* contentData = contentEncoded.constData();
+	const char* contentData = content.constData();
 	if (zipWriteInFileInZip(file, contentData, (unsigned int)strlen(contentData)) != Z_OK) {
 		zipCloseFileInZip(file);
 		zipClose(file, NULL);
@@ -109,6 +107,15 @@ bool FileZip::add(QString filename, QString content, bool compression)
 	}
 	closeInZip();
 
+	return true;
+}
+
+bool FileZip::add(QString filename, QString content, bool compression)
+{
+	// qDebug() << "filezip::add content :" << content;
+	QByteArray contentEncoded = content.toUtf8();
+	// qDebug() << "filezip::add contentEncoded :" << contentEncoded;
+	add(filename, contentEncoded, compression);
 	return true;
 }
 

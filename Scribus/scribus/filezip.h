@@ -53,6 +53,7 @@ public:
 	~FileZip();
 	bool create();
 	bool close();
+    bool add(QString filename, QByteArray content, bool compression);
 	bool add(QString fileName, QString content, bool compression);
 	bool add(QString fileName, QFile *file, bool compression);
 	bool add(QFile *file, bool compression);
