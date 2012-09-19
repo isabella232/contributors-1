@@ -98,7 +98,7 @@ bool FileZip::add(QString filename, QByteArray content, bool compression)
 
 	// qDebug() << "filezip::add content :" << content;
 	const char* contentData = content.constData();
-	if (zipWriteInFileInZip(file, contentData, (unsigned int)strlen(contentData)) != Z_OK) {
+	if (zipWriteInFileInZip(file, contentData, (unsigned int)content.size()) != Z_OK) {
 		zipCloseFileInZip(file);
 		zipClose(file, NULL);
 		// QFile::remove(tempFile);
