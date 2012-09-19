@@ -42,6 +42,7 @@ for which a new license (GPL+exception) is in place.
 #include "scpaths.h"
 #include "scraction.h"
 #include "scribus.h"
+#include "text/shaper.h"
 #include "scribusstructs.h"
 #include "scribusdoc.h"
 #include "undomanager.h"
@@ -97,6 +98,7 @@ void PageItem_PathText::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 	double actStrokeShade = -1;
 	QColor cachedFillQ;
 	QColor cachedStrokeQ;
+        Shaper *shaper = new Shaper( &itemRenderText);
 	if (!m_Doc->layerOutline(LayerID))
 	{
 		if (PoShow)
@@ -182,7 +184,7 @@ void PageItem_PathText::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 	for (a = firstChar; a < itemText.length(); ++a)
 	{
 		hl = itemText.item(a);
-		if (hl->gIdx < 0) continue ;
+//		if (hl->gIdx < 0) continue ;
 		CharStyle nstyle = itemText.charStyle(a);
 		ParagraphStyle pstyle = itemText.paragraphStyle(a);
 		chstr = hl->ch;
@@ -207,6 +209,7 @@ void PageItem_PathText::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 	}
 	int spaceCount = 0;
 	double wordExtra = 0;
+	shaper->shape(firstChar, itemRenderText.length() - 1 ) ;
 	for (a = firstChar; a < itemRenderText.length(); ++a)
 	{
 		hl = itemRenderText.item(a);
@@ -221,7 +224,7 @@ void PageItem_PathText::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 			chstr += itemRenderText.text(a+1, 1);
 		hl->glyph.yadvance = 0;
 		layoutGlyphs(itemRenderText.charStyle(a), chstr, hl->glyph);
-		hl->glyph.shrink();
+		//hl->glyph.shrink();
 		if (hl->hasObject(m_Doc))
 			totalTextLen += (hl->getItem(m_Doc)->width() + hl->getItem(m_Doc)->lineWidth()) * hl->glyph.scaleH;
 		else
@@ -274,7 +277,7 @@ void PageItem_PathText::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 			chstr += itemRenderText.text(a+1, 1);
 		hl->glyph.yadvance = 0;
 		layoutGlyphs(itemRenderText.charStyle(a), chstr, hl->glyph);
-		hl->glyph.shrink();                                                           // HACK
+		//hl->glyph.shrink();                                                           // HACK
 		if (hl->hasObject(m_Doc))
 			dx = (hl->getItem(m_Doc)->width() + hl->getItem(m_Doc)->lineWidth()) * hl->glyph.scaleH / 2.0;
 		else
@@ -384,6 +387,7 @@ void PageItem_PathText::DrawObj_Item(ScPainter *p, QRectF cullingArea)
 			CurX += hl->glyph.wide()+hl->fontSize() * hl->tracking() / 10000.0 + extraOffset;
 	}
 #endif
+	delete shaper;
 }
 
 bool PageItem_PathText::createInfoGroup(QFrame *infoGroup, QGridLayout *infoGroupLayout)

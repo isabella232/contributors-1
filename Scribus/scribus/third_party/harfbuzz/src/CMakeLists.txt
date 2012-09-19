@@ -18,6 +18,8 @@ hb-buffer.cc
 hb-common.cc
 hb-font.cc
 hb-shape.cc
+hb-shaper.cc
+hb-shape-plan.cc
 hb-unicode.cc
 hb-ot-tag.cc
 hb-ot-layout.cc
@@ -30,8 +32,10 @@ hb-ot-shape.cc
 hb-ot-shape-complex-arabic.cc
 hb-ot-shape-complex-indic.cc
 hb-ot-shape-complex-misc.cc
+hb-ot-shape-fallback.cc
 hb-ot-shape-normalize.cc
 hb-tt-font.cc
+hb-shape-plan.cc
 hb-warning.cc
 ${HBSOURCES_FT}
 )
