@@ -222,6 +222,7 @@ private:
     void exportMimetype();
     void exportContainer();
     QString getStylenameSanitized(QString stylename);
+    void exportCover();
     void exportCSS();
     void exportItems();
     void exportXhtml();

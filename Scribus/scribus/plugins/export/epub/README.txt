@@ -7,6 +7,7 @@
 120915	fix the compression for epub (mimetype!)	2
 120915	export each section as an xhtml filex	 4
 120916	css clean up + correctly appy css styles	4
+120919	generate and generate the image for the cover	4
 
 #Other possible formats
 - Epub

@@ -32,7 +32,6 @@
 	- define the condition under which a new span builds upon the current one or
 	  replaces it. (as an example: if a font is defined and it does not change, build upon it)
 	- keeping the colors of the text and the background of frames should be an option
-	- what happens if a style name has a space in it? replace by _?
 	- what happens if a char and a para style have the same name? always create a span to
 	  apply the character style?
 	- all file names must have ASCII chars only (manage the clashes when renaming)
@@ -55,7 +54,7 @@
 	  fields can be handy for epub in some cases
 	- we may need to obfuscate fonts on demand (or leave it to sigil?)
 	  (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
-	- first implementation of char formatting
+	- implement more formatting for the ccs style (bold, italic, ...)
 
  ***************************************************************************/
 
@@ -65,6 +64,8 @@
 #include <QFileInfo>
 #include <QDataStream>
 #include <QByteArray>
+#include <QBuffer> // for writing a QImage to a string (and then add it to the zip file)
+#include <QImage> // for the cover
 
 #include <QDomDocumentType>
 #include <QDomImplementation>
@@ -124,6 +125,8 @@ void EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
 
 	exportMimetype();
 	exportContainer();
+
+    exportCover();
 
     exportCSS();
 
@@ -225,7 +228,7 @@ void EPUBexport::addXhtml()
   */
 void EPUBexport::exportMimetype()
 {
-	epubFile->add("mimetype", "application/epub+zip", false);
+	epubFile->add("mimetype", QString("application/epub+zip"), false);
 }
 
 /**
@@ -266,6 +269,34 @@ QString EPUBexport::getStylenameSanitized(QString stylename)
 	return stylename.replace(' ', '_');
 }
 
+/**
+ * create a cover as a png of the first page of the .sla
+ * From the Sigil documentation:
+ * - Image size should be 590 pixels wide x 750 pixels high
+ * - Image resolution should be 72 pixels per inch (ppi) or higher
+ * - Use color images, saved in RGB color space
+ * - Image format can be JPEG, GIF, or PNG.
+ * TODO:
+ * - make sure that a cover.png image does not yet exist
+ */
+void EPUBexport::exportCover()
+{
+	QImage image = doc->view()->PageToPixmap(0, 750, false);
+
+	QByteArray bytearray;
+	QBuffer buffer(&bytearray);
+	buffer.open(QIODevice::WriteOnly);
+	image.save(&buffer, "PNG");
+	// qDebug() << "image.size" << image.size();
+
+	epubFile->add("OEBPS/Images/cover.png", bytearray, false);
+
+	struct EPUBExportContentItem contentItem;
+	contentItem.id = "cover.png";
+	contentItem.href = "Images/cover.png";
+	contentItem.mediaType = "image/png";
+	contentItems.append(contentItem);
+}
 /**
   * add OEBPS/Styles/style.css to the current epub file
   */ 
@@ -775,6 +806,11 @@ void EPUBexport::exportOPF()
         metadata.appendChild(element);
 	}
 
+	element = xmlDocument.createElement("meta");
+	element.setAttribute("content", "cover.png");
+	element.setAttribute("name", "cover");
+	metadata.appendChild(element);
+
 	QDomElement manifest = xmlDocument.createElement("manifest");
 	xmlRoot.appendChild(manifest);
 
@@ -848,6 +884,7 @@ void EPUBexport::addText(PageItem* docItem)
         QString characterStyleName;
         QString run_text;
 		bool hasCharacterStyle;
+		bool hasCharacterClass;
         for (int i = 0; i < n; i++) {
             // use QString mid() to get substrings...
             EPUBExportRuns run = runs[i];
@@ -855,6 +892,7 @@ void EPUBexport::addText(PageItem* docItem)
             // qDebug() << "run.length:" << run.length;
             // qDebug() << "run.type:" << run.type;
 			hasCharacterStyle = false;
+			hasCharacterClass = false;
 
             if (run.type == 'p') {
                 paragraphStyleName = docItem->itemText.paragraphStyle(run.pos + 1).parent();
@@ -876,7 +914,7 @@ void EPUBexport::addText(PageItem* docItem)
 			if (characterStyleName != "")
 			{
 				element.setAttribute("class", characterStyleName);
-				hasCharacterStyle = true;
+				hasCharacterClass = true;
 			}
 
 			/*
@@ -910,6 +948,7 @@ void EPUBexport::addText(PageItem* docItem)
 			{
 				featureList << CharStyle::BOLD;
 			}
+			QStringList styleAttribute;
 			QStringList::ConstIterator it;
 			for (it = featureList.begin(); it != featureList.end(); ++it)
 			{
@@ -946,13 +985,15 @@ void EPUBexport::addText(PageItem* docItem)
 				else if ((feature == CharStyle::UNDERLINE) || (feature == CharStyle::UNDERLINEWORDS))
 				{
 					qDebug() << "underline";
-					element.setAttribute("text-decoration", "underline");
+					styleAttribute << "text-decoration:underline";
+					// element.setAttribute("text-decoration", "underline");
 					hasCharacterStyle = true;
 				}
 				else if (feature == CharStyle::STRIKETHROUGH)
 				{
 					qDebug() << "underline";
-					element.setAttribute("text-decoration", "line-through");
+					// element.setAttribute("text-decoration", "line-through");
+					styleAttribute << "text-decoration:line-through";
 					hasCharacterStyle = true;
 				}
 				else if (feature != CharStyle::INHERIT)
@@ -972,6 +1013,11 @@ void EPUBexport::addText(PageItem* docItem)
 			}
 			// qDebug() << "tag name: " << element.tagName();
 			if (hasCharacterStyle)
+			{
+				element.setAttribute("style", styleAttribute.join("; ") + ";");
+			}
+
+			if (hasCharacterClass || hasCharacterStyle)
 			{
 				elementCurrent.appendChild(element);
 				elementCurrent = element;
