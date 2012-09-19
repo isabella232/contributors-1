@@ -117,8 +117,8 @@ void EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
 	readMetadata();
 	readItems();
 
-	// targetFile = "/tmp/"+targetFile;
-	// qDebug() << "forcing the output of the .epub file to /tmp";
+	targetFile = "/tmp/"+targetFile;
+	qDebug() << "forcing the output of the .epub file to /tmp";
 	epubFile = new FileZip(targetFile);
 	epubFile->create();
 
@@ -929,27 +929,46 @@ void EPUBexport::addText(PageItem* docItem)
 					elementCurrent.appendChild(iElement);
 					elementCurrent = iElement;
 				}
+				else if (feature == CharStyle::SUPERSCRIPT)
+				{
+					qDebug() << "superscript";
+					QDomElement iElement = xhtmlDocument.createElement("sup");
+					elementCurrent.appendChild(iElement);
+					elementCurrent = iElement;
+				}
+				else if (feature == CharStyle::SUBSCRIPT)
+				{
+					qDebug() << "subscript";
+					QDomElement iElement = xhtmlDocument.createElement("sub");
+					elementCurrent.appendChild(iElement);
+					elementCurrent = iElement;
+				}
 				else if ((feature == CharStyle::UNDERLINE) || (feature == CharStyle::UNDERLINEWORDS))
 				{
 					qDebug() << "underline";
 					element.setAttribute("text-decoration", "underline");
 					hasCharacterStyle = true;
 				}
+				else if (feature == CharStyle::STRIKETHROUGH)
+				{
+					qDebug() << "underline";
+					element.setAttribute("text-decoration", "line-through");
+					hasCharacterStyle = true;
+				}
 				else if (feature != CharStyle::INHERIT)
 				{
 					qDebug() << "else feature" << feature;
 					hasCharacterStyle = true;
+					/*
+					 * The following character formats are supported by Scribus
+					 * but not exported to epub:
+					 * OUTLINE: text-outline: 1px 1px #ccc;
+					 * SHADOWED: text-shadow: 2px 2px #ff0000;
+					 * ALLCAPS: text-transform:uppercase;
+					 * SMALLCAPS: font-variant:small-caps;
+					 * SHYPHEN: hyphenation is possible... how to use it?
+					 */
 				}
-		/*
-		else if (feature == STRIKETHROUGH)
-		else if (feature == SUPERSCRIPT)
-		else if (feature == SUBSCRIPT)
-		else if (feature == OUTLINE)
-		else if (feature == SHADOWED)
-		else if (feature == ALLCAPS)
-		else if (feature == SMALLCAPS)
-		else if (feature == SHYPHEN)
-			*/
 			}
 			// qDebug() << "tag name: " << element.tagName();
 			if (hasCharacterStyle)
