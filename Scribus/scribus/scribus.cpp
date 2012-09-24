@@ -2156,8 +2156,6 @@ void ScribusMainWindow::newActWin(QMdiSubWindow *w)
 	}
 	if (w->widget() == NULL)
 		return;
-	if (doc!=0 && doc->appMode == modeEditClip)
-		view->requestMode(submodeEndNodeEdit);
 	ScribusWin* scw = dynamic_cast<ScribusWin *>(w->widget());
 	if (!scw)
 		return;
@@ -2174,6 +2172,8 @@ void ScribusMainWindow::newActWin(QMdiSubWindow *w)
 
 	if (doc != NULL)
 	{
+		if (doc!=0 && doc->appMode == modeEditClip)
+			view->requestMode(submodeEndNodeEdit);
 		if ((HaveDoc) && (doc != ActWin->doc()))
 			outlinePalette->buildReopenVals();
 	}
