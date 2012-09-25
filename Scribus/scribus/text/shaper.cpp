@@ -103,7 +103,7 @@ printf ( "(%s)(%d)(%s) start (%d) end (%d)\n", __FILE__, __LINE__, __func__, sta
 		{
 			if((story->charStyle(cursor) != ref)
 					|| (currentRTL != previousRTL)
-					|| (cursor == end) || (story->text(cursor) == SpecialChars::PARSEP) )
+					|| (cursor == end) || (story->text(cursor).unicode() == SpecialChars::PARSEP) )
 			{
 				if(cursor != end)
 				{
@@ -123,18 +123,17 @@ printf ( "(%s)(%d)(%s) start (%d) end (%d)\n", __FILE__, __LINE__, __func__, sta
 				itStart = cursor;
 			}
 		}
-                if ((story->text(cursor).unicode() < 0xff)||(story->text(cursor) == SpecialChars::LINEBREAK)) {
+                if ((story->text(cursor).unicode() < 0xff) ||(story->text(cursor).unicode() == SpecialChars::LINEBREAK) ) {
 //printf ( "(%s)(%d)(%s) start (%d) end (%d) cursor (%d)\n", __FILE__, __LINE__, __func__, itStart, end, cursor ) ;
 			items << story->addItem(itStart, (cursor) - itStart + 1);
 			QString itemStr(story->text(itStart, (cursor) - itStart + 1));
 			itStart = cursor;
                 }
-//                if ((cursor > 0) && (story->text(cursor - 1) == SpecialChars::PARSEP)) {
-//printf ( "(%s)(%d)(%s) start (%d) end (%d) cursor (%d)\n", __FILE__, __LINE__, __func__, itStart, end, cursor ) ;
-//			items << story->addItem(itStart, (cursor) - itStart + 1);
-//			QString itemStr(story->text(itStart, (cursor) - itStart + 1));
-//			itStart = cursor;
-//                }
+                if ((cursor != end) && ((story->text(cursor + 1).unicode() < 0xff)||(story->text(cursor + 1).unicode() == SpecialChars::LINEBREAK))) {
+			items << story->addItem(itStart, (cursor + 1) - itStart + 1);
+			QString itemStr(story->text(itStart, (cursor + 1) - itStart + 1));
+			itStart = cursor + 1;
+                }
 		previousRTL = currentRTL;
 	}
 

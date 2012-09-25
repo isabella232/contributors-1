@@ -294,7 +294,7 @@ return -1 ;
 //printf ( "(%s) (%d) (%s) from  (%d) to (%d) item (%d) \n", __FILE__, __LINE__, __func__, st->itemTextPosition(item), end, item ) ;
 	for(unsigned int ci(st->itemTextPosition(item)); ci < end; ++ci)
 	{
-	unsigned short gIndex(st->text(ci,1).at(0).unicode());
+		unsigned short gIndex(st->text(ci,1).at(0).unicode());
 		hb_buffer_add(buf, gIndex, 0x1, ci);
 		hb_glyph_position_t * pos = hb_buffer_get_glyph_positions(buf ,NULL) + counterP;
 		pos->x_advance = 0;
@@ -310,11 +310,13 @@ return -1 ;
 	hb_glyph_info_t * gInfos = hb_buffer_get_glyph_infos (buf, NULL);
 	hb_glyph_position_t * gPositions = hb_buffer_get_glyph_positions (buf, &bLen);
 	
-	int clstr = -1 ;
+	int clstr =  st->nOfGlyphs - 1 ;
 	GlyphLayout* curGlyph = &st->item_p(st->nOfGlyphs)->glyph ;
 	ScText* sct = st->item_p(st->nOfGlyphs) ;
 	sct->gch = sct->ch.unicode() ;
 	int glCnt = 0 ;
+	int clstrCnt = 0 ;
+	int gIdxStrt = st->nOfGlyphs ;
 	for(unsigned int bIdx(0); bIdx < bLen; ++bIdx)
 	{
 //qDebug()<< "(" << __FILE__ << ")(" << __LINE__ << __func__ << ")  " << st->nOfGlyphs ;
@@ -325,13 +327,14 @@ return -1 ;
 			curGlyph = curGlyph->more ;
 			glCnt++ ;
 		} else {
-	        	curGlyph = &st->item_p(st->nOfGlyphs)->glyph ;
 			clstr = gi.cluster ;
-			sct = st->item_p(st->nOfGlyphs) ;
+	        	curGlyph = &st->item_p(gIdxStrt + clstrCnt)->glyph ;
+			sct = st->item_p(gIdxStrt + clstrCnt) ;
 			sct->gIdx = st->nOfGlyphs ;
+			st->nOfGlyphs = clstr ;
+			clstrCnt++ ;
 			glCnt = 0 ;
 		}
-		st->nOfGlyphs++ ;
 		gp.x_advance = 0 ;
 		curGlyph->xadvance = glyphWidth(gi.codepoint, fSize) ; // + (double(gp.x_advance) / 1000.0);
 		curGlyph->xoffset = gp.x_offset;
