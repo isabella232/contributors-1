@@ -54,7 +54,9 @@
 	  fields can be handy for epub in some cases
 	- we may need to obfuscate fonts on demand (or leave it to sigil?)
 	  (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
-	- implement more formatting for the ccs style (bold, italic, ...)
+	- don't include images which are not on the page (how can i check if it's on a page or not?)
+	- QDomDocument has some limitations (like putting newlines around <span>s): in the future we
+	  should probably rather use SAX
 
  ***************************************************************************/
 
@@ -278,6 +280,8 @@ QString EPUBexport::getStylenameSanitized(QString stylename)
  * - Image format can be JPEG, GIF, or PNG.
  * TODO:
  * - make sure that a cover.png image does not yet exist
+ * - create an xhtml file with the cover?
+ *   http://blog.threepress.org/2009/11/20/best-practices-in-epub-cover-images/
  */
 void EPUBexport::exportCover()
 {
@@ -323,9 +327,39 @@ void EPUBexport::exportCSS()
         // alignment
         // evt. tabs for lists
         // left right and first indents
-        wr += "    font-size:" + QString::number(charStyle.fontSize() / 10) + "pt;\n";
         wr += "    padding-top:" + QString::number(paragraphStyle.gapBefore()) + "pt;\n";
         wr += "    padding-bottom:" + QString::number(paragraphStyle.gapAfter()) + "pt;\n";
+
+        wr += "    font-size:" + QString::number(charStyle.fontSize() / 10) + "pt;\n";
+        QString fontname = charStyle.font().scName();
+		// as long as bold and italic are not in the features list, get the property
+		// by guessing from the font name (ale/20120916)
+		// rule.pattern = QRegExp("[\\\\|\\<|\\>|\\=|\\!|\\+|\\-|\\*|\\/|\\%]+");
+		QRegExp regexpItalic("(\\bitalic\\b)");
+		regexpItalic.setCaseSensitivity(Qt::CaseInsensitive);
+		if (regexpItalic.indexIn(fontname) >= 0)
+		{
+			wr += "    font-variant:italic;\n";
+		}
+		QRegExp regexpBold("(\\bbold\\b)");
+		regexpBold.setCaseSensitivity(Qt::CaseInsensitive);
+		if (regexpBold.indexIn(fontname) >= 0)
+		{
+			wr += "    font-weight:bold;\n";
+		}
+
+		QStringList featureList = charStyle.features();
+		QStringList::ConstIterator it;
+		for (it = featureList.begin(); it != featureList.end(); ++it)
+		{
+			QString feature = it->trimmed();
+			// qDebug() << "feature" << feature;
+			if ((feature == CharStyle::UNDERLINE) || (feature == CharStyle::UNDERLINEWORDS))
+				wr += "    text-decoration:underline;\n";
+			else if (feature == CharStyle::STRIKETHROUGH)
+				wr += "    text-decoration:line-through;\n";
+		}
+
         // paragraphStyle.hasDropCap()
 		// paragraphStyle.dcCharStyleName();
 		// paragraphStyle.dropCapOffset());
@@ -340,7 +374,6 @@ void EPUBexport::exportCSS()
         // charStyle.name();
         // charStyle.parent();
         // charStyle.font().scName()
-        // charStyle.fontSize() / 10.0
         // charStyle.features().join(" ")
         // charStyle.fillColor();
         // charStyle.fillShade();
@@ -956,43 +989,35 @@ void EPUBexport::addText(PageItem* docItem)
 				// qDebug() << "feature" << feature;
 				if (feature == CharStyle::BOLD)
 				{
-					qDebug() << "bold";
 					QDomElement bElement = xhtmlDocument.createElement("b");
 					elementCurrent.appendChild(bElement);
 					elementCurrent = bElement;
 				}
 				else if (feature == CharStyle::ITALIC)
 				{
-					qDebug() << "italic";
 					QDomElement iElement = xhtmlDocument.createElement("i");
 					elementCurrent.appendChild(iElement);
 					elementCurrent = iElement;
 				}
 				else if (feature == CharStyle::SUPERSCRIPT)
 				{
-					qDebug() << "superscript";
 					QDomElement iElement = xhtmlDocument.createElement("sup");
 					elementCurrent.appendChild(iElement);
 					elementCurrent = iElement;
 				}
 				else if (feature == CharStyle::SUBSCRIPT)
 				{
-					qDebug() << "subscript";
 					QDomElement iElement = xhtmlDocument.createElement("sub");
 					elementCurrent.appendChild(iElement);
 					elementCurrent = iElement;
 				}
 				else if ((feature == CharStyle::UNDERLINE) || (feature == CharStyle::UNDERLINEWORDS))
 				{
-					qDebug() << "underline";
 					styleAttribute << "text-decoration:underline";
-					// element.setAttribute("text-decoration", "underline");
 					hasCharacterStyle = true;
 				}
 				else if (feature == CharStyle::STRIKETHROUGH)
 				{
-					qDebug() << "underline";
-					// element.setAttribute("text-decoration", "line-through");
 					styleAttribute << "text-decoration:line-through";
 					hasCharacterStyle = true;
 				}
@@ -1023,7 +1048,7 @@ void EPUBexport::addText(PageItem* docItem)
 				elementCurrent = element;
 			}
 
-            QDomText t = xhtmlDocument.createTextNode(run_text);
+			QDomText t = xhtmlDocument.createTextNode(run_text.simplified()); // simplified() removes nasty \r
 			elementCurrent.appendChild(t);
             // run_text = subString(content, run.pos, run.length);
 			// qDebug() << "next round ";

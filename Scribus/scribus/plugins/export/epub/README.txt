@@ -24,3 +24,7 @@
   .prc; .mobi
 - Plucker
   .pdb
+
+LINKS
+
+http://extensions.services.openoffice.org/en/project/Writer2ePub
