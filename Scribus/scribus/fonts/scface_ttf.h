@@ -15,9 +15,6 @@ for which a new license (GPL+exception) is in place.
 #include "text/storytext.h"
 
 #include "third_party/harfbuzz/src/hb.h"
-#include "layout/LELanguages.h"
-#include "layout/LEScripts.h"
-#include "layout/LayoutEngine.h"
 
 #include <QMap>
 #include <QPair>

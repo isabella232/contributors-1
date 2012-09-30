@@ -25,10 +25,6 @@ for which a new license (GPL+exception) is in place.
 #include "sctextstruct.h"
 #include "langmgr.h"
 
-#include <layout/LETypes.h>
-#include <layout/LEFontInstance.h>
-#include <layout/LEScripts.h>
-
 #include "third_party/harfbuzz/src/hb.h"
 #include "third_party/harfbuzz/src/hb-ot.h"
 #include "third_party/harfbuzz/src/hb-ft.h"
