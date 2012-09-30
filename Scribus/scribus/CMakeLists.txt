@@ -990,7 +990,6 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${FREETYPE_INCLUDE_DIRS}
-  ${ICU_INCLUDE_DIRS}
 )
 
 IF (GMAGICK_FOUND)
@@ -1121,7 +1120,6 @@ TARGET_LINK_LIBRARIES(${EXE_NAME}
   ${ZLIB_LIBRARIES}
   ${WIN32_ONLY_LIBS}
   ${GMAGICK_LIBRARIES}
-  ${ICU_LIBRARIES}
 )
 
 # required to resolve symbols from libdl when ld is called with --no-add-needed
