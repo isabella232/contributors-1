@@ -46,7 +46,7 @@ void Shaper::shape(int start, int end)
 
 	const QString txt(story->text(start, end - start ));
 	if(txt.isEmpty()) {
-printf ( "(%s)(%d)(%s) start (%d) end (%d)\n", __FILE__, __LINE__, __func__, start, end ) ;
+//printf ( "(%s)(%d)(%s) start (%d) end (%d)\n", __FILE__, __LINE__, __func__, start, end ) ;
 		return;
         }
 	ScBidi bidi(txt);
@@ -86,7 +86,7 @@ printf ( "(%s)(%d)(%s) start (%d) end (%d)\n", __FILE__, __LINE__, __func__, sta
 	bool currentRTL( bidi.isRTL(0));
 	bool previousRTL(currentRTL);
         story->deleteItems( story->findItems(start, end)) ;
-	for(int cursor(start); cursor <= end; ++cursor )
+	for(int cursor(start); cursor <= end; cursor++ )
 	{
 //printf ( "(%s)(%d)(%s) start (%d) end (%d) cursor (%d)\n", __FILE__, __LINE__, __func__, start, end, cursor ) ;
 		currentRTL = bidi.isRTL(cursor - start);
@@ -109,31 +109,28 @@ printf ( "(%s)(%d)(%s) start (%d) end (%d)\n", __FILE__, __LINE__, __func__, sta
 				{
 					ref = story->charStyle(cursor) ;
 					items << story->addItem(itStart, (cursor) - itStart);
-					QString itemStr(story->text(itStart, (cursor) - itStart ));
-//					// qDebug()<<"ADD ITEM"<<itStart<<(cursor) - itStart <<itemStr;
-//printf ( "(%s)(%d)(%s) start (%d) end (%d) cursor (%d)\n", __FILE__, __LINE__, __func__, itStart, end, cursor ) ;
+//printf ( "(%d)(%s) start (%d / %d) len(%d) cursor (%d) (%c)\n", __LINE__, __func__, itStart, end, (cursor) - itStart, cursor, story->text(cursor).unicode() ) ;
 				}
 				else
 				{
-					items << story->addItem(itStart, (cursor) - itStart + 1);
-					QString itemStr(story->text(itStart, (cursor) - itStart + 1));
-					// qDebug()<<"ADD ITEM"<<itStart<<(cursor) - itStart + 1<<itemStr;
-//printf ( "(%s)(%d)(%s) start (%d) end (%d) cursor (%d)\n", __FILE__, __LINE__, __func__, itStart, end, cursor ) ;
+					items << story->addItem(itStart, (cursor) - itStart + 1 );
+//printf ( "(%d)(%s) start (%d / %d) len(%d) cursor (%d) (%c)\n", __LINE__, __func__, itStart, end,(cursor) - itStart,  cursor, story->text(cursor).unicode() ) ;
 				}
 				itStart = cursor;
 			}
 		}
-                if ((story->text(cursor).unicode() < 0xff) ||(story->text(cursor).unicode() == SpecialChars::LINEBREAK) ) {
-//printf ( "(%s)(%d)(%s) start (%d) end (%d) cursor (%d)\n", __FILE__, __LINE__, __func__, itStart, end, cursor ) ;
-			items << story->addItem(itStart, (cursor) - itStart + 1);
-			QString itemStr(story->text(itStart, (cursor) - itStart + 1));
-			itStart = cursor;
+		if ((story->text(cursor).unicode() < 0xff) ||(story->text(cursor).unicode() == SpecialChars::LINEBREAK) ) {
+			if ( itStart != cursor ){
+//printf ( "(%d)(%s) start (%d / %d)  len(%d) cursor (%d) (%c)\n", __LINE__, __func__, itStart, end,(cursor) - itStart,  cursor, story->text(cursor).unicode() ) ;
+				 items << story->addItem(itStart, (cursor) - itStart );
+				itStart = cursor;
+			}
                 }
-                if ((cursor != end) && ((story->text(cursor + 1).unicode() < 0xff)||(story->text(cursor + 1).unicode() == SpecialChars::LINEBREAK))) {
-			items << story->addItem(itStart, (cursor + 1) - itStart + 1);
-			QString itemStr(story->text(itStart, (cursor + 1) - itStart + 1));
-			itStart = cursor + 1;
-                }
+//                if ((cursor != end) && ((story->text(cursor + 1).unicode() < 0xff)||(story->text(cursor + 1).unicode() == SpecialChars::LINEBREAK))) {
+//printf ( "(%d)(%s) start (%d) end (%d) cursor (%d) (%c)\n", __LINE__, __func__, itStart, end, cursor, story->text(cursor).unicode() ) ;
+//			items << story->addItem(itStart, (cursor + 1) - itStart );
+//			itStart = cursor + 1;
+//                }
 		previousRTL = currentRTL;
 	}
 
