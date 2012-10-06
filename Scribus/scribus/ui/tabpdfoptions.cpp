@@ -107,7 +107,7 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	UseLPI(0),
 	useSpot(0),
 	useThumbnails(0),
-	ValC(0),
+	ValC(0), 
 	// Protected members other than GUI member pointers
 	// End GUI member pointers
 	// Protected non-gui members
@@ -137,6 +137,15 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	AvailFlist(0),
 	BleedGroup(0),
 	BleedGroupLayout(0),
+	MarkGroup(0),
+	MarkGroupLayout(0),
+	cropMarks(0),
+	bleedMarks(0),
+	registrationMarks(0),
+	colorMarks(0),
+	docInfoMarks(0),
+	markLength(0),
+	markOffset(0),
 	CBox(0),
 	CBoxLayout(0),
 	ColorGroup(0),
@@ -190,8 +199,16 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	ProfsTxt2(0),
 	ProfsTxt3(0),
 	ProfsTxt4(0),
+	BleedTxt1(0),
+	BleedTxt2(0),
+	BleedTxt3(0),
+	BleedTxt4(0),
+	MarkTxt1(0),
+	MarkTxt2(0),
+	docBleeds(0),
 	RangeGroup(0),
 	RangeGroupLayout(0),
+	RotationLayout(0),
 	OutlineFonts(0),
 	OutlineList(0),
 	tabColor(0),
@@ -234,6 +251,27 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	useViewDefault(0),
 	X3Group(0),
 	X3GroupLayout(0),
+	tabImposition(0),
+	tabImpositionLayout(0),
+	ImpositionText(0),
+	ImpositionGroup(0),
+	ImpositionGroupLayout(0),
+	AutoSheetSizeText(0),
+	AutoSheetSizeCombo(0),
+	impStyle(0),
+	SheetSizeLabel(0),
+	SheetRotationLabel(0),
+	SheetSizeComboBox(0),
+	SheetRotationComboBox(0),
+	ImpDoubleSidedComboBox(0),
+	ImpNXLabel(0),
+	ImpNXSpinBox(0),
+	ImpNYLabel(0),
+	ImpNYSpinBox(0),
+	ImpSheetWidth(0),
+	ImpSheetHeight(0),
+	ImpSheetWidthLabel(0),
+	ImpSheetHeightLabel(0),
 	// end protected member gui pointers
 	// Private members
 	unit(unitGetSuffixFromIndex(unitIndex)),
@@ -262,7 +300,7 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	RangeGroupLayout->setMargin( 10 );
 	RangeGroupLayout->setAlignment( Qt::AlignTop );
 	AllPages = new QRadioButton( tr( "&All Pages" ), RangeGroup );
-	RangeGroupLayout->addWidget( AllPages );
+    RangeGroupLayout->addWidget( AllPages );
 	Layout11 = new QGridLayout;
 	Layout11->setSpacing( 5 );
 	Layout11->setMargin( 0 );
@@ -909,16 +947,16 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 
 	ImpositionText	= new QLabel ( tr( "Imposition style") );
 	ImpositionGroupLayout->addWidget(ImpositionText,0,0,1,4);
-	ImpositionCombo = new QComboBox( ImpositionGroup );
-	ImpositionCombo->addItem( tr( "No imposition" ) );
-	ImpositionCombo->addItem( tr( "Birthday Cards: Two-way 2x2 fold" ) );
-	ImpositionCombo->addItem( tr( "Business Cards: Multiple copies of one page on a sheet" ) );
-	ImpositionCombo->addItem( tr( "Magazine: Two pages on one sheet, in magazine order" ) );
-	ImpositionCombo->addItem( tr( "Multi-fold: Two or more pages on one sheet" ) );
-	ImpositionCombo->addItem( tr( "Tiles: Split each page in a grid of sheets." ) );
-	//ImpositionCombo->addItem( tr( "File: Load external imposition plan" ) );
-	ImpositionCombo->setEditable(false);
-	ImpositionGroupLayout->addWidget(ImpositionCombo,1,0,1,4);
+	impStyle = new QComboBox( ImpositionGroup );
+	impStyle->addItem( tr( "No imposition" ) );
+	impStyle->addItem( tr( "Birthday Cards: Two-way 2x2 fold" ) );
+	impStyle->addItem( tr( "Business Cards: Multiple copies of one page on a sheet" ) );
+	impStyle->addItem( tr( "Magazine: Two pages on one sheet, in magazine order" ) );
+	impStyle->addItem( tr( "Multi-fold: Two or more pages on one sheet" ) );
+	//impStyle->addItem( tr( "Tiles: Split each page in a grid of sheets." ) );
+	//impStyle->addItem( tr( "File: Load external imposition plan" ) );
+	impStyle->setEditable(false);
+	ImpositionGroupLayout->addWidget(impStyle,1,0,1,4);
 	
 	AutoSheetSizeText	= new QLabel ( tr( "Sheet size and pages per sheet") );
 	ImpositionGroupLayout->addWidget(AutoSheetSizeText,3,0,1,4);
@@ -1058,7 +1096,7 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
 	connect(Encry, SIGNAL(clicked()), this, SLOT(ToggleEncr()));
 	connect(UseLPI, SIGNAL(clicked()), this, SLOT(EnableLPI2()));
 	connect(LPIcolor, SIGNAL(activated(int)), this, SLOT(SelLPIcol(int)));
-	connect(ImpositionCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionStyle(int)));
+	connect(impStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionStyle(int)));
 	connect(ImpDoubleSidedComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionSheetSides(int)));
     connect(AutoSheetSizeCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionSheetSizeI(int)));
     connect(SheetSizeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(ImpositionSheetSizeI(int)));
@@ -1067,6 +1105,8 @@ TabPDFOptions::TabPDFOptions(   QWidget* parent, PDFOptions & Optionen,
     //connect(ImpOptAutoSheetSize, SIGNAL(stateChanged(int)), this, SLOT(ImpositionSheetSize(int)));
 	connect(ImpNXSpinBox, SIGNAL(valueChanged(int)), this, SLOT(ImpositionNXNY(int)));
 	connect(ImpNYSpinBox, SIGNAL(valueChanged(int)), this, SLOT(ImpositionNXNY(int)));
+    connect(this, SIGNAL(currentChanged(int)), this, SLOT(currentTabChanged(int)));
+
 	//tooltips
 	RotateDeg->setToolTip( "<qt>" + tr( "Automatically rotate the exported pages" ) + "</qt>" );
 	AllPages->setToolTip( "<qt>" + tr( "Export all pages to PDF" ) + "</qt>" );
@@ -1558,7 +1598,7 @@ void TabPDFOptions::restoreDefaults(PDFOptions & Optionen,
 		
 	}
 	
-	ImpositionCombo->setCurrentIndex(Opts.imposerOptions.style);
+	impStyle->setCurrentIndex(Opts.imposerOptions.style);
   ImpNXSpinBox->setValue(Opts.imposerOptions.nX);
   ImpNYSpinBox->setValue(Opts.imposerOptions.nY);
   SheetSizeComboBox->setCurrentIndex(SheetSizeComboBox->count()-1);
@@ -1583,7 +1623,7 @@ void TabPDFOptions::doDocBleeds()
 	if (docBleeds->isChecked())
 	{
 		Opts.bleeds.Top = BleedTop->value() / unitRatio;
-		Opts.bleeds.Bottom = BleedBottom->value() / unitRatio;
+        Opts.bleeds.Bottom = BleedBottom->value() / unitRatio;
 		Opts.bleeds.Right = BleedRight->value() / unitRatio;
 		Opts.bleeds.Left = BleedLeft->value() / unitRatio;
 		BleedTop->setValue(doc->bleeds()->Top*unitRatio);
@@ -2352,10 +2392,26 @@ void TabPDFOptions::createPageNumberRange( )
 }
 
 void TabPDFOptions::updateImpositionTab() {
-	/* FIXME: Ensure all the setValues don't keep on triggering signals forever... */
-  ImposerOptions::ImposerStyle style = (ImposerOptions::ImposerStyle) ImpositionCombo->currentIndex();
+  ImposerOptions::ImposerStyle style = (ImposerOptions::ImposerStyle) impStyle->currentIndex();
   Opts.imposerOptions.style = style;
   bool impositionEnabled = style != ImposerOptions::None; // Imposition is enabled except when the first style is selected (No imposition)
+
+  /* Hack for 1.5.0: Disable imposition if marks are enabled.
+   * The pdf exporter needs a major update to support this
+   */
+  if (colorMarks->isChecked() || bleedMarks->isChecked() ||
+      cropMarks-> isChecked() || registrationMarks->isChecked() ||
+      docInfoMarks->isChecked()) {
+      impositionEnabled = false;
+      impStyle->setEnabled(false);
+      impStyle->setCurrentIndex(0);
+      Opts.imposerOptions.style = ImposerOptions::None;
+      impStyle->setToolTip( "<qt>" + tr( "Imposition is not yet compatible with bleeds or marks. Disable all bleeds and marks to enable imposition." ) + "</qt>" );
+  } else {
+      impStyle->setEnabled(true);
+      impStyle->setToolTip( "" );
+  }
+  /* End hack */
 
   AutoSheetSizeCombo->setEnabled (impositionEnabled);
   SheetSizeComboBox->setEnabled(impositionEnabled && AutoSheetSizeCombo->currentIndex()!=0);
@@ -2438,4 +2494,11 @@ void TabPDFOptions::ImpositionSheetSides(int i) {
 
 void TabPDFOptions::ImpositionNXNY(int i) {
 	updateImpositionTab();
+}
+
+void TabPDFOptions::currentTabChanged(int) {
+       /* Hack for scribus 1.5.0: The imposition tab must be disabled or enabled when
+        * the user selects/deselects marks. THis can go out when the imposition supoprts marks and bleeds. */
+
+       updateImpositionTab();
 }

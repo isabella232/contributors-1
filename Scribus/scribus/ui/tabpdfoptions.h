@@ -155,6 +155,7 @@ public slots:
 
 protected slots:
 	void createPageNumberRange();
+    void currentTabChanged(int);
 
 protected:
 	// PDFExportDialog should really privately inherit from us, but it can't
@@ -321,7 +322,7 @@ private:
  	QGridLayout* ImpositionGroupLayout;
  	QLabel* AutoSheetSizeText;
  	QComboBox * AutoSheetSizeCombo;
- 	QComboBox * ImpositionCombo;
+ 	QComboBox * impStyle;
  	QLabel* SheetSizeLabel;
  	QLabel* SheetRotationLabel;
  	QComboBox * SheetSizeComboBox;
