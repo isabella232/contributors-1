@@ -1,0 +1,57 @@
+#ASAP
+
+- rename the files and classes to match the schema i've defined in the sample plugin for the scribus development manual
+  epubexportplugin
+  epubexportdialog
+  epubexport
+- mail to change shift-breakline to behave as <br> -> better compatibility with HTML;
+  current shift-newline can still be achieved with shift-newline+forced justified
+  i've never seen used and it's only slightly more complicated than before.
+  on the other hand cross production (import / export of html) is made much easier!
+- implement TOC with the fix h\d.* style names until cezary implements a real TOC in 1.5
+- correctly set dtb:depth with the TOC depth (TODO)
+
+
+BEFORE 1.0
+
+- add the font files
+- font sizes: 12 pt = 16px = 1 em = 100%
+- convert all colors to rgb
+- optionally (?) use h1 to break into files
+- detect lists (option = glyph to look for <- no use cezary's lists!); if we're on a list retain the indent 
+- correctly handle images that are used multiple times in a file
+- crop images to the shape
+- for images where the resolution is defined, keep the size (in px???)
+- select directory where to put the ebook
+- in document settings optionally define the directory where low resolution images are placed (this can be useful for pdf created for the web)
+- keeping the colors of the text and the background of frames should be an option
+- what happens if a char and a para style have the same name? always create a span to apply the character style?
+- correctly set the language in the metadata (TODO)
+- store the generated UUID in the document configuration (TODO)
+- all file names must have ASCII chars only (manage the clashes when renaming)
+	- Your filenames have spaces or encoded characters. If your EPUB has any spaces in filenames, be sure the spaces are properly encoded in the EPUB manifest by using "%20" in their place. Filenames may not contain periods (“.”) other than to separate the filename from its extension.
+- check that the cover is correctly generated as as a jpg with 1400px height (generate a png and convert it to jpg)
+- cover:
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="100%" preserveAspectRatio="xMidYMid meet" version="1.1" viewBox="0 0 600 800" width="100%">
+          <image height="800" width="600" xlink:href="../Images/cover.jpeg"></image>
+        </svg>
+      </div>
+- patch scribus to enable an identifier type in the document information (#11055)
+- don't include images which are not on the page (how can i check if it's on a page or not?)
+- check that for each section a new file is created (should already be so)
+
+
+
+LATER
+- eventually and optionally set the chapter title as the name of the section in the epub file (TODO)
+- eventually store the epu date in the document configuration (TODO)
+- define the condition under which a new span builds upon the current one or replaces it. (as an example: if a font is defined and it does not change, build upon it)
+- show the document infos in the export dialog
+- add the footnotes as soon cezary's code is in the trunk (http://blog.epubbooks.com/183/creating-an-epub-document)
+- add a checkbox to open the created epub with an application (sigil) and let it set in the preferences
+- groups only containing shapes (no text nor images) should be exported as svg
+- patch scribus to enable an authorFileAs the document information (lastname, first,)
+	- should the document information also be in the preferences (mostly not needed, but some fields can be handy for epub in some cases
+- we may need to obfuscate fonts on demand (or leave it to sigil?) (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
+- QDomDocument has some limitations (like putting newlines around <span>s): in the future we should probably rather use SAX

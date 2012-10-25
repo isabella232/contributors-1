@@ -1,5 +1,5 @@
-#ifndef EPUBPLUG_H
-#define EPUBPLUG_H
+#ifndef EPUBEXPPORTPLUGIN_H
+#define EPUBEXPPORTPLUGIN_H
 
 #include "pluginapi.h"
 #include "scplugin.h"
@@ -8,14 +8,14 @@ class QString;
 class ScribusDoc;
 class ScribusMainWindow;
 
-class PLUGIN_API EPUBExportPlugin : public ScActionPlugin
+class PLUGIN_API EpubExportPlugin : public ScActionPlugin
 {
 	Q_OBJECT
 public:
 
 	// Standard plugin implementation
-	EPUBExportPlugin();
-	virtual ~EPUBExportPlugin();
+	EpubExportPlugin();
+	virtual ~EpubExportPlugin();
 	/*!
 	\author Ale Rimoldi
 	\brief Run the EPUB export
@@ -30,7 +30,7 @@ public:
 	virtual void addToMainWindowMenu(ScribusMainWindow *) {};
 };
 
-extern "C" PLUGIN_API int epubexplugin_getPluginAPIVersion();
-extern "C" PLUGIN_API ScPlugin* epubexplugin_getPlugin();
-extern "C" PLUGIN_API void epubexplugin_freePlugin(ScPlugin* plugin);
+extern "C" PLUGIN_API int epubexportplugin_getPluginAPIVersion();
+extern "C" PLUGIN_API ScPlugin* epubexportplugin_getPlugin();
+extern "C" PLUGIN_API void epubexportplugin_freePlugin(ScPlugin* plugin);
 #endif

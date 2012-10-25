@@ -7,7 +7,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "epubexdialog.h"
+#include "epubexportdialog.h"
 #include "epubexport.h"
 
 // for file input widget
@@ -21,7 +21,7 @@
 #include "scribusdoc.h" // for setting the default filename in the dialog
 #include "ui/customfdialog.h"
 
-EPUBexDialog::EPUBexDialog(QWidget* parent, ScribusDoc* doc, const char* name, bool modal, Qt::WFlags fl)
+EpubExportDialog::EpubExportDialog(QWidget* parent, ScribusDoc* doc, const char* name, bool modal, Qt::WFlags fl)
 	: QDialog (parent, fl),
 	  m_Doc(doc)
 {
@@ -49,17 +49,17 @@ EPUBexDialog::EPUBexDialog(QWidget* parent, ScribusDoc* doc, const char* name, b
 	connect(exportButton, SIGNAL(clicked()), this, SLOT(exportButton_clicked()));
 }
 
-EPUBexDialog::~EPUBexDialog() {};
+EpubExportDialog::~EpubExportDialog() {};
 
-void EPUBexDialog::cancelButton_clicked()
+void EpubExportDialog::cancelButton_clicked()
 {
 	reject();
 }
 
-void EPUBexDialog::exportButton_clicked()
+void EpubExportDialog::exportButton_clicked()
 {
     // see gtfiledialog.ui for a way to integrate a file manager
-    EPUBexport *action = new EPUBexport(m_Doc);
+    EpubExport *action = new EpubExport(m_Doc);
     EPUBExportOptions options;
 	// qDebug() << "fileOutput->text()" << fileOutput->text();
     action->doExport(fileOutput->text(), options);
@@ -67,7 +67,7 @@ void EPUBexDialog::exportButton_clicked()
 	reject();
 }
 
-void EPUBexDialog::chooseFile()
+void EpubExportDialog::chooseFile()
 {
 	PrefsContext* dirs = PrefsManager::instance()->prefsFile->getContext("dirs");
 	// TODO: check how to correctly add an epub dir (ale/20120815)
@@ -100,7 +100,7 @@ void EPUBexDialog::chooseFile()
 	}	
 }
 
-void EPUBexDialog::fileOutputChanged()
+void EpubExportDialog::fileOutputChanged()
 {
 	QString filename = checkFileExtension(fileOutput->text(),"epub");
 	fileOutput->setText( QDir::toNativeSeparators(filename) );

@@ -1,6 +1,4 @@
 /***************************************************************************
-                          epubexplugin.cpp  -  description
-                             -------------------
     begin                : Wed Mar 28 08:00:00 CEST 2012
     copyright            : (C) 2012 by Ale Rimoldi
     email                : a.l.e@ideale.ch
@@ -17,43 +15,43 @@
 
 #include <QMessageBox>
 
-#include "epubexplugin.h"
-#include "epubexdialog.h"
+#include "epubexportplugin.h"
+#include "epubexportdialog.h"
 #include "scribuscore.h"
 #include "scribusdoc.h"
 
-int epubexplugin_getPluginAPIVersion()
+int epubexportplugin_getPluginAPIVersion()
 {
 	return PLUGIN_API_VERSION;
 }
 
-ScPlugin* epubexplugin_getPlugin()
+ScPlugin* epubexportplugin_getPlugin()
 {
-	EPUBExportPlugin* plug = new EPUBExportPlugin();
+	EpubExportPlugin* plug = new EpubExportPlugin();
 	Q_CHECK_PTR(plug);
 	return plug;
 }
 
-void epubexplugin_freePlugin(ScPlugin* plugin)
+void epubexportplugin_freePlugin(ScPlugin* plugin)
 {
-	EPUBExportPlugin* plug = dynamic_cast<EPUBExportPlugin*>(plugin);
+	EpubExportPlugin* plug = dynamic_cast<EpubExportPlugin*>(plugin);
 	Q_ASSERT(plug);
 	delete plug;
 }
 
-EPUBExportPlugin::EPUBExportPlugin() : ScActionPlugin()
+EpubExportPlugin::EpubExportPlugin() : ScActionPlugin()
 {
 	// Set action info in languageChange, so we only have to do
 	// it in one place.
 	languageChange();
 }
 
-EPUBExportPlugin::~EPUBExportPlugin()
+EpubExportPlugin::~EpubExportPlugin()
 {
 	// unregisterAll();
 };
 
-void EPUBExportPlugin::languageChange()
+void EpubExportPlugin::languageChange()
 {
 	// Note that we leave the unused members unset. They'll be initialised
 	// with their default ctors during construction.
@@ -67,12 +65,12 @@ void EPUBExportPlugin::languageChange()
 	m_actionInfo.needsNumObjects = -1;
 }
 
-const QString EPUBExportPlugin::fullTrName() const
+const QString EpubExportPlugin::fullTrName() const
 {
 	return QObject::tr("EPUB Export");
 }
 
-const ScActionPlugin::AboutData* EPUBExportPlugin::getAboutData() const
+const ScActionPlugin::AboutData* EpubExportPlugin::getAboutData() const
 {
 	AboutData* about = new AboutData;
 	about->authors = "Ale Rimoldi <a.l.e@ideale.ch>";
@@ -83,13 +81,13 @@ const ScActionPlugin::AboutData* EPUBExportPlugin::getAboutData() const
 	return about;
 }
 
-void EPUBExportPlugin::deleteAboutData(const AboutData* about) const
+void EpubExportPlugin::deleteAboutData(const AboutData* about) const
 {
 	Q_ASSERT(about);
 	delete about;
 }
 
-bool EPUBExportPlugin::run(ScribusDoc* doc, QString target)
+bool EpubExportPlugin::run(ScribusDoc* doc, QString target)
 {
 	Q_ASSERT(target.isNull());
 	ScribusDoc* currDoc=doc;
@@ -97,7 +95,7 @@ bool EPUBExportPlugin::run(ScribusDoc* doc, QString target)
 		currDoc=ScCore->primaryMainWindow()->doc;
 	if (currDoc==0)
 		return false;
-	EPUBexDialog *dlg = new EPUBexDialog(currDoc->scMW(), currDoc, "dlg", true, 0);
+	EpubExportDialog *dlg = new EpubExportDialog(currDoc->scMW(), currDoc, "dlg", true, 0);
 	if (dlg)
 	{
 		dlg->exec();

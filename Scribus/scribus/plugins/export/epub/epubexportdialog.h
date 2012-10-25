@@ -7,19 +7,19 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef EPUBEXDIALOG_H
-#define EPUBEXDIALOG_H
+#ifndef EPUBEXPORTDIALOG_H
+#define EPUBEXPORTDIALOG_H
 
-#include "ui_epubexdialog.h"
+#include "ui_epubexportdialog.h"
 
 class ScribusDoc;
 
-class EPUBexDialog : public QDialog, Ui::EPUBexDialog
+class EpubExportDialog : public QDialog, Ui::EpubExportDialog
 {
 	Q_OBJECT
 	public:
-		EPUBexDialog( QWidget* parent = 0, ScribusDoc* doc = 0, const char* name = 0, bool modal = FALSE, Qt::WFlags fl = 0 );
-		~EPUBexDialog();
+		EpubExportDialog( QWidget* parent = 0, ScribusDoc* doc = 0, const char* name = 0, bool modal = FALSE, Qt::WFlags fl = 0 );
+		~EpubExportDialog();
 	private:
 		//! \brief a parent doc reference
 		ScribusDoc* m_Doc;
@@ -31,4 +31,4 @@ class EPUBexDialog : public QDialog, Ui::EPUBexDialog
 
 };
 
-#endif // EPUBEXDIALOG_H
+#endif // EPUBEXPORTDIALOG_H

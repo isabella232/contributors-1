@@ -171,7 +171,7 @@ struct EPUBExportContentItem
     QString mediaType;
 };
 
-class EPUBexport : public QObject
+class EpubExport : public QObject
 /*
  * Inspired by svgexplugin
  */
@@ -179,8 +179,8 @@ class EPUBexport : public QObject
     Q_OBJECT
 
 public:
-	EPUBexport(ScribusDoc* doc);
-	~EPUBexport();
+	EpubExport(ScribusDoc* doc);
+	~EpubExport();
 
 	/*!
 	\author Ale Rimoldi

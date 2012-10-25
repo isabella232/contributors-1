@@ -8,55 +8,9 @@
  ***************************************************************************/
 
 /***************************************************************************
-                          epubexport.cpp  -  description
-                             -------------------
     begin                : Thu Mar 29 15:16:41 CEST 2012
     copyright            : (C) 2012 by Ale Rimoldi
     email                : a.l.e@ideale.ch
-	TODO:
-	- mail to change shift-breakline to behave as <br> -> better compatibility with HTML;
-	  current shift-newline can still be achieved with shift-newline+forced justified
-      i've never seen used and it's only slightly more complicated than before.
-      on the other hand cross production (import / export of html) is made much easier!
-	- font sizes: 12 pt = 16px = 1 em = 100%
-	- convert colors to rgb
-	- for each section one file; optionally (?) use h1 to break into files
-	- implement TDC with the fix h\d.* style names until cezary implements a real TOC in 1.5
-	- detect lists (option = glyph to look for <- no use cezary's lists!); if we're on a list retain the indent 
-	- export images:
-	  - crop them
-	  - for images where the resolution is defined, keep the size (in px???)
-	- options:
-	  - select directory where to put the ebook
-	  - optionally define the directory where low resolution images are placed
-	- define the condition under which a new span builds upon the current one or
-	  replaces it. (as an example: if a font is defined and it does not change, build upon it)
-	- keeping the colors of the text and the background of frames should be an option
-	- what happens if a char and a para style have the same name? always create a span to
-	  apply the character style?
-	- all file names must have ASCII chars only (manage the clashes when renaming)
-	- Your filenames have spaces or encoded characters. If your EPUB has any spaces in filenames, be sure the spaces are properly encoded in the EPUB manifest by using "%20" in their place. Filenames may not contain periods (“.”) other than to separate the filename from its extension.
-	- show the document infos in the export dialog
-    - add the toc as soon as the styles based TOC is available (but not after the 1.6 release)
-    - add the footnotes as soon cezary's code is in the trunk (http://blog.epubbooks.com/183/creating-an-epub-document)
-	- add a checkbox to open the created epub with an application (sigil) and let it set in the preferences
-	- generate the cover as a jpg with 1400px height (generate a png and convert it to jpg)
-	- cover:
-		  <div>
-			<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="100%" preserveAspectRatio="xMidYMid meet" version="1.1" viewBox="0 0 600 800" width="100%">
-			  <image height="800" width="600" xlink:href="../Images/cover.jpeg"></image>
-			</svg>
-		  </div>
-    - groups only containing shapes (no text nor images) should be exported as svg
-	- patch scribus to enable an identifier type in the document information (#11055)
-	- patch scribus to enable an authorFileAs the document information (lastname, first,)
-	- should the document information also be in the preferences (mostly not needed, but some
-	  fields can be handy for epub in some cases
-	- we may need to obfuscate fonts on demand (or leave it to sigil?)
-	  (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
-	- don't include images which are not on the page (how can i check if it's on a page or not?)
-	- QDomDocument has some limitations (like putting newlines around <span>s): in the future we
-	  should probably rather use SAX
 
  ***************************************************************************/
 
@@ -97,22 +51,22 @@
 #include "util_formats.h" // for checking file extension
 #include "documentinformation.h" // for filling the metadata
 
-EPUBexport::EPUBexport(ScribusDoc* doc)
+EpubExport::EpubExport(ScribusDoc* doc)
 {
 	this->doc = doc;
 }
 
-EPUBexport::~EPUBexport()
+EpubExport::~EpubExport()
 {
 }
 
-bool EPUBexport::isDocItemTopLeftLessThan(const PageItem *docItem1, const PageItem *docItem2)
+bool EpubExport::isDocItemTopLeftLessThan(const PageItem *docItem1, const PageItem *docItem2)
 {
     return (docItem1->gXpos < docItem2->gXpos) ||
            ((docItem1->gXpos == docItem2->gXpos) && (docItem1->gYpos < docItem2->gYpos));
 }
 
-void EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
+void EpubExport::doExport(QString filename, EPUBExportOptions &Opts)
 {
 	Options = Opts; // what is this good for? (ale/20120901)
     targetFile = filename;
@@ -144,7 +98,7 @@ void EPUBexport::doExport(QString filename, EPUBExportOptions &Opts)
  * read the metadata from the documentInfo() and ensure that all mandatory fields are filled.
  * some values may be written back to the document information
  */
-void EPUBexport::readMetadata()
+void EpubExport::readMetadata()
 {
 	// read the document information
 	documentMetadata = doc->documentInfo();
@@ -166,7 +120,7 @@ void EPUBexport::readMetadata()
 		documentMetadata.setDate(QDate::currentDate().toString(Qt::ISODate));
 }
 
-void EPUBexport::readItems()
+void EpubExport::readItems()
 {
 	for (int i = 0; i < doc->Layers.count(); i++)
     {
@@ -205,7 +159,7 @@ void EPUBexport::readItems()
 /**
  * add the content of xhtmlDocument to the current epub file
  */
-void EPUBexport::addXhtml()
+void EpubExport::addXhtml()
 {
 	EPUBExportXhtmlFile file;
 	file.section = section;
@@ -228,7 +182,7 @@ void EPUBexport::addXhtml()
   * The mimetype file must be a text document in ASCII that contains the string application/epub+zip.
   * It must also be uncompressed, unencrypted, and the first file in the ZIP archive.
   */
-void EPUBexport::exportMimetype()
+void EpubExport::exportMimetype()
 {
 	epubFile->add("mimetype", QString("application/epub+zip"), false);
 }
@@ -242,7 +196,7 @@ void EPUBexport::exportMimetype()
   *   </rootfiles>
   * </container>
   */ 
-void EPUBexport::exportContainer()
+void EpubExport::exportContainer()
 {
 	QDomDocument xmlDocument = QDomDocument();
 	QDomElement element;
@@ -266,7 +220,7 @@ void EPUBexport::exportContainer()
 	epubFile->add("META-INF/container.xml", xmlDocument.toString(), true);
 }
 
-QString EPUBexport::getStylenameSanitized(QString stylename)
+QString EpubExport::getStylenameSanitized(QString stylename)
 {
 	return stylename.replace(' ', '_');
 }
@@ -283,7 +237,7 @@ QString EPUBexport::getStylenameSanitized(QString stylename)
  * - create an xhtml file with the cover?
  *   http://blog.threepress.org/2009/11/20/best-practices-in-epub-cover-images/
  */
-void EPUBexport::exportCover()
+void EpubExport::exportCover()
 {
 	QImage image = doc->view()->PageToPixmap(0, 750, false);
 
@@ -304,7 +258,7 @@ void EPUBexport::exportCover()
 /**
   * add OEBPS/Styles/style.css to the current epub file
   */ 
-void EPUBexport::exportCSS()
+void EpubExport::exportCSS()
 {
     int n = 0;
 	QString wr = QString();
@@ -442,7 +396,7 @@ void EPUBexport::exportCSS()
   *   </body>
   * </html>
   */
-void EPUBexport::initializeXhtml()
+void EpubExport::initializeXhtml()
 {
 	QDomText text;
 	QDomElement element;
@@ -482,7 +436,7 @@ void EPUBexport::initializeXhtml()
     xhtmlRoot.appendChild(xhtmlBody);
 }
 
-void EPUBexport::exportXhtml()
+void EpubExport::exportXhtml()
 {
 	initializeXhtml();
 
@@ -516,7 +470,7 @@ void EPUBexport::exportXhtml()
 			section = sectionId;
 			initializeXhtml();
 		}
-        qSort(itemList[i].begin(), itemList[i].end(), EPUBexport::isDocItemTopLeftLessThan);
+        qSort(itemList[i].begin(), itemList[i].end(), EpubExport::isDocItemTopLeftLessThan);
 
         mm = itemList[i].count();
         jj = jj + mm;
@@ -566,7 +520,7 @@ void EPUBexport::exportXhtml()
   *   </navMap>
   * </ncx>
   */ 
-void EPUBexport::exportNCX()
+void EpubExport::exportNCX()
 {
 	QDomElement element;
 	QDomElement elementText;
@@ -677,7 +631,7 @@ void EPUBexport::exportNCX()
   *   </guide>
   * </package>
   */
-void EPUBexport::exportOPF()
+void EpubExport::exportOPF()
 {
 	QDomDocument xmlDocument = QDomDocument();
 	QDomElement element;
@@ -894,7 +848,7 @@ void EPUBexport::exportOPF()
 	epubFile->add("OEBPS/content.opf", xmlDocument.toString(), true);
 }
 
-void EPUBexport::addText(PageItem* docItem)
+void EpubExport::addText(PageItem* docItem)
 {
 	/*
 	//  example of use in svgexplugin.cpp 
@@ -1058,7 +1012,7 @@ void EPUBexport::addText(PageItem* docItem)
     }
 }
 
-void EPUBexport::addImage(PageItem* docItem)
+void EpubExport::addImage(PageItem* docItem)
 {
 	QString filename(docItem->Pfile);
 	qDebug() << "image file" << filename;
@@ -1107,7 +1061,7 @@ void EPUBexport::addImage(PageItem* docItem)
 /*
  * read the runs beginnings and the number of runs in the text item
 */
-void EPUBexport::initOfRuns(PageItem* docItem)
+void EpubExport::initOfRuns(PageItem* docItem)
 {
     runs.clear();
     // paragraph.clear();
@@ -1202,17 +1156,17 @@ void EPUBexport::initOfRuns(PageItem* docItem)
     // qDebug() << "paragraph: " << paragraph;
 }
 
-uint EPUBexport::nrOfRuns()
+uint EpubExport::nrOfRuns()
 {
 	return runs.count();
 }
 
-int EPUBexport::startOfRun(uint index)
+int EpubExport::startOfRun(uint index)
 {
 	return index;
 }
 
-int EPUBexport::endOfRun(uint index)
+int EpubExport::endOfRun(uint index)
 {
 	return index + 1;
 }
