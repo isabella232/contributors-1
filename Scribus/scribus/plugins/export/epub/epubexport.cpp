@@ -120,28 +120,29 @@ void EpubExport::readMetadata()
 		documentMetadata.setDate(QDate::currentDate().toString(Qt::ISODate));
 }
 
+/**
+ * go through the full items list in the document and add a reference of the printable ones
+ * in a list sorted by page
+ */
 void EpubExport::readItems()
 {
 	for (int i = 0; i < doc->Layers.count(); i++)
     {
         ScLayer layer = doc->Layers.at(i);
-        // qDebug() << "layer.ID: " << layer.ID;
-        // qDebug() << "layer.name: " << layer.Name;
-        // qDebug() << "layer.isPrintable: " << layer.isPrintable;
         if (!layer.isPrintable)
             layerNotPrintableList.append(layer.ID);
     }
-    // qDebug() << "layerNotPrintableList: " << layerNotPrintableList;
 
     int n = doc->DocPages.count();
-    // qDebug() << "n: " << n;
+    // qDebug() << "readItems n: " << n;
     itemList.resize(n);
     int m = doc->DocItems.count();
-    // qDebug() << "m: " << m;
+    // qDebug() << "readItems m: " << m;
     PageItem* docItem = NULL;
     for (int i = 0; i < m; ++i )
     {
         docItem = doc->DocItems[i];
+        // qDebug() << "own page: " << docItem->OwnPage;
         // qDebug() << "i: " << i;
 		if (!docItem->printEnabled())
 			continue;

@@ -8,6 +8,8 @@
 120915	export each section as an xhtml filex	 4
 120916	css clean up + correctly appy css styles	4
 120919	generate and generate the image for the cover	4
+120926	refactor the class and file names	1
+120926	test items out of page	1
 
 #Other possible formats
 - Epub
