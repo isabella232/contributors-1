@@ -28,9 +28,7 @@
 
 #include <QList>
 #include <QStringList>
-#include <QtAlgorithms>
 
-#include <QStack>
 #include <QUuid> // for generated the uuid if no isbn&co has been defined
 
 #include <QProgressBar>
@@ -123,6 +121,9 @@ void EpubExport::readMetadata()
 /**
  * go through the full items list in the document and add a reference of the printable ones
  * in a list sorted by page
+ * TODO: don't use OwnPage but implement in docItem the way PDFLibCore::PDF_ProcessItem is doing and use it
+ * (OwnPage according to jghali OwnPage should only be used make sense of the coordinates of an item,
+ * which are stored in relation to its own page)
  */
 void EpubExport::readItems()
 {
