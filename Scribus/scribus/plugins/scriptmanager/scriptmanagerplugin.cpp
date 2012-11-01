@@ -15,6 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "scriptmanagerplugin.h"
+#include "scriptmanagerdialog.h"
 #include "scribuscore.h"
 #include "scribusdoc.h"
 int scriptmanagerplugin_getPluginAPIVersion()
@@ -88,5 +89,13 @@ void ScriptManagerPlugin::deleteAboutData(const AboutData* about) const
 bool ScriptManagerPlugin::run(ScribusDoc* doc, QString target)
 {
 	Q_ASSERT(target.isNull());
-    return true;
+	ScriptManagerDialog *dlg = new ScriptManagerDialog(doc->scMW(), doc, "dlg", true, 0);
+	if (dlg)
+	{
+		dlg->exec();
+		delete dlg;
+		return true;
+	}
+	else
+		return false;
 }
