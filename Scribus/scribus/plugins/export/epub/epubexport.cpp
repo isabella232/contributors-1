@@ -49,6 +49,10 @@
 #include "util_formats.h" // for checking file extension
 #include "documentinformation.h" // for filling the metadata
 
+#include "util.h" // for parsing the list of pages (remove it when the function is moved to ScribusDoc)
+#include "scribusstructs.h" // for getPageRect() remove it, it's moved to ScPage
+
+
 EpubExport::EpubExport(ScribusDoc* doc)
 {
 	this->doc = doc;
@@ -64,17 +68,17 @@ bool EpubExport::isDocItemTopLeftLessThan(const PageItem *docItem1, const PageIt
            ((docItem1->gXpos == docItem2->gXpos) && (docItem1->gYpos < docItem2->gYpos));
 }
 
-void EpubExport::doExport(QString filename, EPUBExportOptions &Opts)
+void EpubExport::doExport(EPUBExportOptions &Opts)
 {
 	Options = Opts; // what is this good for? (ale/20120901)
-    targetFile = filename;
 
+    qDebug() << "pageRange" << pageRange;
 	readMetadata();
 	readItems();
 
-	// targetFile = "/tmp/"+targetFile;
+	// targetFilename = "/tmp/"+targetFilename;
 	// qDebug() << "forcing the output of the .epub file to /tmp";
-	epubFile = new FileZip(targetFile);
+	epubFile = new FileZip(targetFilename);
 	epubFile->create();
 
 	exportMimetype();
@@ -102,7 +106,7 @@ void EpubExport::readMetadata()
 	documentMetadata = doc->documentInfo();
 	// make sure that all mandatory fields are filled
 	if (documentMetadata.title() == "")
-		documentMetadata.setTitle(targetFile);
+		documentMetadata.setTitle(targetFilename);
 	// TODO: if (documentMetadata.author() == "") // -> it's recommended not obligatory!
 	// TODO: if (documentMetadata.authorSort() == "") // -> it's recommended not obligatory!
 	if (documentMetadata.langInfo() == "")
@@ -119,11 +123,107 @@ void EpubExport::readMetadata()
 }
 
 /**
+ * TODO:
+ * add it as ScPage::getBleeds(const ScPage* page) and eventually remove/deprecate all the
+ * ScribusDoc::getBleeds(...) methods.
+ * Warning: in ScribusDoc there are also bleeds() methods that return the values without the facing
+ * pages correction!
+ */
+MarginStruct EpubExport::getPageBleeds(const ScPage* page)
+{
+    MarginStruct result;
+    doc->getBleeds(page, result);
+    return result;
+}
+
+/**
+ * TODO:
+ * Add it as ScPage::getRect(const ScPage* page)
+ * Eventually, rename to signify that it does not return xOffset, yOffset, ... but it adds the bleeds
+ */
+QRect EpubExport::getPageRect(const ScPage* page)
+{
+    MarginStruct bleeds = getPageBleeds(page);
+    return QRect(
+        static_cast<int>(page->xOffset() - bleeds.Left), // x
+        static_cast<int>(page->yOffset() - bleeds.Top), // y
+        static_cast<int>(page->width() + bleeds.Left + bleeds.Right), // w
+        static_cast<int>(page->height()+ bleeds.Bottom + bleeds.Top) // h
+    );
+}
+
+/**
+ * Returns a list of ScPage on which the item is. An empty vector, if it's fully on the scratch space.
+ * TODO:
+ * - This (or a similar) method should replace the (very) similar calculations in
+ *   ScribusDoc::fixItemPageOwner, ScribusDoc::OnPage and PDFLibCore::PDF_ProcessItem
+ *   It should go to PageItem (or ScPage) and it should be cached in memory + eventually in the .SLA
+ *   --> PageItem::getPages()
+ *   (According to jghali OwnPage should only be used make sense of the coordinates of an item,
+ *   which are stored in relation to its own page)
+ */
+QList<ScPage *> EpubExport::getPagesWithItem(PageItem* item)
+{
+    QList<ScPage *> result;
+
+    // some woodoo adjustings
+	if (item->isGroup())
+		item->asGroupFrame()->adjustXYPosition();
+	item->setRedrawBounding();
+
+	double itemLineWidth = item->lineWidth();
+    QRect itemRect = QRect(
+        static_cast<int>(item->BoundingX - itemLineWidth / 2.0), // x
+        static_cast<int>(item->BoundingY - itemLineWidth / 2.0), // y
+        static_cast<int>(qMax(item->BoundingW + itemLineWidth, 1.0)), // w
+        static_cast<int>(qMax(item->BoundingH + itemLineWidth, 1.0)) // h
+    );
+    QRect pageRect;
+
+    bool fullyOnOwnPage = false;
+    // TODO: ignore bitmaps and inline items!
+    // First check if the element is fully on its OwnPage
+    if (item->OwnPage > -1)
+    {
+        ScPage* page = doc->DocPages.at(item->OwnPage);
+        pageRect = getPageRect(page);
+
+        if (pageRect.contains(itemRect)) {
+            result.append(page);
+            fullyOnOwnPage = true;
+        }
+    }
+
+    qDebug() << "fullyOnOwnPage" << fullyOnOwnPage;
+
+    // if it's not fully on the OwnPage, check on all pages (in the range)
+    if (!fullyOnOwnPage)
+    {
+        // TODO: if creating the QRect is expensive, we can create a list of pages' QRects
+        // before cycling through the items
+        bool allPages = pageRange.isEmpty();
+        int n = allPages ? doc->DocPages.count() : pageRange.count();
+        // qDebug() << "n" << n;
+        for (int i = 0; i < n; ++i)
+        {
+            ScPage* page = doc->DocPages.at(allPages ? i : pageRange.at(i) - 1);
+            pageRect = getPageRect(page);
+            if (pageRect.intersects(itemRect))
+                result.append(page);
+            // TODO: we can use rect.intersected() to get a rectangle and calculate the area of the page
+            // that has the biggest intersection and use it as the "main page";
+            // or we can use the first page where the intersection occurs (two different uses)
+        }
+    }
+
+    // TODO: check what happens for groups
+
+    return result;
+}
+
+/**
  * go through the full items list in the document and add a reference of the printable ones
  * in a list sorted by page
- * TODO: don't use OwnPage but implement in docItem the way PDFLibCore::PDF_ProcessItem is doing and use it
- * (OwnPage according to jghali OwnPage should only be used make sense of the coordinates of an item,
- * which are stored in relation to its own page)
  */
 void EpubExport::readItems()
 {
@@ -143,6 +243,9 @@ void EpubExport::readItems()
     for (int i = 0; i < m; ++i )
     {
         docItem = doc->DocItems[i];
+        const QList<ScPage*> itemPages = getPagesWithItem(docItem);
+        for (int j = 0; j < itemPages.count(); j++)
+            qDebug() << "itemPages[" << j << "]" << itemPages.at(j)->pageNr();
         // qDebug() << "own page: " << docItem->OwnPage;
         // qDebug() << "i: " << i;
 		if (!docItem->printEnabled())

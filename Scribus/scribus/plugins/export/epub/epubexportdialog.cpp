@@ -21,6 +21,9 @@
 #include "scribusdoc.h" // for setting the default filename in the dialog
 #include "ui/customfdialog.h"
 
+#include <QList>
+#include "ui/createrange.h" // for getting the page ranges
+
 EpubExportDialog::EpubExportDialog(QWidget* parent, ScribusDoc* doc, const char* name, bool modal, Qt::WFlags fl)
 	: QDialog (parent, fl),
 	  m_Doc(doc)
@@ -28,6 +31,12 @@ EpubExportDialog::EpubExportDialog(QWidget* parent, ScribusDoc* doc, const char*
 	setupUi(this);
 	setObjectName(name);
 	setModal(modal);
+    // TODO: the plugin does not run if there is no document active... should we still check that
+    // one is there?
+    /*
+	if (m_doc == 0)
+        return;
+    */
 
 	//TODO: fill a bug report: what is the policy in scribus to set the initial value for the target? i think that we have multiple of them between the same place as the file or the last time a function has been used in scribus
 	QFileInfo basename(m_Doc->DocName);
@@ -42,14 +51,53 @@ EpubExportDialog::EpubExportDialog(QWidget* parent, ScribusDoc* doc, const char*
 	dirModel->setFilter(QDir::AllDirs);
 	fileOutput->setCompleter(new QCompleter(dirModel, this));
 
-	connect( fileOutput, SIGNAL( editingFinished() ), this, SLOT( fileOutputChanged() ) );
-	connect( fileOutputChange, SIGNAL( clicked() ), this, SLOT( chooseFile() ) );
+	connect(fileOutput, SIGNAL(editingFinished()), this, SLOT(fileOutputChanged()));
+	connect(fileOutputChange, SIGNAL(clicked()), this, SLOT(chooseFile()));
+	connect(intervalPagesRadio, SIGNAL(toggled(bool)), this, SLOT(enableIntervalPages(bool)));
+	connect(intervalPagesButton, SIGNAL(clicked()), this, SLOT(readIntervalFromDialog()));
 
 	connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancelButton_clicked()));
 	connect(exportButton, SIGNAL(clicked()), this, SLOT(exportButton_clicked()));
+
+	intervalPagesButton->setToolTip( "<qt>" + tr( "Insert a comma separated list of tokens where "
+		                                    "a token can be * for all the pages, 1-5 for "
+		                                    "a range of pages or a single page number.") + "</qt>" );
 }
 
 EpubExportDialog::~EpubExportDialog() {};
+
+void EpubExportDialog::enableIntervalPages(bool enabled)
+{
+	intervalPagesValue->setEnabled( enabled );
+	intervalPagesButton->setEnabled( enabled );
+}
+
+/**
+ * TODO:
+ * Add it to ScribusDoc, remove it from util.cpp and use it in scribus.cpp!
+ * Eventually, rename to signify that it does not return xOffset, yOffset, ... but it adds the bleeds
+ */
+QList<int> EpubExportDialog::getPagesListFromString(const QString pages)
+{
+    std::vector<int> pageNumbers;
+    parsePagesString(pages, &pageNumbers, m_Doc->DocPages.count());
+    QList<int> result = QList<int>::fromVector(QVector<int>::fromStdVector(pageNumbers));
+    return result;
+}
+
+
+void EpubExportDialog::readIntervalFromDialog()
+{
+    CreateRange cr(intervalPagesValue->text(), m_Doc->DocPages.count(), this);
+    if (cr.exec())
+    {
+        CreateRangeData crData;
+        cr.getCreateRangeData(crData);
+        intervalPagesValue->setText(crData.pageRange);
+        return;
+    }
+	intervalPagesValue->setText(QString::null);
+}
 
 void EpubExportDialog::cancelButton_clicked()
 {
@@ -62,7 +110,20 @@ void EpubExportDialog::exportButton_clicked()
     EpubExport *action = new EpubExport(m_Doc);
     EPUBExportOptions options;
 	// qDebug() << "fileOutput->text()" << fileOutput->text();
-    action->doExport(fileOutput->text(), options);
+    QString pagesString = "";
+    if (thisPageRadio->isChecked())
+        pagesString = QString::number(m_Doc->currentPage()->pageNr() + 1);
+    else if (intervalPagesRadio->isChecked())
+        pagesString = intervalPagesValue->text();
+    else if (thisSectionRadio->isChecked())
+    {
+        int i = m_Doc->getSectionKeyForPageIndex(m_Doc->currentPage()->pageNr());
+        pagesString = QString("%1-%2").arg(m_Doc->sections()[i].fromindex + 1).arg(m_Doc->sections()[i].toindex + 1);
+    }
+	// qDebug() << "pagesString" << pagesString;
+    action->setTargetFilename(fileOutput->text());
+    action->setPageRange(getPagesListFromString(pagesString));
+    action->doExport(options);
     delete action;
 	reject();
 }

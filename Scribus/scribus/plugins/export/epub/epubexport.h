@@ -28,6 +28,8 @@ class FileZip;
 
 class PageItem;
 
+class MarginStruct; // for getPageRect() remove it, it's moved to ScPage
+
 struct EPUBExportOptions
 {
     /*
@@ -187,7 +189,7 @@ public:
 	\brief Create the SVG exporter
 	\param doc QString file name
 	 */
-	void doExport(QString fName, EPUBExportOptions &Opts);
+	void doExport(EPUBExportOptions &Opts);
 	EPUBExportOptions Options;
 
     /*!
@@ -197,13 +199,22 @@ public:
     */
     static bool isDocItemTopLeftLessThan(const PageItem *docItem1, const PageItem *docItem2);
 
+    void setTargetFilename(QString filename) {targetFilename = filename;}
+    void setPageRange(QList<int> range) {pageRange = range;}
+
 private:
-    QString targetFile;
+    QString targetFilename;
+    QList<int> pageRange;
 	ScribusDoc* doc;
 
 	DocumentInformation documentMetadata;
 	void readMetadata();
     QVector< QList<PageItem*> > itemList;
+
+    // the following moethods should move to ScPage/PageItem
+    MarginStruct getPageBleeds(const ScPage* page);
+    QRect getPageRect(const ScPage* page);
+    QList<ScPage *> getPagesWithItem(PageItem* item);
 
 	void readItems();
 

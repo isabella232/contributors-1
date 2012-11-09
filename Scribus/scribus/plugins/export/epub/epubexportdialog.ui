@@ -135,6 +135,9 @@
       <property name="text">
        <string>&amp;All pages</string>
       </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
      </widget>
     </item>
     <item row="4" column="0">
@@ -145,21 +148,46 @@
      </widget>
     </item>
     <item row="5" column="0">
-     <widget class="QRadioButton" name="oneSectionRadio">
+     <widget class="QRadioButton" name="thisSectionRadio">
       <property name="text">
        <string>Current &amp;section</string>
       </property>
      </widget>
     </item>
     <item row="4" column="2">
-     <widget class="QPushButton" name="pageNrButton">
+     <widget class="QPushButton" name="intervalPagesButton">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>1</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>30</width>
+        <height>16777215</height>
+       </size>
+      </property>
       <property name="text">
-       <string/>
+       <string>...</string>
       </property>
      </widget>
     </item>
     <item row="4" column="1">
-     <widget class="QLineEdit" name="rangeVal"/>
+     <widget class="QLineEdit" name="intervalPagesValue">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+     </widget>
     </item>
     <item row="6" column="0">
      <spacer>
@@ -175,7 +203,7 @@
      </spacer>
     </item>
     <item row="3" column="0">
-     <widget class="QRadioButton" name="onePageRadio">
+     <widget class="QRadioButton" name="thisPageRadio">
       <property name="text">
        <string>&amp;Current page</string>
       </property>

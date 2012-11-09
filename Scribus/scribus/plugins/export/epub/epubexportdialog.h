@@ -12,6 +12,8 @@
 
 #include "ui_epubexportdialog.h"
 
+#include <QList>
+
 class ScribusDoc;
 
 class EpubExportDialog : public QDialog, Ui::EpubExportDialog
@@ -20,6 +22,7 @@ class EpubExportDialog : public QDialog, Ui::EpubExportDialog
 	public:
 		EpubExportDialog( QWidget* parent = 0, ScribusDoc* doc = 0, const char* name = 0, bool modal = FALSE, Qt::WFlags fl = 0 );
 		~EpubExportDialog();
+
 	private:
 		//! \brief a parent doc reference
 		ScribusDoc* m_Doc;
@@ -27,6 +30,9 @@ class EpubExportDialog : public QDialog, Ui::EpubExportDialog
 		void cancelButton_clicked();
 		void exportButton_clicked();
 		void chooseFile();
+        void enableIntervalPages(bool enabled);
+        QList<int> getPagesListFromString(const QString pages);
+        void readIntervalFromDialog();
 		void fileOutputChanged();
 
 };
