@@ -153,7 +153,8 @@ QRect EpubExport::getPageRect(const ScPage* page)
 }
 
 /**
- * Returns a list of ScPage on which the item is. An empty vector, if it's fully on the scratch space.
+ * Returns a list of ScPage where the item appears. If the item is fully ion the scratch space,
+ * an empty vector is returned.
  * TODO:
  * - This (or a similar) method should replace the (very) similar calculations in
  *   ScribusDoc::fixItemPageOwner, ScribusDoc::OnPage and PDFLibCore::PDF_ProcessItem
@@ -172,51 +173,44 @@ QList<ScPage *> EpubExport::getPagesWithItem(PageItem* item)
 	item->setRedrawBounding();
 
 	double itemLineWidth = item->lineWidth();
+    QRect pageRect;
     QRect itemRect = QRect(
         static_cast<int>(item->BoundingX - itemLineWidth / 2.0), // x
         static_cast<int>(item->BoundingY - itemLineWidth / 2.0), // y
         static_cast<int>(qMax(item->BoundingW + itemLineWidth, 1.0)), // w
         static_cast<int>(qMax(item->BoundingH + itemLineWidth, 1.0)) // h
     );
-    QRect pageRect;
 
     bool fullyOnOwnPage = false;
-    // TODO: ignore bitmaps and inline items!
     // First check if the element is fully on its OwnPage
+    // OwnPage is an indicator of where the item could be, but it's not reliable.
     if (item->OwnPage > -1)
     {
         ScPage* page = doc->DocPages.at(item->OwnPage);
-        pageRect = getPageRect(page);
-
-        if (pageRect.contains(itemRect)) {
+        if (getPageRect(page).contains(itemRect)) {
             result.append(page);
             fullyOnOwnPage = true;
         }
     }
 
-    qDebug() << "fullyOnOwnPage" << fullyOnOwnPage;
-
-    // if it's not fully on the OwnPage, check on all pages (in the range)
+    // If the item is not fully on the OwnPage, check on all pages (in the range)
     if (!fullyOnOwnPage)
     {
         // TODO: if creating the QRect is expensive, we can create a list of pages' QRects
         // before cycling through the items
         bool allPages = pageRange.isEmpty();
         int n = allPages ? doc->DocPages.count() : pageRange.count();
-        // qDebug() << "n" << n;
         for (int i = 0; i < n; ++i)
         {
             ScPage* page = doc->DocPages.at(allPages ? i : pageRange.at(i) - 1);
-            pageRect = getPageRect(page);
-            if (pageRect.intersects(itemRect))
+            if (getPageRect(page).intersects(itemRect))
                 result.append(page);
             // TODO: we can use rect.intersected() to get a rectangle and calculate the area of the page
             // that has the biggest intersection and use it as the "main page";
             // or we can use the first page where the intersection occurs (two different uses)
         }
+        // TODO: if OwnPage == -1 and a page has been found, fix OwnPage in the item
     }
-
-    // TODO: check what happens for groups
 
     return result;
 }
@@ -242,21 +236,21 @@ void EpubExport::readItems()
     PageItem* docItem = NULL;
     for (int i = 0; i < m; ++i )
     {
-        docItem = doc->DocItems[i];
-        const QList<ScPage*> itemPages = getPagesWithItem(docItem);
-        for (int j = 0; j < itemPages.count(); j++)
-            qDebug() << "itemPages[" << j << "]" << itemPages.at(j)->pageNr();
-        // qDebug() << "own page: " << docItem->OwnPage;
         // qDebug() << "i: " << i;
+        docItem = doc->DocItems[i];
+
 		if (!docItem->printEnabled())
-			continue;
-		//Item not on a page, continue
-		if (docItem->OwnPage == -1)
 			continue;
         if (layerNotPrintableList.contains(docItem->LayerID))
             continue;
-        itemList[docItem->OwnPage].append(docItem);
-        // qDebug() << "on page: " << docItem->OwnPage;
+
+        // qDebug() << "own page: " << docItem->OwnPage;
+        const QList<ScPage*> itemPages = getPagesWithItem(docItem);
+        // qDebug() << "itemPages" << itemPages;
+		//Item not on a page, ignore
+        if (itemPages.empty())
+			continue;
+        itemList[itemPages.first()->pageNr()].append(docItem);
     }
     // qDebug() << "itemList: " << itemList;
 }
@@ -1276,11 +1270,23 @@ int EpubExport::endOfRun(uint index)
 	return index + 1;
 }
 
+// does not work (does not get called)
 QDebug operator<<(QDebug dbg, const QList<EPUBExportRuns> &v)
 {
     for (int i = 0; i < v.length(); i++) {
         EPUBExportRuns r = v[i];
         dbg.nospace() << "(" << r.pos << ", " << r.type << ")";
     }
+    return dbg.space();
+}
+
+// you have to declared it before using it... so put the signature in the .h file, too
+QDebug operator<<(QDebug dbg, const QList<ScPage*> &pages)
+{
+    QStringList output;
+    for (int i = 0; i < pages.length(); i++) {
+        output << QString::number(pages.at(i)->pageNr());
+    }
+    dbg.nospace() << "(" << output.join(", ") << ")";
     return dbg.space();
 }

@@ -260,4 +260,7 @@ private:
     QVector<EPUBExportRuns> runs; // the indexes where the runs start
 
 };
+
+QDebug operator<<(QDebug dbg, const QList<ScPage*> &pages);
+
 #endif // EPUBEXPORT_H
