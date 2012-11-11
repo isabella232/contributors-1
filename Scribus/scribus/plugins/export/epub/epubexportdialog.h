@@ -31,6 +31,7 @@ class EpubExportDialog : public QDialog, Ui::EpubExportDialog
 		void exportButton_clicked();
 		void chooseFile();
         void enableIntervalPages(bool enabled);
+        void enableImageDownsize(bool enabled);
         QList<int> getPagesListFromString(const QString pages);
         void readIntervalFromDialog();
 		void fileOutputChanged();

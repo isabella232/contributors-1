@@ -1120,7 +1120,7 @@ void EpubExport::addImage(PageItem* docItem)
         return;
 
     QPixmap image; // null if the image has not been cropped nor scaled
-    bool useLoadedImage = false;
+    bool usingLoadedImage = false;
 
 	// qDebug() << "image file" << filename;
 	// qDebug() << "imageXScale" << docItem->imageXScale();
@@ -1145,17 +1145,18 @@ void EpubExport::addImage(PageItem* docItem)
 
     if (!image.load(filename)) // TODO: if the image's width and height are already stored, only load the image when it has to be cropped or scaled
         return;
-        // useLoadedImage = true;
+        // usingLoadedImage = true;
 
     QRect frameRect = QRect(- cropX, -cropY, frameW, frameH);
     QRect imageRect = QRect(0, 0, image.width(), image.height());
+    QRect cropRect;
 	// qDebug() << "frameRect" << frameRect;
 	// qDebug() << "imageRect" << imageRect;
 
     if (frameRect != imageRect)
     {
-        useLoadedImage = true;
-        QRect cropRect = frameRect.intersected(imageRect);
+        usingLoadedImage = true;
+        cropRect = frameRect.intersected(imageRect);
         // qDebug() << "cropRect" << cropRect;
         if (!cropRect.isEmpty())
         {
@@ -1172,7 +1173,7 @@ void EpubExport::addImage(PageItem* docItem)
         ColorSpaceEnum colorspace -> 0 = RGB  1 = CMYK  2 = Grayscale 3 = Duotone
     CMSettings cms(c->doc(), Profil, Intent);
     cms.setUseEmbeddedProfile(Embedded);
-    useLoadedImage = img.loadPicture(fn, c->pixm.imgInfo.actualPageNumber, cms, ScImage::RGBData, 72, &realCMYK);
+    usingLoadedImage = img.loadPicture(fn, c->pixm.imgInfo.actualPageNumber, cms, ScImage::RGBData, 72, &realCMYK);
 	bool loadPicture(const QString & fn, int page, const CMSettings& cmSettings, RequestType requestType, int gsRes, bool *realCMYK = 0, bool showMsg = false);
      */
     QFileInfo fileinfo = QFileInfo(filename);
@@ -1187,7 +1188,16 @@ void EpubExport::addImage(PageItem* docItem)
 
     if (mediaType > 0)
     {
-        QString filepath = "Images/" + fileinfo.fileName();
+        QString zippedFilename = fileinfo.fileName();
+        if (usingLoadedImage)
+        {
+            zippedFilename = fileinfo.completeBaseName()+"_c-%1-%2-%3-%4-s-%5."+fileinfo.suffix();
+            zippedFilename = zippedFilename.arg(cropRect.x()).arg(cropRect.y()).arg(cropRect.width()).arg(cropRect.height()).arg(100);
+        }
+        zippedFilename.remove(QRegExp("[^a-zA-Z\\d\\s_.-]"));
+        qDebug() << "zippedFilename" << zippedFilename;
+
+        QString filepath = "Images/" + zippedFilename;
         // add the image to the dom
         QDomElement div = xhtmlDocument.createElement("div");
         xhtmlBody.appendChild(div);
@@ -1200,7 +1210,7 @@ void EpubExport::addImage(PageItem* docItem)
         // TODO: set the width and height? from the docItem?
         div.appendChild(element);
         // copy the image into the zip
-        if (!useLoadedImage)
+        if (!usingLoadedImage)
         {
             qDebug() << "standard file add";
             QFile file(fileinfo.filePath()); // TODO: if we already have a scimage we may have to change this

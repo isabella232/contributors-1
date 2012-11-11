@@ -54,6 +54,7 @@ EpubExportDialog::EpubExportDialog(QWidget* parent, ScribusDoc* doc, const char*
 	connect(fileOutput, SIGNAL(editingFinished()), this, SLOT(fileOutputChanged()));
 	connect(fileOutputChange, SIGNAL(clicked()), this, SLOT(chooseFile()));
 	connect(intervalPagesRadio, SIGNAL(toggled(bool)), this, SLOT(enableIntervalPages(bool)));
+	connect(imageDownsizeCheckbox, SIGNAL(toggled(bool)), this, SLOT(enableImageDownsize(bool)));
 	connect(intervalPagesButton, SIGNAL(clicked()), this, SLOT(readIntervalFromDialog()));
 
 	connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancelButton_clicked()));
@@ -70,6 +71,14 @@ void EpubExportDialog::enableIntervalPages(bool enabled)
 {
 	intervalPagesValue->setEnabled( enabled );
 	intervalPagesButton->setEnabled( enabled );
+}
+
+void EpubExportDialog::enableImageDownsize(bool enabled)
+{
+	imageXScaleSpinBox->setEnabled( enabled );
+	imageXScaleLabel->setEnabled( enabled );
+	imageXMaximizeSpinBox->setEnabled( enabled );
+	imageXMaximizeLabel->setEnabled( enabled );
 }
 
 /**
