@@ -54,7 +54,7 @@ EpubExportDialog::EpubExportDialog(QWidget* parent, ScribusDoc* doc, const char*
 	connect(fileOutput, SIGNAL(editingFinished()), this, SLOT(fileOutputChanged()));
 	connect(fileOutputChange, SIGNAL(clicked()), this, SLOT(chooseFile()));
 	connect(intervalPagesRadio, SIGNAL(toggled(bool)), this, SLOT(enableIntervalPages(bool)));
-	connect(imageDownsizeCheckbox, SIGNAL(toggled(bool)), this, SLOT(enableImageDownsize(bool)));
+	connect(imageMaxWidthCheckbox, SIGNAL(toggled(bool)), this, SLOT(enableImageMaxWidth(bool)));
 	connect(intervalPagesButton, SIGNAL(clicked()), this, SLOT(readIntervalFromDialog()));
 
 	connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancelButton_clicked()));
@@ -73,12 +73,12 @@ void EpubExportDialog::enableIntervalPages(bool enabled)
 	intervalPagesButton->setEnabled( enabled );
 }
 
-void EpubExportDialog::enableImageDownsize(bool enabled)
+void EpubExportDialog::enableImageMaxWidth(bool enabled)
 {
-	imageXScaleSpinBox->setEnabled( enabled );
-	imageXScaleLabel->setEnabled( enabled );
-	imageXMaximizeSpinBox->setEnabled( enabled );
-	imageXMaximizeLabel->setEnabled( enabled );
+	imageMaxWidthSpinBox->setEnabled( enabled );
+	imageMaxWidthLabel->setEnabled( enabled );
+	imageMaxWidthThresholdSpinBox->setEnabled( enabled );
+	imageMaxWidthThresholdLabel->setEnabled( enabled );
 }
 
 /**
@@ -132,6 +132,8 @@ void EpubExportDialog::exportButton_clicked()
 	// qDebug() << "pagesString" << pagesString;
     action->setTargetFilename(fileOutput->text());
     action->setPageRange(getPagesListFromString(pagesString));
+    action->setImagesMaxWidth(imageMaxWidthSpinBox->value());
+    action->setImagesMaxWidthThreshold(imageMaxWidthThresholdSpinBox->value());
     action->doExport(options);
     delete action;
 	reject();

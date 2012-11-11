@@ -262,7 +262,7 @@
    <property name="title">
     <string>Image options</string>
    </property>
-   <widget class="QCheckBox" name="imageDownsizeCheckbox">
+   <widget class="QCheckBox" name="imageMaxWidthCheckbox">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -278,7 +278,7 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QSpinBox" name="imageXScaleSpinBox">
+   <widget class="QSpinBox" name="imageMaxWidthSpinBox">
     <property name="geometry">
      <rect>
       <x>190</x>
@@ -306,7 +306,7 @@
      <number>600</number>
     </property>
    </widget>
-   <widget class="QLabel" name="imageXScaleLabel">
+   <widget class="QLabel" name="imageMaxWidthLabel">
     <property name="geometry">
      <rect>
       <x>29</x>
@@ -319,7 +319,7 @@
      <string>Maximal width</string>
     </property>
    </widget>
-   <widget class="QLabel" name="imageXMaximizeLabel">
+   <widget class="QLabel" name="imageMaxWidthThresholdLabel">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -332,7 +332,7 @@
      <string>Maximize if bigger than</string>
     </property>
    </widget>
-   <widget class="QSpinBox" name="imageXMaximizeSpinBox">
+   <widget class="QSpinBox" name="imageMaxWidthThresholdSpinBox">
     <property name="geometry">
      <rect>
       <x>190</x>
