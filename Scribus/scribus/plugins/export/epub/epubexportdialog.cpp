@@ -132,8 +132,8 @@ void EpubExportDialog::exportButton_clicked()
 	// qDebug() << "pagesString" << pagesString;
     action->setTargetFilename(fileOutput->text());
     action->setPageRange(getPagesListFromString(pagesString));
-    action->setImagesMaxWidth(imageMaxWidthSpinBox->value());
-    action->setImagesMaxWidthThreshold(imageMaxWidthThresholdSpinBox->value());
+    action->setImageMaxWidth(imageMaxWidthSpinBox->value());
+    action->setImageMaxWidthThreshold(imageMaxWidthThresholdSpinBox->value());
     action->doExport(options);
     delete action;
 	reject();

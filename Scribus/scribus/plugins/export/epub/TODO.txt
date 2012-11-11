@@ -9,6 +9,7 @@
   on the other hand cross production (import / export of html) is made much easier!
 - get the GUI to do something for each existing field
 - check that the items are not embedded or a pattern
+- remove all references to OwnPage
 
 
 BEFORE 1.0

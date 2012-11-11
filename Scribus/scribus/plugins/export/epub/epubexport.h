@@ -201,10 +201,14 @@ public:
 
     void setTargetFilename(QString filename) {targetFilename = filename;}
     void setPageRange(QList<int> range) {pageRange = range;}
+    void setImageMaxWidth(int width) {imageMaxWidth = width;}
+    void setImageMaxWidthThreshold(int threshold) {imageMaxWidthThreshold = threshold;}
 
 private:
     QString targetFilename;
     QList<int> pageRange;
+    int imageMaxWidth;
+    int imageMaxWidthThreshold;
 	ScribusDoc* doc;
 
 	DocumentInformation documentMetadata;

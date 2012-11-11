@@ -188,7 +188,7 @@ QList<ScPage *> EpubExport::getPagesWithItem(PageItem* item)
     // OwnPage is an indicator of where the item could be, but it's not reliable.
     if (item->OwnPage > -1)
     {
-        ScPage* page = doc->DocPages.at(item->OwnPage);
+        ScPage* page = doc->DocPages.at(item->OwnPage); // TODO: use the real page that we are handling
         if (getPageRect(page).contains(itemRect)) {
             result.append(page);
             fullyOnOwnPage = true;
@@ -561,7 +561,7 @@ void EpubExport::exportXhtml()
 		// TODO: if the page is on a new section, create a new file
 		if (itemList[i].count() == 0)
 			continue;
-		int sectionId = doc->getSectionKeyForPageIndex(itemList[i][0]->OwnPage);
+		int sectionId = doc->getSectionKeyForPageIndex(itemList[i][0]->OwnPage); // TODO: use the real page that we are handling
 		// TODO: create the file as Section0001 ... check the name from sigil
         // qDebug() << "sectionId" << sectionId;
         // qDebug() << "section" << section;
@@ -1140,8 +1140,8 @@ void EpubExport::addImage(PageItem* docItem)
     double cropY =  docItem->imageYOffset();
 
     // calculate the frame's width and height in "image pixels"
-    double frameW = docItem->width() * docItem->pixm.imgInfo.xres / (docItem->imageXScale() * docItem->pixm.imgInfo.xres);
-    double frameH = docItem->height() * docItem->pixm.imgInfo.yres / (docItem->imageYScale() * docItem->pixm.imgInfo.yres);
+    double frameW = docItem->width() / docItem->imageXScale();
+    double frameH = docItem->height() / docItem->imageYScale();
 
     if (!image.load(filename)) // TODO: if the image's width and height are already stored, only load the image when it has to be cropped or scaled
         return;
@@ -1163,6 +1163,35 @@ void EpubExport::addImage(PageItem* docItem)
             QPixmap imageTmp = image.copy(cropRect);
             image = imageTmp;
         }
+    }
+
+	qDebug() << "frameW" << frameW;
+	qDebug() << "imageMaxWidth" << imageMaxWidth;
+    int scaling = 100;
+
+    ScPage* page = doc->DocPages.at(docItem->OwnPage); // TODO: use the real page that we are handling
+    qDebug() << "item width" << docItem->width();
+    double proportion = docItem->width() / (page->width() - page->rightMargin() - page->leftMargin());
+    qDebug() << "proportion" << proportion;
+    qDebug() << "imageMaxWidthThreshold" << imageMaxWidthThreshold;
+
+    int scaledWidth;
+    if (proportion > static_cast<double>(imageMaxWidthThreshold) / 100)
+        scaledWidth = imageMaxWidth;
+    else
+        scaledWidth = static_cast<int>(proportion * imageMaxWidth);
+    qDebug() << "scaledWidth" << scaledWidth;
+
+    qDebug() << "image width" << image.width();
+    if (scaledWidth < frameW)
+        scaling = static_cast<int>(static_cast<double>(scaledWidth) / image.width() * 100);
+    qDebug() << "scaling" << scaling;
+
+    if (scaling > 0 && scaling < 100)
+    {
+        usingLoadedImage = true;
+        QPixmap imageTmp = image.scaledToWidth(scaledWidth, Qt::SmoothTransformation);
+        image = imageTmp;
     }
     /*
     // TODO: some leftovers if we want ever do a color managed conversion of the pictures
@@ -1192,7 +1221,7 @@ void EpubExport::addImage(PageItem* docItem)
         if (usingLoadedImage)
         {
             zippedFilename = fileinfo.completeBaseName()+"_c-%1-%2-%3-%4-s-%5."+fileinfo.suffix();
-            zippedFilename = zippedFilename.arg(cropRect.x()).arg(cropRect.y()).arg(cropRect.width()).arg(cropRect.height()).arg(100);
+            zippedFilename = zippedFilename.arg(cropRect.x()).arg(cropRect.y()).arg(cropRect.width()).arg(cropRect.height()).arg(scaling);
         }
         zippedFilename.remove(QRegExp("[^a-zA-Z\\d\\s_.-]"));
         qDebug() << "zippedFilename" << zippedFilename;
