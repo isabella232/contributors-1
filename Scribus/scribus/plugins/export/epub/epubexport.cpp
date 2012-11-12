@@ -78,8 +78,8 @@ void EpubExport::doExport(EPUBExportOptions &Opts)
 	readMetadata();
 	readItems();
 
-	targetFilename = "/tmp/"+targetFilename;
-	qDebug() << "forcing the output of the .epub file to /tmp";
+	// targetFilename = "/tmp/"+targetFilename;
+	// qDebug() << "forcing the output of the .epub file to /tmp";
 	epubFile = new FileZip(targetFilename);
 	epubFile->create();
 
