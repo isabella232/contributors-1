@@ -126,8 +126,10 @@ struct EPUBExportRuns
     int pos;
     int length;
     char type; // p=paragraph, f=formatting
+    bool hasBr;
     EPUBExportFormattingParagraph formatParagraph;
     EPUBExportCharacterFormatting formatCharacter;
+    EPUBExportRuns() : hasBr(false) { }
 };
 /*
 struct EPUBExportRuns

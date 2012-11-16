@@ -78,8 +78,8 @@ void EpubExport::doExport(EPUBExportOptions &Opts)
 	readMetadata();
 	readItems();
 
-	// targetFilename = "/tmp/"+targetFilename;
-	// qDebug() << "forcing the output of the .epub file to /tmp";
+	targetFilename = "/tmp/"+targetFilename;
+	qDebug() << "forcing the output of the .epub file to /tmp";
 	epubFile = new FileZip(targetFilename);
 	epubFile->create();
 
@@ -685,7 +685,7 @@ void EpubExport::exportNCX()
 		QDomElement navPoint = xmlDocument.createElement("navPoint");
 		navPoint.setAttribute("class", "chapter");
 		navPoint.setAttribute("id", file.filename);
-		navPoint.setAttribute("playOrder", i);
+		navPoint.setAttribute("playOrder", i + 1);
 		nav.appendChild(navPoint);
 
 		element = xmlDocument.createElement("navLabel");
@@ -895,7 +895,7 @@ void EpubExport::exportOPF()
 	}
 
 	element = xmlDocument.createElement("meta");
-	element.setAttribute("properties", "cover-image");
+	// element.setAttribute("properties", "cover-image");
 	element.setAttribute("content", "cover.png");
 	element.setAttribute("name", "cover");
 	metadata.appendChild(element);
@@ -986,7 +986,7 @@ void EpubExport::addText(PageItem* docItem)
             if (run.type == 'p') {
                 paragraphStyleName = docItem->itemText.paragraphStyle(run.pos + 1).parent();
 				paragraphStyleName = getStylenameSanitized(paragraphStyleName);
-                qDebug() << "paragraphStyle: " << paragraphStyleName;
+                // qDebug() << "paragraphStyle:" << paragraphStyleName;
                 elementParagraph = xhtmlDocument.createElement("p");
 				if (paragraphStyleName != "")
 					elementParagraph.setAttribute("class", paragraphStyleName);
@@ -1018,7 +1018,7 @@ void EpubExport::addText(PageItem* docItem)
             const CharStyle& style(docItem->itemText.charStyle(run.pos));
 
 			QString fontname = style.font().scName();
-			qDebug() << "fontname:" << fontname;
+			// qDebug() << "fontname:" << fontname;
 
 			QStringList featureList = style.features();
 			// qDebug() << "featureList" << featureList;
@@ -1104,8 +1104,23 @@ void EpubExport::addText(PageItem* docItem)
 				elementCurrent = element;
 			}
 
-			QDomText t = xhtmlDocument.createTextNode(run_text.simplified()); // simplified() removes nasty \r
-			elementCurrent.appendChild(t);
+            QString text_chunk = run_text;
+            if (run.hasBr)
+            {
+                // run_text = run_text.replace(QChar(SpecialChars::LINEBREAK), "<br />");
+                QStringList run_text_chunks = run_text.split(QChar(SpecialChars::LINEBREAK));
+                text_chunk = run_text_chunks.last();
+                run_text_chunks.removeLast();
+                QString chunk;
+                foreach (chunk, run_text_chunks)
+                {
+                    QDomText t = xhtmlDocument.createTextNode(chunk.simplified()); // simplified() removes nasty \r
+                    elementCurrent.appendChild(t);
+                    elementCurrent.appendChild(xhtmlDocument.createElement("br"));
+                }
+            }
+            QDomText t = xhtmlDocument.createTextNode(text_chunk.simplified()); // simplified() removes nasty \r
+            elementCurrent.appendChild(t);
             // run_text = subString(content, run.pos, run.length);
 			// qDebug() << "next round ";
             // lineStart += line.length() + 1;
@@ -1282,6 +1297,7 @@ void EpubExport::initOfRuns(PageItem* docItem)
     struct EPUBExportRuns runsItem;
     runsItem.pos = 0;
     runsItem.type = 'p';
+    runsItem.hasBr = false;
     int n = docItem->itemText.length();
     if (n == 0) {
         runsItem.length = 0;
@@ -1305,16 +1321,22 @@ void EpubExport::initOfRuns(PageItem* docItem)
             // if there is a paragraph change or the formatting has changed
             if (
                 ch == SpecialChars::PARSEP ||
-                ch == SpecialChars::LINEBREAK ||
                 ch == SpecialChars::COLBREAK ||
                 ch == SpecialChars::FRAMEBREAK
             )
             {
+                qDebug() << "ch" << ch.unicode();
                 runsItem.length = i - runsItem.pos;
                 runs.append(runsItem);
                 runsItem.pos = i;
                 runsItem.type = 'p';
+                runsItem.hasBr = false;
             }
+            if (ch == SpecialChars::LINEBREAK)
+            {
+                runsItem.hasBr = true;
+            }
+
             if (
                 style1 != lastStyle
             )
