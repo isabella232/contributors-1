@@ -895,7 +895,8 @@ void EpubExport::exportOPF()
 	}
 
 	element = xmlDocument.createElement("meta");
-	element.setAttribute("content", "Image/cover.png");
+	element.setAttribute("properties", "cover-image");
+	element.setAttribute("content", "cover.png");
 	element.setAttribute("name", "cover");
 	metadata.appendChild(element);
 
