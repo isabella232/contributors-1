@@ -11,6 +11,13 @@
 120926	refactor the class and file names	1
 120926	test items out of page	1
 
+
+the epub exporter does not allow you to design epub files.
+
+it takes your SLA file (the scribus file) and exports all the content -- text with paragraph style, character styles, and some of the local formatting; images -- and packs it in a well formatted epub file.
+
+you will then be able to open the epub file with sigil (or any other epub editor) and tweak it to your needs.
+
 #Other possible formats
 - Epub
   Versions 2.0.1 / 3.0

@@ -1,13 +1,8 @@
 #ASAP
 
 - downsize the images to something meaningful for an epub
-- insert the cover page
 - correctly handle images that are used multiple times in a file
-- mail to change shift-breakline to behave as <br> -> better compatibility with HTML;
-  current shift-newline can still be achieved with shift-newline+forced justified
-  i've never seen used and it's only slightly more complicated than before.
-  on the other hand cross production (import / export of html) is made much easier!
-- get the GUI to do something for each existing field
+- get the GUI to do something for each existing field (text color and font information)
 - check that the items are not embedded or a pattern
 - remove all references to OwnPage
 
@@ -42,6 +37,7 @@ BEFORE 1.0
 - patch scribus to enable an identifier type in the document information (#11055)
 - check that for each section a new file is created (should already be so)
 - check how the exporter behaves with embedded frames
+- fix the <span>s around the <br>s (cf. fm/scribus sample by cédric)
 
 
 
