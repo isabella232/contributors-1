@@ -186,7 +186,7 @@ bool PDFLibCore::doExport(const QString& fn, const QString& nam, int Components,
 	usedFonts.clear();
 	doc.getUsedFonts(usedFonts);
 	ucs2Codec = QTextCodec::codecForName("ISO-10646-UCS-2");
-	if(!ucs2Codec)
+	if (!ucs2Codec)
 		ucs2Codec = QTextCodec::codecForName("UTF-16");
 	if (!ucs2Codec)
 	{
@@ -470,9 +470,9 @@ bool PDFLibCore::EncodeArrayToStream(const QByteArray& in, int ObjNum)
 	return (outStream.status() == QDataStream::Ok);
 }
 
-int PDFLibCore::WriteImageToStream(ScImage& image, int ObjNum, bool cmyk, bool gray, bool precal)
+int PDFLibCore::WriteImageToStream(ScImage& image, int ObjNum, ColorSpaceEnum format, bool precal)
 {
-	bool succeed = false;
+	bool fromCmyk, succeed = false;
 	int  bytesWritten = 0;
 	if (Options.Encrypt)
 	{
@@ -480,12 +480,18 @@ int PDFLibCore::WriteImageToStream(ScImage& image, int ObjNum, bool cmyk, bool g
 		ScRC4EncodeFilter rc4Encode(&outStream, step1.data(), qMin(KeyLen+5, 16));
 		if (rc4Encode.openFilter())
 		{
-			if (gray)
-				succeed = image.writeGrayDataToFilter(&rc4Encode, precal);
-			else if (cmyk)
-				succeed = image.writeCMYKDataToFilter(&rc4Encode);
-			else
-				succeed = image.writeRGBDataToFilter(&rc4Encode);
+			switch (format)
+			{
+				case ColorSpaceMonochrome :
+					fromCmyk = !Options.UseRGB && !Options.isGrayscale && !(doc.HasCMS && Options.UseProfiles2);
+					succeed = image.writeMonochromeDataToFilter(&rc4Encode, fromCmyk); break;
+				case ColorSpaceGray :
+					succeed = image.writeGrayDataToFilter(&rc4Encode, precal); break;
+				case ColorSpaceCMYK :
+					succeed = image.writeCMYKDataToFilter(&rc4Encode); break;
+				default :
+					succeed = image.writeRGBDataToFilter(&rc4Encode); break;
+			}
 			succeed &= rc4Encode.closeFilter();
 			bytesWritten = rc4Encode.writtenToStream();
 		}
@@ -495,12 +501,18 @@ int PDFLibCore::WriteImageToStream(ScImage& image, int ObjNum, bool cmyk, bool g
 		ScNullEncodeFilter nullEncode(&outStream);
 		if (nullEncode.openFilter())
 		{
-			if (gray)
-				succeed = image.writeGrayDataToFilter(&nullEncode, precal);
-			else if (cmyk)
-				succeed = image.writeCMYKDataToFilter(&nullEncode);
-			else
-				succeed = image.writeRGBDataToFilter(&nullEncode);
+			switch (format)
+			{
+				case ColorSpaceMonochrome :
+					fromCmyk = !Options.UseRGB && !Options.isGrayscale && !(doc.HasCMS && Options.UseProfiles2);
+					succeed = image.writeMonochromeDataToFilter(&nullEncode, fromCmyk); break;
+				case ColorSpaceGray :
+					succeed = image.writeGrayDataToFilter(&nullEncode, precal); break;
+				case ColorSpaceCMYK :
+					succeed = image.writeCMYKDataToFilter(&nullEncode); break;
+				default :
+					succeed = image.writeRGBDataToFilter(&nullEncode); break;
+			}
 			succeed &= nullEncode.closeFilter();
 			bytesWritten = nullEncode.writtenToStream();
 		}
@@ -508,8 +520,8 @@ int PDFLibCore::WriteImageToStream(ScImage& image, int ObjNum, bool cmyk, bool g
 	return (succeed ? bytesWritten : 0);
 }
 
-int PDFLibCore::WriteJPEGImageToStream(ScImage& image, const QString& fn, int ObjNum, int quality, bool cmyk,
-										bool gray, bool sameFile, bool precal)
+int PDFLibCore::WriteJPEGImageToStream(ScImage& image, const QString& fn, int ObjNum, int quality, ColorSpaceEnum format,
+										 bool sameFile, bool precal)
 {
 	bool succeed = true;
 	int  bytesWritten = 0;
@@ -521,9 +533,9 @@ int PDFLibCore::WriteJPEGImageToStream(ScImage& image, const QString& fn, int Ob
 	else
 	{
 		tmpFile  = QDir::toNativeSeparators(ScPaths::getTempFileDir() + "sc.jpg");
-		if ((gray) && (!precal))
+		if (format == ColorSpaceGray && (!precal))
 			image.convertToGray();
-		if (image.convert2JPG(tmpFile, quality, cmyk, gray))
+		if (image.convert2JPG(tmpFile, quality, format == ColorSpaceCMYK, format == ColorSpaceGray))
 			jpgFileName = tmpFile;
 	}
 	if (jpgFileName.isEmpty())
@@ -551,9 +563,9 @@ int PDFLibCore::WriteJPEGImageToStream(ScImage& image, const QString& fn, int Ob
 	return (succeed ? bytesWritten : 0);
 }
 
-int PDFLibCore::WriteFlateImageToStream(ScImage& image, int ObjNum, bool cmyk, bool gray, bool precal)
+int PDFLibCore::WriteFlateImageToStream(ScImage& image, int ObjNum, ColorSpaceEnum format, bool precal)
 {
-	bool succeed = false;
+	bool fromCmyk, succeed = false;
 	int  bytesWritten = 0;
 	if (Options.Encrypt)
 	{
@@ -562,12 +574,18 @@ int PDFLibCore::WriteFlateImageToStream(ScImage& image, int ObjNum, bool cmyk, b
 		ScFlateEncodeFilter flateEncode(&rc4Encode);
 		if (flateEncode.openFilter())
 		{
-			if (gray)
-				succeed = image.writeGrayDataToFilter(&flateEncode, precal);
-			else if (cmyk)
-				succeed = image.writeCMYKDataToFilter(&flateEncode);
-			else
-				succeed = image.writeRGBDataToFilter(&flateEncode);
+			switch (format)
+			{
+				case ColorSpaceMonochrome :
+					fromCmyk = !Options.UseRGB && !Options.isGrayscale && !(doc.HasCMS && Options.UseProfiles2);
+					succeed = image.writeMonochromeDataToFilter(&flateEncode, fromCmyk); break;
+				case ColorSpaceGray :
+					succeed = image.writeGrayDataToFilter(&flateEncode, precal); break;
+				case ColorSpaceCMYK :
+					succeed = image.writeCMYKDataToFilter(&flateEncode); break;
+				default :
+					succeed = image.writeRGBDataToFilter(&flateEncode); break;
+			}
 			succeed &= flateEncode.closeFilter();
 			bytesWritten = flateEncode.writtenToStream();
 		}
@@ -577,12 +595,18 @@ int PDFLibCore::WriteFlateImageToStream(ScImage& image, int ObjNum, bool cmyk, b
 		ScFlateEncodeFilter flateEncode(&outStream);
 		if (flateEncode.openFilter())
 		{
-			if (gray)
-				succeed = image.writeGrayDataToFilter(&flateEncode, precal);
-			else if (cmyk)
-				succeed = image.writeCMYKDataToFilter(&flateEncode);
-			else
-				succeed = image.writeRGBDataToFilter(&flateEncode);
+			switch (format)
+			{
+				case ColorSpaceMonochrome :
+					fromCmyk = !Options.UseRGB && !Options.isGrayscale && !(doc.HasCMS && Options.UseProfiles2);
+					succeed = image.writeMonochromeDataToFilter(&flateEncode, fromCmyk); break;
+				case ColorSpaceGray :
+					succeed = image.writeGrayDataToFilter(&flateEncode, precal); break;
+				case ColorSpaceCMYK :
+					succeed = image.writeCMYKDataToFilter(&flateEncode); break;
+				default :
+					succeed = image.writeRGBDataToFilter(&flateEncode); break;
+			}
 			succeed &= flateEncode.closeFilter();
 			bytesWritten = flateEncode.writtenToStream();
 		}
@@ -977,8 +1001,8 @@ bool PDFLibCore::PDF_Begin_Doc(const QString& fn, SCFonts &AllFonts, QMap<QStrin
 				if (pgit->isAnnotation())
 				{
 					int annotType  = pgit->annotation().Type();
-					bool mustEmbed = ((annotType >= 2) && (annotType <= 6) && (annotType != 4));
-					if (pgit->annotation().Type() == 4)
+					bool mustEmbed = ((annotType >= Annotation::Button) && (annotType <= Annotation::Listbox) && (annotType != Annotation::Checkbox));
+					if (pgit->annotation().Type() == Annotation::Checkbox)
 						StdFonts.insert("/ZapfDingbats", "");
 					if (pgit->itemText.length() > 0 || mustEmbed)
 					{
@@ -1029,8 +1053,8 @@ bool PDFLibCore::PDF_Begin_Doc(const QString& fn, SCFonts &AllFonts, QMap<QStrin
 				if (pgit->isAnnotation())
 				{
 					int annotType  = pgit->annotation().Type();
-					bool mustEmbed = ((annotType >= 2) && (annotType <= 6) && (annotType != 4));
-					if (pgit->annotation().Type() == 4)
+					bool mustEmbed = ((annotType >= Annotation::Button) && (annotType <= Annotation::Listbox) && (annotType != Annotation::Checkbox));
+					if (pgit->annotation().Type() == Annotation::Checkbox)
 						StdFonts.insert("/ZapfDingbats", "");
 					if (pgit->itemText.length() > 0 || mustEmbed)
 					{
@@ -1081,8 +1105,8 @@ bool PDFLibCore::PDF_Begin_Doc(const QString& fn, SCFonts &AllFonts, QMap<QStrin
 				if (pgit->isAnnotation())
 				{
 					int annotType  = pgit->annotation().Type();
-					bool mustEmbed = ((annotType >= 2) && (annotType <= 6) && (annotType != 4));
-					if (pgit->annotation().Type() == 4)
+					bool mustEmbed = ((annotType >= Annotation::Button) && (annotType <= Annotation::Listbox) && (annotType != Annotation::Checkbox));
+					if (pgit->annotation().Type() == Annotation::Checkbox)
 						StdFonts.insert("/ZapfDingbats", "");
 					if (pgit->itemText.length() > 0 || mustEmbed)
 					{
@@ -1140,7 +1164,7 @@ bool PDFLibCore::PDF_Begin_Doc(const QString& fn, SCFonts &AllFonts, QMap<QStrin
 				{
 					if (pgit->isAnnotation())
 					{
-						if (pgit->annotation().Type() == 4)
+						if (pgit->annotation().Type() == Annotation::Checkbox)
 							StdFonts.insert("/ZapfDingbats", "");
 						if (pgit->itemText.length() > 0)
 						{
@@ -1499,8 +1523,8 @@ bool PDFLibCore::PDF_Begin_Doc(const QString& fn, SCFonts &AllFonts, QMap<QStrin
 			StartObj(fontDescriptor);
 			// TODO: think about QByteArray ScFace::getFontDescriptor() -- AV
 			PutDoc("<<\n/Type /FontDescriptor\n");
-			PutDoc("/FontName /"+face.psName().replace( QRegExp("[\\s\\/\\{\\[\\]\\}\\<\\>\\(\\)\\%]"), "_" )+"\n");
-			PutDoc("/FontBBox [ "+face.fontBBoxAsString()+" ]\n");
+			PutDoc("/FontName /"  + face.psName().replace( QRegExp("[\\s\\/\\{\\[\\]\\}\\<\\>\\(\\)\\%]"), "_" ) + "\n");
+			PutDoc("/FontBBox [ " + face.pdfFontBBoxAsString() + " ]\n");
 			PutDoc("/Flags ");
 			//FIXME: isItalic() should be queried from ScFace, not from Qt -- AV
 			//QFontInfo fo = QFontInfo(it.data());
@@ -1513,15 +1537,10 @@ bool PDFLibCore::PDF_Begin_Doc(const QString& fn, SCFonts &AllFonts, QMap<QStrin
 //			pfl = pfl ^ 4;
 			pfl = pfl ^ 32;
 			PutDoc(QString::number(pfl)+"\n");
-			PutDoc("/Ascent " + face.ascentAsString()+"\n");
-			PutDoc("/Descent " + face.descentAsString()+"\n");
-			PutDoc("/CapHeight " + face.capHeightAsString()+"\n");
+			PutDoc("/Ascent "      + face.pdfAscentAsString()+"\n");
+			PutDoc("/Descent "     + face.pdfDescentAsString()+"\n");
+			PutDoc("/CapHeight "   + face.pdfCapHeightAsString()+"\n");
 			PutDoc("/ItalicAngle " + face.italicAngleAsString()+"\n");
-//			PutDoc("/Ascent "+QString::number(static_cast<int>(face.ascent()))+"\n");
-//			PutDoc("/Descent "+QString::number(static_cast<int>(face.descent()))+"\n");
-//			PutDoc("/CapHeight "+QString::number(static_cast<int>(face.capHeight()))+"\n");
-//			PutDoc("/ItalicAngle "+face.italicAngle()+"\n");
-//			PutDoc("/StemV "+ face.stemV() + "\n");
 			PutDoc("/StemV 1\n");
 			if ((fformat == ScFace::SFNT || fformat == ScFace::TTCF) && (Options.EmbedList.contains(it.key())))
 				PutDoc("/FontFile2 "+QString::number(embeddedFontObject)+" 0 R\n");
@@ -2535,8 +2554,12 @@ bool PDFLibCore::PDF_TemplatePage(const ScPage* pag, bool )
 								tmpD += "q\n";
 								tmpD +=  "1 0 0 1 "+FToStr(embedded->gXpos)+" "+FToStr(ite->height() - embedded->gYpos)+" cm\n";
 								QString output;
+								if (inPattern > 0)
+									patternStackPos.push(QPointF(embedded->gXpos, -(embedded->gYpos - ite->height())));
 								if (!PDF_ProcessItem(output, embedded, pag, pag->pageNr(), true))
 									return "";
+								if (inPattern)
+									patternStackPos.pop();
 								tmpD += output;
 								tmpD += "Q\n";
 							}
@@ -3421,6 +3444,14 @@ QString PDFLibCore::Write_TransparencyGroup(double trans, int blend, QString &da
 	return retString;
 }
 
+/**
+ * Fill this.output with the QString representation of the item.
+ * Checks if the item can be represented in the chosen PDF version, based on some of its caracteristics
+ * and delegates the work to PDF_Image, PDF_GradientFillStroke, PDF_PatternFillStroke and so on for
+ * filling this.output.
+ * Returns false if the content can't be represented in the chosen PDF version,
+ * if the image can't be loaded
+ */
 bool PDFLibCore::PDF_ProcessItem(QString& output, PageItem* ite, const ScPage* pag, uint PNr, bool embedded, bool pattern)
 {
 	QString tmp(""), tmpOut;
@@ -4140,6 +4171,7 @@ bool PDFLibCore::PDF_ProcessItem(QString& output, PageItem* ite, const ScPage* p
 				trans.translate(0.0, -ite->height());
 	//			trans.translate(pat.items.at(0)->gXpos, -pat.items.at(0)->gYpos);
 				tmp += FToStr(trans.m11())+" "+FToStr(trans.m12())+" "+FToStr(trans.m21())+" "+FToStr(trans.m22())+" "+FToStr(trans.dx())+" "+FToStr(trans.dy())+" cm\n";
+				groupStackPos.push(QPointF(0, ite->height()));
 				for (int em = 0; em < pat.items.count(); ++em)
 				{
 					PageItem* embedded = pat.items.at(em);
@@ -4151,6 +4183,7 @@ bool PDFLibCore::PDF_ProcessItem(QString& output, PageItem* ite, const ScPage* p
 					tmpD += output;
 					tmpD += "Q\n";
 				}
+				groupStackPos.pop();
 				if (Options.Version >= PDFOptions::PDFVersion_14 || Options.Version == PDFOptions::PDFVersion_X4)
 					tmp += Write_TransparencyGroup(ite->fillTransparency(), ite->fillBlendmode(), tmpD, ite);
 				else
@@ -4183,8 +4216,12 @@ bool PDFLibCore::PDF_ProcessItem(QString& output, PageItem* ite, const ScPage* p
 					tmpD += "q\n";
 					tmpD +=  "1 0 0 1 "+FToStr(embedded->gXpos)+" "+FToStr(ite->height() - embedded->gYpos)+" cm\n";
 					QString output;
+					if (inPattern > 0)
+						patternStackPos.push(QPointF(embedded->gXpos, -(embedded->gYpos - ite->height())));
 					if (!PDF_ProcessItem(output, embedded, pag, PNr, true))
 						return "";
+					if (inPattern > 0)
+						patternStackPos.pop();
 					tmpD += output;
 					tmpD += "Q\n";
 				}
@@ -6164,12 +6201,14 @@ bool PDFLibCore::PDF_PatternFillStroke(QString& output, PageItem *currItem, int 
 		tmp2 += "q\n";
 		tmp2 +=  "1 0 0 1 "+FToStr(item->gXpos)+" "+FToStr(-(item->gYpos - pat->height))+" cm\n";
 		item->setXYPos(item->xPos() + ActPageP->xOffset(), item->yPos() + ActPageP->yOffset(), true);
+		patternStackPos.push(QPointF(item->gXpos, -(item->gYpos - pat->height)));
 		inPattern++;
 		if (!PDF_ProcessItem(tmpOut, item, doc.DocPages.at(0), 0, true, true))
 			return false;
 		tmp2 += tmpOut;
 		item->setXYPos(item->xPos() - ActPageP->xOffset(), item->yPos() - ActPageP->yOffset(), true);
 		inPattern--;
+		patternStackPos.pop();
 		tmp2 += "Q\n";
 	}
 	if (Options.Compress)
@@ -6621,6 +6660,11 @@ bool PDFLibCore::PDF_MeshGradientFill(QString& output, PageItem *c)
 			mpa.rotate(-c->rotation());
 		}
 	}
+	else
+	{
+		if (patternStackPos.count() != 0)
+			mpa.translate(patternStackPos.top().x(), patternStackPos.top().y());
+	}
 	PutDoc("/Matrix ["+FToStr(mpa.m11())+" "+FToStr(mpa.m12())+" "+FToStr(mpa.m21())+" "+FToStr(mpa.m22())+" "+FToStr(mpa.dx())+" "+FToStr(mpa.dy())+"]\n");
 	PutDoc("/Shading "+QString::number(shadeObject)+" 0 R\n");
 	PutDoc(">>\nendobj\n");
@@ -6941,6 +6985,11 @@ bool PDFLibCore::PDF_PatchMeshGradientFill(QString& output, PageItem *c)
 			mpa.translate(c->xPos() - ActPageP->xOffset(), ActPageP->height() - (c->yPos() - ActPageP->yOffset()));
 			mpa.rotate(-c->rotation());
 		}
+	}
+	else
+	{
+		if (patternStackPos.count() != 0)
+			mpa.translate(patternStackPos.top().x(), patternStackPos.top().y());
 	}
 	PutDoc("/Matrix ["+FToStr(mpa.m11())+" "+FToStr(mpa.m12())+" "+FToStr(mpa.m21())+" "+FToStr(mpa.m22())+" "+FToStr(mpa.dx())+" "+FToStr(mpa.dy())+"]\n");
 	PutDoc("/Shading "+QString::number(shadeObject)+" 0 R\n");
@@ -7354,6 +7403,11 @@ bool PDFLibCore::PDF_DiamondGradientFill(QString& output, PageItem *c)
 			mpa.rotate(-c->rotation());
 		}
 	}
+	else
+	{
+		if (patternStackPos.count() != 0)
+			mpa.translate(patternStackPos.top().x(), patternStackPos.top().y());
+	}
 	PutDoc("/Matrix ["+FToStr(mpa.m11())+" "+FToStr(mpa.m12())+" "+FToStr(mpa.m21())+" "+FToStr(mpa.m22())+" "+FToStr(mpa.dx())+" "+FToStr(mpa.dy())+"]\n");
 	PutDoc("/Shading "+QString::number(shadeObject)+" 0 R\n");
 	PutDoc(">>\nendobj\n");
@@ -7685,6 +7739,11 @@ bool PDFLibCore::PDF_TensorGradientFill(QString& output, PageItem *c)
 			mpa.rotate(-c->rotation());
 		}
 	}
+	else
+	{
+		if (patternStackPos.count() != 0)
+			mpa.translate(patternStackPos.top().x(), patternStackPos.top().y());
+	}
 	PutDoc("/Matrix ["+FToStr(mpa.m11())+" "+FToStr(mpa.m12())+" "+FToStr(mpa.m21())+" "+FToStr(mpa.m22())+" "+FToStr(mpa.dx())+" "+FToStr(mpa.dy())+"]\n");
 	PutDoc("/Shading "+QString::number(shadeObject)+" 0 R\n");
 	PutDoc(">>\nendobj\n");
@@ -7808,6 +7867,11 @@ bool PDFLibCore::PDF_GradientFillStroke(QString& output, PageItem *currItem, boo
 			mpa.translate(currItem->xPos() - ActPageP->xOffset(), ActPageP->height() - (currItem->yPos() - ActPageP->yOffset()));
 			mpa.rotate(-currItem->rotation());
 		}
+	}
+	else
+	{
+		if (patternStackPos.count() != 0)
+			mpa.translate(patternStackPos.top().x(), patternStackPos.top().y());
 	}
 	if (Gskew == 90)
 		Gskew = 1;
@@ -8317,12 +8381,12 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 	switch (ite->annotation().Type())
 	{
 		case 0:
-		case 10:
+		case Annotation::Text:
 			PutDoc("/Subtype /Text\n");
 			PutDoc("/Contents " + EncStringUTF16(bmUtf16, annotationObj) + "\n");
 			break;
 		case 1:
-		case 11:
+		case Annotation::Link:
 			PutDoc("/Subtype /Link\n");
 			if (ite->annotation().ActionType() == 2)
 			{
@@ -8347,11 +8411,11 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 				PutDoc("/D ["+QString::number(ite->annotation().Ziel())+" /XYZ "+ite->annotation().Action()+"]\n>>\n");
 			}
 			break;
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-		case 6:
+		case Annotation::Button:
+		case Annotation::Textfield:
+		case Annotation::Checkbox:
+		case Annotation::Combobox:
+		case Annotation::Listbox:
 			Seite.FormObjects.append(annotationObj);
 			PutDoc("/Subtype /Widget\n");
 			PutDoc("/T " + EncString(anTitle, annotationObj) + "\n");
@@ -8391,14 +8455,14 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 			QString xs[] = {"N", "I", "O", "P"};
 			switch (ite->annotation().Type())
 			{
-				case 2:
+				case Annotation::Button:
 					PutDoc("/FT /Btn\n");
 					PutDoc("/H /");
 					PutDoc(xs[ite->annotation().Feed()]);
 					PutDoc("\n");
 					PutDoc("/Q 0\n");
 					break;
-				case 3:
+				case Annotation::Textfield:
 					PutDoc("/FT /Tx\n");
 					PutDoc("/V " + EncStringUTF16(bmUtf16, annotationObj) + "\n");
 					PutDoc("/DV "+ EncStringUTF16(bmUtf16, annotationObj) + "\n");
@@ -8408,15 +8472,15 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 					if (ite->annotation().MaxChar() != -1)
 						PutDoc("/MaxLen "+QString::number(ite->annotation().MaxChar())+"\n");
 					break;
-				case 4:
+				case Annotation::Checkbox:
 					PutDoc("/FT /Btn\n");
 					PutDoc(ite->annotation().IsChk() ? "/V /Yes\n/DV /Yes\n/AS /Yes\n" :
 								"/V /Off\n/DV /Off\n/AS /Off\n");
 					appearanceObj = newObject();
 					PutDoc("/AP << /N << /Yes "+QString::number(appearanceObj)+" 0 R >> >>\n");
 					break;
-				case 5:
-				case 6:
+				case Annotation::Combobox:
+				case Annotation::Listbox:
 					cnx = "%1";
 					cnx = cnx.arg((bmstUtf16.count() > 0) ? bmstUtf16[0] : "");
 					cnx = EncStringUTF16(cnx, annotationObj);
@@ -8432,7 +8496,7 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 					break;
 			}
 			PutDoc("/MK << ");
-			if ((ite->annotation().Type() == 5) || (ite->annotation().Type() == 6))
+			if ((ite->annotation().Type() == Annotation::Combobox) || (ite->annotation().Type() == Annotation::Listbox))
 			{
 				PutDoc("/BG [ 1 1 1 ] ");
 				if (ite->annotation().borderColor() != CommonStrings::None)
@@ -8448,7 +8512,7 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 			int IconOb = 0;
 			switch (ite->annotation().Type())
 			{
-				case 2:
+				case Annotation::Button:
 					PutDoc("/CA " + EncString(bmUtf16, annotationObj) + " ");
 					if (!ite->annotation().RollOver().isEmpty())
 						PutDoc("/RC " + EncString(ite->annotation().RollOver(), annotationObj) + " ");
@@ -8514,11 +8578,11 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 						PutDoc(" ] >> ");
 					}
 					break;
-				case 6:
-				case 5:
-				case 3:
+				case Annotation::Textfield:
+				case Annotation::Combobox:
+				case Annotation::Listbox:
 					break;
-				case 4:
+				case Annotation::Checkbox:
 					PutDoc("/CA " + EncString(ct, annotationObj) + " ");
 					break;
 			}
@@ -8593,10 +8657,17 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 					NamedDest.append(de);
 					NDnum++;
 				}
+				if (ite->annotation().ActionType() == 10)
+				{
+					if (!ite->annotation().Action().isEmpty())
+					{
+						PutDoc("/A << /Type /Action /S /Named /N /" + ite->annotation().Action() + " >>\n");
+					}
+				}
 			}
 			break;
 		}
-	if ((ite->annotation().Type() < 2) || (ite->annotation().Type() > 9))
+	if ((ite->annotation().Type() < 2) || ((ite->annotation().Type() > Annotation::Listbox) && (ite->annotation().Type() < Annotation::Annot3D)))
 		PutDoc("/Border [ 0 0 0 ]\n");
 	switch (((abs(static_cast<int>(ite->rotation())) / 90)*90))
 	{
@@ -8624,7 +8695,7 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 	PutDoc("/Rect [ "+FToStr(x+bleedDisplacementX)+" "+FToStr(y2+bleedDisplacementY)+" "+FToStr(x2+bleedDisplacementX)+" "+FToStr(y+bleedDisplacementY)+" ]\n");
 	PutDoc(">>\nendobj\n");
 	// write icons
-	if ((ite->annotation().Type() == 2) && (ite->annotation().UseIcons()))
+	if ((ite->annotation().Type() == Annotation::Button) && (ite->annotation().UseIcons()))
 	{
 		if (!ite->Pfile.isEmpty())
 		{
@@ -8652,7 +8723,7 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 		}
 	}
 	// write Appearance?
-	if (ite->annotation().Type() == 3)
+	if (ite->annotation().Type() == Annotation::Textfield)
 	{
 		cc = "";
 		if (ite->fillColor() != CommonStrings::None)
@@ -8681,7 +8752,7 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 			cc += "1 0 0 1 0 0 Tm\n0 0 Td\n" + EncStringUTF16(bmUtf16, annotationObj) + " Tj\nET\nEMC";
 		PDF_xForm(appearanceObj, ite->width(), ite->height(), cc);
 	}
-	if (ite->annotation().Type() == 4)
+	if (ite->annotation().Type() == Annotation::Checkbox)
 	{
 		cc = "q\nBT\n";
 		if (ite->itemText.defaultStyle().charStyle().fillColor() != CommonStrings::None)
@@ -8690,7 +8761,7 @@ bool PDFLibCore::PDF_Annotation(PageItem *ite, uint)
 		cc += "0 0 Td\n("+ct+") Tj\nET\nQ";
 		PDF_xForm(appearanceObj, ite->width(), ite->height(), cc);
 	}
-	if ((ite->annotation().Type() == 5) || (ite->annotation().Type() == 6))
+	if ((ite->annotation().Type() == Annotation::Combobox) || (ite->annotation().Type() == Annotation::Listbox))
 	{
 		cc = "";
 		cc += "1 g\n";
@@ -8742,7 +8813,7 @@ uint PDFLibCore::writeActions(const Annotation&	annot, uint annotationObj)
 		uint F = 0;
 		uint V = 0;
 		uint C = 0;
-		if ((annot.Type() == 3) || (annot.Type() == 5) || (annot.Type() == 6))
+		if ((annot.Type() == Annotation::Textfield) || (annot.Type() == Annotation::Combobox) || (annot.Type() == Annotation::Listbox))
 		{
 			if (!annot.K_act().isEmpty())
 				K = WritePDFString(annot.K_act());
@@ -8780,7 +8851,7 @@ uint PDFLibCore::writeActions(const Annotation&	annot, uint annotationObj)
 		{
 			PutDoc("/Bl << /Type /Action /S /JavaScript /JS "+QString::number(Bl)+" 0 R >>\n");
 		}
-		if ((annot.Type() == 3) || (annot.Type() == 5) || (annot.Type() == 6))
+		if ((annot.Type() == Annotation::Textfield) || (annot.Type() == Annotation::Combobox) || (annot.Type() == Annotation::Listbox))
 		{
 			if (K)
 			{
@@ -9290,7 +9361,23 @@ void PDFLibCore::copyPoDoFoObject(const PoDoFo::PdfObject* obj, uint scObjID, QM
 }
 #endif
 
+/*
+ * Helper function to transition for booleans to ColorSpaceEnum. This
+ * should be removed once output format is specified directly.
+ */
+static ColorSpaceEnum getOutputType(const bool gray, const bool cmyk)
+{
+	if (gray)
+		return ColorSpaceGray;
+	if (cmyk)
+		return ColorSpaceCMYK;
+	return ColorSpaceRGB;
+}
 
+/**
+ * Add the image item to this.output
+ * Returns false if the image can't be read or if it can't be added to this.output
+*/
 bool PDFLibCore::PDF_Image(PageItem* c, const QString& fn, double sx, double sy, double x, double y, bool fromAN, const QString& Profil, bool Embedded, eRenderIntent Intent, QString* output)
 {
 	QFileInfo fi = QFileInfo(fn);
@@ -9367,7 +9454,7 @@ bool PDFLibCore::PDF_Image(PageItem* c, const QString& fn, double sx, double sy,
 			isEmbeddedPDF = true;
 			ImInfo.Page = c->pixm.imgInfo.actualPageNumber;
 		}
-		if(!imageLoaded && extensionIndicatesPDF(ext) && c->effectsInUse.count() == 0 && Options.embedPDF)
+		if (!imageLoaded && extensionIndicatesPDF(ext) && c->effectsInUse.count() == 0 && Options.embedPDF)
 			qDebug() << "Failed to embed the PDF file";
 		// no embedded PDF:
 		if (!imageLoaded)
@@ -9734,28 +9821,6 @@ bool PDFLibCore::PDF_Image(PageItem* c, const QString& fn, double sx, double sy,
 			PutDoc("<<\n/Type /XObject\n/Subtype /Image\n");
 			PutDoc("/Width "+QString::number(img.width())+"\n");
 			PutDoc("/Height "+QString::number(img.height())+"\n");
-			if ((doc.HasCMS) && (Options.UseProfiles2))
-			{
-				PutDoc("/ColorSpace "+ICCProfiles[profInUse].ICCArray+"\n");
-				PutDoc("/Intent /");
-				int inte2 = Intent;
-				if (Options.EmbeddedI)
-					inte2 = Options.Intent2;
-				static const QString cmsmode[] = {"Perceptual", "RelativeColorimetric", "Saturation", "AbsoluteColorimetric"};
-				PutDoc(cmsmode[inte2] + "\n");
-			}
-			else
-			{
-				if (Options.UseRGB)
-					PutDoc("/ColorSpace /DeviceRGB\n");
-				else
-				{
-					if (Options.isGrayscale)
-						PutDoc("/ColorSpace /DeviceGray\n");
-					else
-						PutDoc("/ColorSpace /DeviceCMYK\n");
-				}
-			}
 			enum PDFOptions::PDFCompression compress_method = Options.CompressMethod;
  			enum PDFOptions::PDFCompression cm = Options.CompressMethod;
 			bool exportToCMYK = false, exportToGrayscale = false, jpegUseOriginal = false;
@@ -9769,6 +9834,11 @@ bool PDFLibCore::PDF_Image(PageItem* c, const QString& fn, double sx, double sy,
 			}
 			if (c->OverrideCompressionMethod)
 				compress_method = cm = (enum PDFOptions::PDFCompression) c->CompressionMethodIndex;
+			if (img.imgInfo.colorspace == ColorSpaceMonochrome && (c->effectsInUse.count() == 0))
+			{
+				compress_method = (compress_method != PDFOptions::Compression_None) ? PDFOptions::Compression_ZIP : compress_method;
+				cm = compress_method;
+			}
 			if (extensionIndicatesJPEG(ext) && (cm != PDFOptions::Compression_None))
 			{
 				if (((Options.UseRGB || Options.UseProfiles2) && (cm == PDFOptions::Compression_Auto) && (c->effectsInUse.count() == 0) && (img.imgInfo.colorspace == ColorSpaceRGB)) && (!img.imgInfo.progressive) && (!((Options.RecalcPic) && (Options.PicRes < (qMax(72.0 / c->imageXScale(), 72.0 / c->imageYScale()))))))
@@ -9831,8 +9901,39 @@ bool PDFLibCore::PDF_Image(PageItem* c, const QString& fn, double sx, double sy,
 					}*/
 				}
 			}
+			if ((hasGrayProfile) && (doc.HasCMS) && (Options.UseProfiles2) && (!hasColorEffect))
+				exportToGrayscale = true;
 			int bytesWritten = 0;
-			PutDoc("/BitsPerComponent 8\n");
+			// Fixme: outType variable should be set directly in the if/else maze above.
+			ColorSpaceEnum outType;
+			if (img.imgInfo.colorspace == ColorSpaceMonochrome && c->effectsInUse.count() == 0)
+				outType = ColorSpaceMonochrome;
+			else
+				outType = getOutputType(exportToGrayscale, exportToCMYK);
+			if ((outType != ColorSpaceMonochrome) && (doc.HasCMS) && (Options.UseProfiles2))
+			{
+				PutDoc("/ColorSpace "+ICCProfiles[profInUse].ICCArray+"\n");
+				PutDoc("/Intent /");
+				int inte2 = Intent;
+				if (Options.EmbeddedI)
+					inte2 = Options.Intent2;
+				static const QString cmsmode[] = {"Perceptual", "RelativeColorimetric", "Saturation", "AbsoluteColorimetric"};
+				PutDoc(cmsmode[inte2] + "\n");
+			}
+			else
+			{
+				switch (outType)
+				{
+					case ColorSpaceMonochrome :
+					case ColorSpaceGray : PutDoc("/ColorSpace /DeviceGray\n"); break;
+					case ColorSpaceCMYK : PutDoc("/ColorSpace /DeviceCMYK\n"); break;
+					default : PutDoc("/ColorSpace /DeviceRGB\n"); break;
+				}
+			}
+			if (outType == ColorSpaceMonochrome)
+				PutDoc("/BitsPerComponent 1\n");
+			else
+				PutDoc("/BitsPerComponent 8\n");
 			uint lengthObj = newObject();
 			PutDoc("/Length "+QString::number(lengthObj)+" 0 R\n");
 			if (cm == PDFOptions::Compression_JPEG)
@@ -9849,19 +9950,17 @@ bool PDFLibCore::PDF_Image(PageItem* c, const QString& fn, double sx, double sy,
 					PutDoc("/Mask "+QString::number(maskObj)+" 0 R\n");
 			}
 			PutDoc(">>\nstream\n");
-			if ((hasGrayProfile) && (doc.HasCMS) && (Options.UseProfiles2) && (!hasColorEffect))
-				exportToGrayscale = true;
-			if (cm == PDFOptions::Compression_JPEG)
+			if (cm == PDFOptions::Compression_JPEG) // Fixme: should not do this with monochrome images?
 			{
 				int quality = c->OverrideCompressionQuality ? c->CompressionQualityIndex : Options.Quality;
 				if (c->OverrideCompressionQuality)
 					jpegUseOriginal = false;
-				bytesWritten = WriteJPEGImageToStream(img, fn, imageObj, quality, exportToCMYK, exportToGrayscale, jpegUseOriginal, (!hasColorEffect && hasGrayProfile));
+				bytesWritten = WriteJPEGImageToStream(img, fn, imageObj, quality, outType, jpegUseOriginal, (!hasColorEffect && hasGrayProfile));
 			}
 			else if (cm == PDFOptions::Compression_ZIP)
-				bytesWritten = WriteFlateImageToStream(img, imageObj, exportToCMYK, exportToGrayscale, (!hasColorEffect && hasGrayProfile));
+				bytesWritten = WriteFlateImageToStream(img, imageObj, outType, (!hasColorEffect && hasGrayProfile));
 			else
-				bytesWritten = WriteImageToStream(img, imageObj, exportToCMYK, exportToGrayscale, (!hasColorEffect && hasGrayProfile));
+				bytesWritten = WriteImageToStream(img, imageObj, outType, (!hasColorEffect && hasGrayProfile));
 			PutDoc("\nendstream\nendobj\n");
 			if (bytesWritten <= 0)
 			{
