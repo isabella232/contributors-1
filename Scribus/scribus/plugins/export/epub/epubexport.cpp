@@ -974,7 +974,7 @@ void EpubExport::addText(PageItem* docItem)
         initOfRuns(docItem);
         int n = nrOfRuns();
         QString content = docItem->itemText.text(0, docItem->itemText.length());
-        // qDebug() << "content: " << content;
+        qDebug() << "content: " << content;
         QDomElement element;
         QDomElement elementCurrent;
         QDomElement elementParagraph;
@@ -1023,7 +1023,7 @@ void EpubExport::addText(PageItem* docItem)
 			*/
 
             run_text = content.mid(run.pos, run.length);
-			// qDebug() << "run text: " << run_text;
+			qDebug() << "run text -->" << run_text << "<--";
             const CharStyle& style(docItem->itemText.charStyle(run.pos));
 
 			QString fontname = style.font().scName();
@@ -1128,7 +1128,8 @@ void EpubExport::addText(PageItem* docItem)
                     elementCurrent.appendChild(xhtmlDocument.createElement("br"));
                 }
             }
-            QDomText t = xhtmlDocument.createTextNode(text_chunk.simplified()); // simplified() removes nasty \r
+            // QDomText t = xhtmlDocument.createTextNode(text_chunk.simplified()); // simplified() removes nasty \r
+            QDomText t = xhtmlDocument.createTextNode(text_chunk); // simplified() removes nasty \r
             elementCurrent.appendChild(t);
             // run_text = subString(content, run.pos, run.length);
 			// qDebug() << "next round ";
