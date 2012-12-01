@@ -15,6 +15,7 @@
 #include <QList>
 
 class ScribusDoc;
+class EpubExport;
 
 class EpubExportDialog : public QDialog, Ui::EpubExportDialog
 {
@@ -22,10 +23,12 @@ class EpubExportDialog : public QDialog, Ui::EpubExportDialog
 	public:
 		EpubExportDialog( QWidget* parent = 0, ScribusDoc* doc = 0, const char* name = 0, bool modal = FALSE, Qt::WFlags fl = 0 );
 		~EpubExportDialog();
+        void setAction(EpubExport* action) {this->action = action;}
 
 	private:
 		//! \brief a parent doc reference
 		ScribusDoc* m_Doc;
+		EpubExport* action;
 	private slots:
 		void cancelButton_clicked();
 		void exportButton_clicked();

@@ -15,10 +15,14 @@
 
 #include <QMessageBox>
 
+#include "epubexport.h"
 #include "epubexportplugin.h"
 #include "epubexportdialog.h"
+
 #include "scribuscore.h"
 #include "scribusdoc.h"
+
+#include "ui/multiprogressdialog.h"
 
 int epubexportplugin_getPluginAPIVersion()
 {
@@ -91,17 +95,37 @@ bool EpubExportPlugin::run(ScribusDoc* doc, QString target)
 {
 	Q_ASSERT(target.isNull());
 	ScribusDoc* currDoc=doc;
-	if (currDoc==0)
-		currDoc=ScCore->primaryMainWindow()->doc;
-	if (currDoc==0)
+	if (currDoc == 0)
+		currDoc = ScCore->primaryMainWindow()->doc;
+	if (currDoc == 0)
 		return false;
-	EpubExportDialog *dlg = new EpubExportDialog(currDoc->scMW(), currDoc, "dlg", true, 0);
-	if (dlg)
+    EpubExport *action = new EpubExport(currDoc);
+	EpubExportDialog *dialog = new EpubExportDialog(currDoc->scMW(), currDoc, "dlg", true, 0);
+	if (dialog)
 	{
-		dlg->exec();
-		delete dlg;
+        dialog->setAction(action);
+        if (dialog->exec() == QDialog::Accepted)
+        {
+            MultiProgressDialog* progressDialog = new MultiProgressDialog(tr("Exporting: %1").arg(action->getTargetFilename()), CommonStrings::tr_Cancel, currDoc->scMW());
+            progressDialog->setOverallTotalSteps(0);
+            progressDialog->setOverallProgress(0);
+            progressDialog->show();
+            connect(progressDialog, SIGNAL(canceled()), action, SLOT(cancelRequested()));
+            qApp->processEvents();
+
+            action->setProgressDialog(progressDialog);
+
+            EPUBExportOptions options;
+            action->doExport(options);
+
+            progressDialog->hide();
+            delete progressDialog;
+        }
+		delete dialog;
 		return true;
 	}
 	else
 		return false;
+
+    delete action;
 }

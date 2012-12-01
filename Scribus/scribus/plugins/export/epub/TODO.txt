@@ -5,10 +5,13 @@
 - get the GUI to do something for each existing field (text color and font information)
 - check that the items are not embedded or a pattern
 - remove all references to OwnPage
+- add support for footnotes (http://blog.epubbooks.com/183/creating-an-epub-document)
+- correctly impelement captions (using the welding references?)
 
 
 BEFORE 1.0
 
+- clean up the progress bar and implement the cancel button.
 - if the images are not jpg or png (or .gif?) convert them to jpg or png.
 - implement TOC with the fix h\d.* style names if cezary implemention of a real TOC does not make it in 1.5
 - correctly set dtb:depth with the TOC depth (TODO)
@@ -46,7 +49,6 @@ LATER
 - eventually store the epu date in the document configuration (TODO)
 - define the condition under which a new span builds upon the current one or replaces it. (as an example: if a font is defined and it does not change, build upon it)
 - show the document infos in the export dialog
-- add the footnotes as soon cezary's code is in the trunk (http://blog.epubbooks.com/183/creating-an-epub-document)
 - add a checkbox to open the created epub with an application (sigil) and let it set in the preferences
 - groups only containing shapes (no text nor images) should be exported as svg
 - patch scribus to enable an authorFileAs the document information (lastname, first,)

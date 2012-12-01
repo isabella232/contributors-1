@@ -26,6 +26,8 @@ class ScPage;
 class ScLayer;
 class FileZip;
 
+class MultiProgressDialog;
+
 class PageItem;
 
 class MarginStruct; // for getPageRect() remove it, it's moved to ScPage
@@ -202,12 +204,19 @@ public:
     static bool isDocItemTopLeftLessThan(const PageItem *docItem1, const PageItem *docItem2);
 
     void setTargetFilename(QString filename) {targetFilename = filename;}
+    QString getTargetFilename() {return targetFilename;}
     void setPageRange(QList<int> range) {pageRange = range;}
     void setImageMaxWidth(int width) {imageMaxWidth = width;}
     void setImageMaxWidthThreshold(int threshold) {imageMaxWidthThreshold = threshold;}
 
+    void setProgressDialog(MultiProgressDialog* dialog) {progressDialog = dialog;}
+
+public slots:
+    void cancelRequested();
+
 private:
     QString targetFilename;
+    MultiProgressDialog* progressDialog;
     QList<int> pageRange;
     int imageMaxWidth;
     int imageMaxWidthThreshold;
@@ -216,6 +225,7 @@ private:
 	DocumentInformation documentMetadata;
 	void readMetadata();
     QVector< QList<PageItem*> > itemList;
+    int itemNumber;
 
     // the following moethods should move to ScPage/PageItem
     MarginStruct getPageBleeds(const ScPage* page);

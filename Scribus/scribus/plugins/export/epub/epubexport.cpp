@@ -37,6 +37,8 @@
 #include "scribusdoc.h"
 #include "scribuscore.h" // for reading the gui language
 
+#include "ui/multiprogressdialog.h"
+
 #include "filezip.h"
 
 #include "styles/styleset.h"
@@ -57,6 +59,8 @@
 
 EpubExport::EpubExport(ScribusDoc* doc)
 {
+    progressDialog = 0;
+    itemNumber = 0;
 	this->doc = doc;
 }
 
@@ -77,6 +81,8 @@ void EpubExport::doExport(EPUBExportOptions &Opts)
     qDebug() << "pageRange" << pageRange;
 	readMetadata();
 	readItems();
+    if (progressDialog)
+        progressDialog->setOverallTotalSteps(itemNumber);
 
 	targetFilename = "/tmp/"+targetFilename;
 	qDebug() << "forcing the output of the .epub file to /tmp";
@@ -253,6 +259,7 @@ void EpubExport::readItems()
         if (itemPages.empty())
 			continue;
         itemList[itemPages.first()->pageNr()].append(docItem);
+        itemNumber++;
     }
     // qDebug() << "itemList: " << itemList;
 }
@@ -587,6 +594,8 @@ void EpubExport::exportXhtml()
             {
                 addImage(docItem);
             }
+            if (progressDialog)
+                progressDialog->setOverallProgress(progressDialog->overallProgress() + 1);
         }
     }
     doc->scMW()->mainWindowProgressBar->setValue(mm);
