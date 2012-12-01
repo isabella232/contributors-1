@@ -233,6 +233,7 @@ private:
     QList<ScPage *> getPagesWithItem(PageItem* item);
 
 	void readItems();
+    QList<QString> imageFileNames; // list the file names of the images already inserted in the epub file
 
     // QMap<int, ScLayer*> layerList;
     QList<int> layerNotPrintableList;

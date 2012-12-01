@@ -1,7 +1,13 @@
 #ASAP
 
-- downsize the images to something meaningful for an epub
+- define what the sample tests:
+  - rennes_600.jpg must be included as is
+  - penguin.jpg should be cropped, included once, used twice
+
 - correctly handle images that are used multiple times in a file
+  - still missing the second penguin
+  - check for images that are inserted 1:1 (which don't need resizing nor cropping)
+- correctly handle iamges with the same name and size but coming from different directories
 - get the GUI to do something for each existing field (text color and font information)
 - check that the items are not embedded or a pattern
 - remove all references to OwnPage

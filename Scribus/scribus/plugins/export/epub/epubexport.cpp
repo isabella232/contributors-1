@@ -1023,7 +1023,7 @@ void EpubExport::addText(PageItem* docItem)
 			*/
 
             run_text = content.mid(run.pos, run.length);
-			qDebug() << "run text -->" << run_text << "<--";
+			// qDebug() << "run text -->" << run_text << "<--";
             const CharStyle& style(docItem->itemText.charStyle(run.pos));
 
 			QString fontname = style.font().scName();
@@ -1145,6 +1145,23 @@ void EpubExport::addImage(PageItem* docItem)
 	if (filename == "")
         return;
 
+    QFileInfo fileinfo = QFileInfo(filename);
+    QString ext = fileinfo.suffix().toLower();
+
+    int mediaType = 0;
+    if (ext == "png")
+        mediaType = FormatsManager::PNG;
+    else if (extensionIndicatesJPEG(ext))
+        mediaType = FormatsManager::JPEG;
+    qDebug() << "mediaType" << mediaType;
+
+    if (mediaType == 0)
+    {
+        // TODO: convert the other "acceptable" image types to png or jpeg (how to choose?)
+        qDebug() << "image format not yet supported: " << filename;
+        return;
+    }
+
     QPixmap image; // null if the image has not been cropped nor scaled
     bool usingLoadedImage = false;
 
@@ -1213,57 +1230,51 @@ void EpubExport::addImage(PageItem* docItem)
         scaling = static_cast<int>(static_cast<double>(scaledWidth) / image.width() * 100);
     qDebug() << "scaling" << scaling;
 
-    if (scaling > 0 && scaling < 100)
+    QString zippedFilename = fileinfo.fileName();
+    if (usingLoadedImage)
     {
-        usingLoadedImage = true;
-        QPixmap imageTmp = image.scaledToWidth(scaledWidth, Qt::SmoothTransformation);
-        image = imageTmp;
+        zippedFilename = fileinfo.completeBaseName()+"_c-%1-%2-%3-%4-s-%5."+fileinfo.suffix();
+        zippedFilename = zippedFilename.arg(cropRect.x()).arg(cropRect.y()).arg(cropRect.width()).arg(cropRect.height()).arg(scaling);
     }
-    /*
-    // TODO: some leftovers if we want ever do a color managed conversion of the pictures
-	ScImage img;
-	ScImage docItem->pixm;
-	ImageInfoRecord imgInfo;
-        ImageTypeEnum type -> 0 = jpg, 1 = tiff, 2 = psd, 3 = eps/ps, 4 = pdf, 5 = jpg2000, 6 = other
-        ColorSpaceEnum colorspace -> 0 = RGB  1 = CMYK  2 = Grayscale 3 = Duotone
-    CMSettings cms(c->doc(), Profil, Intent);
-    cms.setUseEmbeddedProfile(Embedded);
-    usingLoadedImage = img.loadPicture(fn, c->pixm.imgInfo.actualPageNumber, cms, ScImage::RGBData, 72, &realCMYK);
-	bool loadPicture(const QString & fn, int page, const CMSettings& cmSettings, RequestType requestType, int gsRes, bool *realCMYK = 0, bool showMsg = false);
-     */
-    QFileInfo fileinfo = QFileInfo(filename);
-    QString ext = fileinfo.suffix().toLower();
+    zippedFilename.remove(QRegExp("[^a-zA-Z\\d\\s_.-]"));
+    qDebug() << "zippedFilename" << zippedFilename;
 
-    int mediaType = 0;
-    if (ext == "png")
-        mediaType = FormatsManager::PNG;
-    else if (extensionIndicatesJPEG(ext))
-        mediaType = FormatsManager::JPEG;
-    qDebug() << "mediaType" << mediaType;
+    QString filepath = "Images/" + zippedFilename;
 
-    if (mediaType > 0)
+    // add the image to the dom
+    QDomElement div = xhtmlDocument.createElement("div");
+    xhtmlBody.appendChild(div);
+    QDomElement element = xhtmlDocument.createElement("img");
+    // <image height="800" width="600" xlink:href="../Images/cover.jpeg"></image>
+    element.setAttribute("height", (int) docItem->height()); // TODO: use the real width of the visible part of the image (as a rectangle)
+    element.setAttribute("width", (int) docItem->width());
+    element.setAttribute("alt", ""); // TODO do we have a way to define the metadata? eventually from the exif? epubcheck says it's mandatory... and it's not nice to leave it empty...
+    element.setAttribute("src", "../"+filepath); // TODO: make sure that the name is unique in the target! (if it already exists prefix the frame name?)
+    // TODO: set the width and height? from the docItem?
+    div.appendChild(element);
+
+    if (!imageFileNames.contains(zippedFilename))
     {
-        QString zippedFilename = fileinfo.fileName();
-        if (usingLoadedImage)
+        imageFileNames << zippedFilename;
+        if (scaling > 0 && scaling < 100)
         {
-            zippedFilename = fileinfo.completeBaseName()+"_c-%1-%2-%3-%4-s-%5."+fileinfo.suffix();
-            zippedFilename = zippedFilename.arg(cropRect.x()).arg(cropRect.y()).arg(cropRect.width()).arg(cropRect.height()).arg(scaling);
+            usingLoadedImage = true;
+            QPixmap imageTmp = image.scaledToWidth(scaledWidth, Qt::SmoothTransformation);
+            image = imageTmp;
         }
-        zippedFilename.remove(QRegExp("[^a-zA-Z\\d\\s_.-]"));
-        qDebug() << "zippedFilename" << zippedFilename;
+        /*
+        // TODO: some leftovers if we want ever do a color managed conversion of the pictures
+        ScImage img;
+        ScImage docItem->pixm;
+        ImageInfoRecord imgInfo;
+            ImageTypeEnum type -> 0 = jpg, 1 = tiff, 2 = psd, 3 = eps/ps, 4 = pdf, 5 = jpg2000, 6 = other
+            ColorSpaceEnum colorspace -> 0 = RGB  1 = CMYK  2 = Grayscale 3 = Duotone
+        CMSettings cms(c->doc(), Profil, Intent);
+        cms.setUseEmbeddedProfile(Embedded);
+        usingLoadedImage = img.loadPicture(fn, c->pixm.imgInfo.actualPageNumber, cms, ScImage::RGBData, 72, &realCMYK);
+        bool loadPicture(const QString & fn, int page, const CMSettings& cmSettings, RequestType requestType, int gsRes, bool *realCMYK = 0, bool showMsg = false);
+         */
 
-        QString filepath = "Images/" + zippedFilename;
-        // add the image to the dom
-        QDomElement div = xhtmlDocument.createElement("div");
-        xhtmlBody.appendChild(div);
-        QDomElement element = xhtmlDocument.createElement("img");
-        // <image height="800" width="600" xlink:href="../Images/cover.jpeg"></image>
-        element.setAttribute("height", (int) docItem->height()); // TODO: use the real width of the visible part of the image (as a rectangle)
-        element.setAttribute("width", (int) docItem->width());
-        element.setAttribute("alt", ""); // TODO do we have a way to define the metadata? eventually from the exif? epubcheck says it's mandatory... and it's not nice to leave it empty...
-        element.setAttribute("src", "../"+filepath); // TODO: make sure that the name is unique in the target! (if it already exists prefix the frame name?)
-        // TODO: set the width and height? from the docItem?
-        div.appendChild(element);
         // copy the image into the zip
         if (!usingLoadedImage)
         {
@@ -1281,16 +1292,13 @@ void EpubExport::addImage(PageItem* docItem)
 
 
         }
+    } // if (imageFileNames.contains(zippedFilename))
 
-        struct EPUBExportContentItem contentItem;
-        contentItem.id = fileinfo.fileName();
-        contentItem.href = filepath;
-        contentItem.mediaType = FormatsManager::instance()->mimetypeOfFormat(mediaType).first();
-        contentItems.append(contentItem);
-    } else {
-        // TODO: convert the other "acceptable" image types to png or jpeg (how to choose?)
-            qDebug() << "image format not yet supported: " << filename;
-    }
+    struct EPUBExportContentItem contentItem;
+    contentItem.id = fileinfo.fileName();
+    contentItem.href = filepath;
+    contentItem.mediaType = FormatsManager::instance()->mimetypeOfFormat(mediaType).first();
+    contentItems.append(contentItem);
 }
 
 // @todo: use the text/storytext methods as soon as they are implemented
