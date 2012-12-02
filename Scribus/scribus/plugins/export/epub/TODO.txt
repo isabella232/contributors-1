@@ -12,6 +12,8 @@
 - check that the items are not embedded or a pattern
 - remove all references to OwnPage
 - add support for footnotes (http://blog.epubbooks.com/183/creating-an-epub-document)
+  - link and backlink
+  - always at the end of the chapter
 - correctly impelement captions (using the welding references?)
 
 
@@ -51,6 +53,7 @@ BEFORE 1.0
 
 
 LATER
+- optionally allow a special rule for (big) portrait pictures (ex.: max width = 80%)
 - eventually and optionally set the chapter title as the name of the section in the epub file (TODO)
 - eventually store the epu date in the document configuration (TODO)
 - define the condition under which a new span builds upon the current one or replaces it. (as an example: if a font is defined and it does not change, build upon it)

@@ -469,7 +469,23 @@ void EpubExport::exportCSS()
         // qDebug() << "style font size: " << charStyle.fontSize();
         wr += "}\n";
     }
+    //
+    // add epub exporter related styles (must be included in the imported css if one is imported
+    // (or check if the exist?)
+    wr += "div.picture{\n";
+    // qDebug() << "style name: " << paragraphStyle.name();
+    // qDebug() << "style alignment: " << paragraphStyle.alignment();
+    // qDebug() << "style font: " << charStyle.font().scName();
+    // line height: fixed (<- baseline) or auto
+    // alignment
+    // evt. tabs for lists
+    // left right and first indents
+    wr += "    text-align:left;\n";
+    wr += "    page-break-before:always;\n";
+    wr += "    page-break-inside:avoid;\n";
+    wr += "}\n";
 
+    // write the stylesheet
 	epubFile->add("OEBPS/Styles/style.css", wr, true);
 
 	struct EPUBExportContentItem contentItem;
@@ -1243,6 +1259,7 @@ void EpubExport::addImage(PageItem* docItem)
 
     // add the image to the dom
     QDomElement div = xhtmlDocument.createElement("div");
+    div.setAttribute("class", "picture");
     xhtmlBody.appendChild(div);
     QDomElement element = xhtmlDocument.createElement("img");
     // <image height="800" width="600" xlink:href="../Images/cover.jpeg"></image>
