@@ -4,6 +4,7 @@
   - rennes_600.jpg must be included as is
   - penguin.jpg should be cropped, included once, used twice
 
+- check why the pictures are dpulicated in the content file
 - correctly handle images that are used multiple times in a file
   - still missing the second penguin
   - check for images that are inserted 1:1 (which don't need resizing nor cropping)
@@ -15,6 +16,7 @@
   - link and backlink
   - always at the end of the chapter
 - correctly impelement captions (using the welding references?)
+- "Default Paragraph Style" should be translates as p and not as p.Default_Paragraph_Style (the same for the default char style)
 
 
 BEFORE 1.0
@@ -65,3 +67,6 @@ LATER
 - we may need to obfuscate fonts on demand (or leave it to sigil?) (Sigil/Importers/ImportEPUB.cpp FontObfuscation; Sigil/Misc/FontObfuscation)
 - QDomDocument has some limitations (like putting newlines around <span>s): in the future we should probably rather use SAX
 - allow a separate folder for low-res images (this should probably be a general feature in scribus, since it also useful for web oriented PDFs: it should be carefully designed)
+- load an external css
+- show a report
+  - which styles are not matching between .sla and .css?

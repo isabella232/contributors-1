@@ -1259,6 +1259,7 @@ void EpubExport::addImage(PageItem* docItem)
 
     // add the image to the dom
     QDomElement div = xhtmlDocument.createElement("div");
+    // TODO: only set class picture if the images is maximized (or use different names: the goal is not to only set the page break before, if the picture is maximized)
     div.setAttribute("class", "picture");
     xhtmlBody.appendChild(div);
     QDomElement element = xhtmlDocument.createElement("img");
@@ -1270,9 +1271,13 @@ void EpubExport::addImage(PageItem* docItem)
     // TODO: set the width and height? from the docItem?
     div.appendChild(element);
 
+    // TODO: add also the path to the original picture before the zippedFilename in order to catch files with
+    // the same name but from different paths... and then? how to set the name?
     if (!imageFileNames.contains(zippedFilename))
     {
         imageFileNames << zippedFilename;
+        qDebug() << "zippedFilename" << zippedFilename;
+        qDebug() << "imageFileNames" << imageFileNames;
         if (scaling > 0 && scaling < 100)
         {
             usingLoadedImage = true;
@@ -1309,13 +1314,13 @@ void EpubExport::addImage(PageItem* docItem)
 
 
         }
-    } // if (imageFileNames.contains(zippedFilename))
 
-    struct EPUBExportContentItem contentItem;
-    contentItem.id = fileinfo.fileName();
-    contentItem.href = filepath;
-    contentItem.mediaType = FormatsManager::instance()->mimetypeOfFormat(mediaType).first();
-    contentItems.append(contentItem);
+        struct EPUBExportContentItem contentItem;
+        contentItem.id = zippedFilename;
+        contentItem.href = filepath;
+        contentItem.mediaType = FormatsManager::instance()->mimetypeOfFormat(mediaType).first();
+        contentItems.append(contentItem);
+    } // if (imageFileNames.contains(zippedFilename))
 }
 
 // @todo: use the text/storytext methods as soon as they are implemented
