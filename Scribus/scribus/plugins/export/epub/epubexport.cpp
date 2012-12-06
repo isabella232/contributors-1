@@ -29,6 +29,8 @@
 #include <QList>
 #include <QStringList>
 
+#include <QRegExp>
+
 #include <QUuid> // for generated the uuid if no isbn&co has been defined
 
 #include <QProgressBar>
@@ -265,6 +267,19 @@ void EpubExport::readItems()
 }
 
 /**
+ * replace the unicode characters to entities if needed.
+ * TODO: we should find a way to correctly insert them in addText() itself, without having to "fix"
+ * them afterwards (ale/20120606)
+ */
+QString EpubExport::getFixedXhtml(QString xhtml) {
+    xhtml = xhtml.replace(SpecialChars::NBSPACE, "&nbsp;");
+    // QRegExp pattern("</span>\n");
+    QRegExp pattern("</span>\n(\\s*)<span>");
+    xhtml = xhtml.replace(pattern, "</span><span>");
+    return xhtml;
+}
+
+/**
  * add the content of xhtmlDocument to the current epub file
  */
 void EpubExport::addXhtml()
@@ -275,7 +290,7 @@ void EpubExport::addXhtml()
 	// qDebug() << "file.filename" << file.filename;
 	file.title = QString("Section %1").arg(section + 1, 4, 10, QChar('0')); // TODO: as soon as we have a TOC, take the title from the text
 	// XXX: passing false to toString() would remove all indenting and line breaks (ale/20120917)
-	epubFile->add("OEBPS/Text/" + file.filename, xhtmlDocument.toString(), true);
+	epubFile->add("OEBPS/Text/" + file.filename, getFixedXhtml(xhtmlDocument.toString()), true);
 	xhtmlFile.append(file);
 
 	struct EPUBExportContentItem contentItem;
@@ -1139,14 +1154,22 @@ void EpubExport::addText(PageItem* docItem)
                 QString chunk;
                 foreach (chunk, run_text_chunks)
                 {
-                    QDomText t = xhtmlDocument.createTextNode(chunk.simplified()); // simplified() removes nasty \r
-                    elementCurrent.appendChild(t);
-                    elementCurrent.appendChild(xhtmlDocument.createElement("br"));
+                    // QDomText t = xhtmlDocument.createTextNode(chunk.simplified()); // simplified() removes nasty \r
+                    chunk = chunk.replace("\r", "");
+                    if (chunk != "") {
+                        QDomText t = xhtmlDocument.createTextNode(chunk); // simplified() removes nasty \r
+                        elementCurrent.appendChild(t);
+                        elementCurrent.appendChild(xhtmlDocument.createElement("br"));
+                    }
                 }
             }
             // QDomText t = xhtmlDocument.createTextNode(text_chunk.simplified()); // simplified() removes nasty \r
-            QDomText t = xhtmlDocument.createTextNode(text_chunk); // simplified() removes nasty \r
-            elementCurrent.appendChild(t);
+            // text_chunk = text_chunk.replace(SpecialChars::NBSPACE, "&nbsp;");
+            text_chunk = text_chunk.replace("\r", "");
+            if (text_chunk != "") {
+                QDomText t = xhtmlDocument.createTextNode(text_chunk); // simplified() removes nasty \r
+                elementCurrent.appendChild(t);
+            }
             // run_text = subString(content, run.pos, run.length);
 			// qDebug() << "next round ";
             // lineStart += line.length() + 1;
@@ -1371,10 +1394,15 @@ void EpubExport::initOfRuns(PageItem* docItem)
                 runsItem.pos = i;
                 runsItem.type = 'p';
                 runsItem.hasBr = false;
+                runsItem.hasNbsp = false;
             }
             if (ch == SpecialChars::LINEBREAK)
             {
                 runsItem.hasBr = true;
+            }
+            if (ch == SpecialChars::NBSPACE)
+            {
+                runsItem.hasNbsp = true;
             }
 
             if (

@@ -1,5 +1,12 @@
 #ASAP
 
+- bug to add:
+  -> when replacing the font, is there any other outcome than the font being replaced? if not, please remove
+     the confirmation dialog
+
+- keep nbsp;
+  SpecialChars::NBSPACE ---> what does epub want? should we just keep the unicode char?
+  (SpecialChars::NBHYPHEN)
 - define what the sample tests:
   - rennes_600.jpg must be included as is
   - penguin.jpg should be cropped, included once, used twice

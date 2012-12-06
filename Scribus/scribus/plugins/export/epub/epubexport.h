@@ -129,9 +129,10 @@ struct EPUBExportRuns
     int length;
     char type; // p=paragraph, f=formatting
     bool hasBr;
+    bool hasNbsp;
     EPUBExportFormattingParagraph formatParagraph;
     EPUBExportCharacterFormatting formatCharacter;
-    EPUBExportRuns() : hasBr(false) { }
+    EPUBExportRuns() : hasBr(false), hasNbsp(false) { }
 };
 /*
 struct EPUBExportRuns
@@ -257,6 +258,7 @@ private:
     void exportNCX();
     void exportOPF();
     void initializeXhtml();
+    QString getFixedXhtml(QString);
     void addXhtml();
     void addText(PageItem* docItem);
     void addImage(PageItem* docItem);
