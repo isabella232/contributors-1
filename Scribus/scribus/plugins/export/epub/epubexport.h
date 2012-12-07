@@ -61,114 +61,19 @@ struct EPUBExportFormattingParagraph
 	int dropcapsFontsize; // -n..n
 };
 
-// TODO: use StyleFlagValue defined in charstyle.h?
-enum EPUBExportCharacterFlagValue {
-	EPUBExport_Default		 =	 0,
-	EPUBExport_Superscript	 =	 1,
-	EPUBExport_Subscript	 =	 2,
-	EPUBExport_Strikethrough =	 4,
-	EPUBExport_Underline	 =	 8,
-	EPUBExport_DropCap		 =	 16,
-	EPUBExport_AllCaps		 =	 32,
-	EPUBExport_SmallCaps	 =	 64,
-	EPUBExport_Italic		 =	128,
-	EPUBExport_Bold			 =	256,
-    // = 512,
-	// = 1024,
-	// = 2048,
-	// = 4096,
-	// = 8192,
-	EPUBExport_Noformatting  = 65535
-};
-
-class SCRIBUS_API EPUBExportCharacterFlag
-{
-	EPUBExportCharacterFlagValue value;
-
-	EPUBExportCharacterFlag(void) { value = EPUBExport_Default; }
-	EPUBExportCharacterFlag(EPUBExportCharacterFlagValue val) { value = val; }
-	EPUBExportCharacterFlag(int val) { value = static_cast<EPUBExportCharacterFlagValue>(val); }
-
-	operator EPUBExportCharacterFlagValue() const { return value; }
-
-	QStringList featureList() const; 
-	
-	EPUBExportCharacterFlag& operator=  (EPUBExportCharacterFlagValue val) { value = val; return *this;}
-	EPUBExportCharacterFlag& operator&= (const EPUBExportCharacterFlag& right);
-	EPUBExportCharacterFlag& operator|= (const EPUBExportCharacterFlag& right);
-	EPUBExportCharacterFlag  operator&  (const EPUBExportCharacterFlag& right);
-	EPUBExportCharacterFlag  operator&  (int right);
-	EPUBExportCharacterFlag  operator|  (const EPUBExportCharacterFlag& right);
-	EPUBExportCharacterFlag  operator^  (const EPUBExportCharacterFlag& right);
-	EPUBExportCharacterFlag  operator^  (int right);
-	EPUBExportCharacterFlag  operator~  ();
-
-	bool operator== (const EPUBExportCharacterFlag& right) const;
-	bool operator== (const EPUBExportCharacterFlagValue right) const;
-	bool operator== (int right) const;
-	bool operator!= (const EPUBExportCharacterFlag& right) const;
-	bool operator!= (const EPUBExportCharacterFlagValue right) const;
-};
-
-struct EPUBExportCharacterFormatting
-{
-	int bold; // 0 1
-	int italic; // 0 1
-	int underline; // 0 1
-	QString fontname;
-	int textsize; // 1..n
-	QString textcolor; // 000000
-	// QString language; // string
-	int superscript; // 0 1
-	int subscript; // 0 1
-};
-
 struct EPUBExportRuns
 {
     int pos;
     int length;
     char type; // p=paragraph, f=formatting
-    bool hasBr;
-    bool hasNbsp;
-    EPUBExportFormattingParagraph formatParagraph;
-    EPUBExportCharacterFormatting formatCharacter;
-    EPUBExportRuns() : hasBr(false), hasNbsp(false) { }
+    QVector< QVector<QString> > content;
 };
-/*
-struct EPUBExportRuns
-{
-    int pos;
-    char type; // p=paragraph, f=formatting
-    QDebug operator<<(QDebug dbg)
-    {
-        dbg.nospace() << "(" << pos << ", " << type << ")";
-        return dbg.space();
-    }
-};
-*/
+
 struct EPUBExportXhtmlFile
 {
     int section;
     QString title;
     QString filename;
-};
-
-struct EPUBExportCurrentFormatting
-{
-    bool bold;
-    bool italic;
-    bool underline;
-    bool strikethrough;
-    // span:
-    QString charstylename;
-    int fontsize;
-    QString fontname;
-    QString color;
-    QString shadow;
-    int scaleh;
-    int scalev;
-    int tracking;
-    QString language;
 };
 
 struct EPUBExportContentItem
@@ -281,5 +186,7 @@ private:
 };
 
 QDebug operator<<(QDebug dbg, const QList<ScPage*> &pages);
+QDebug operator<<(QDebug dbg, const QVector<EPUBExportRuns> &runs);
+QDebug operator<<(QDebug dbg, const EPUBExportRuns run);
 
 #endif // EPUBEXPORT_H

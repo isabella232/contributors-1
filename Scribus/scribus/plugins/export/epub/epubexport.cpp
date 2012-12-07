@@ -28,6 +28,8 @@
 
 #include <QList>
 #include <QStringList>
+#include <QVector>
+#include <QVectorIterator>
 
 #include <QRegExp>
 
@@ -86,8 +88,8 @@ void EpubExport::doExport(EPUBExportOptions &Opts)
     if (progressDialog)
         progressDialog->setOverallTotalSteps(itemNumber);
 
-	targetFilename = "/tmp/"+targetFilename;
-	qDebug() << "forcing the output of the .epub file to /tmp";
+	// targetFilename = "/tmp/"+targetFilename;
+	// qDebug() << "forcing the output of the .epub file to /tmp";
 	epubFile = new FileZip(targetFilename);
 	epubFile->create();
 
@@ -272,10 +274,12 @@ void EpubExport::readItems()
  * them afterwards (ale/20120606)
  */
 QString EpubExport::getFixedXhtml(QString xhtml) {
+
     xhtml = xhtml.replace(SpecialChars::NBSPACE, "&nbsp;");
-    // QRegExp pattern("</span>\n");
-    QRegExp pattern("</span>\n(\\s*)<span>");
-    xhtml = xhtml.replace(pattern, "</span><span>");
+
+    QRegExp pattern("<(html|head|meta|/title|link|/head|body|/body|/html|/p)([^>]*)>");
+    xhtml = xhtml.replace(pattern, "<\\1\\2>\n");
+
     return xhtml;
 }
 
@@ -289,8 +293,9 @@ void EpubExport::addXhtml()
 	file.filename = QString("Section%1.xhtml").arg(section + 1, 4, 10, QChar('0'));
 	// qDebug() << "file.filename" << file.filename;
 	file.title = QString("Section %1").arg(section + 1, 4, 10, QChar('0')); // TODO: as soon as we have a TOC, take the title from the text
-	// XXX: passing false to toString() would remove all indenting and line breaks (ale/20120917)
-	epubFile->add("OEBPS/Text/" + file.filename, getFixedXhtml(xhtmlDocument.toString()), true);
+	// passing somethign else then -1 to toString() adds indenting line breaks. we prefer to manually add
+    // some breaks with getFixedXhtml()
+	epubFile->add("OEBPS/Text/" + file.filename, getFixedXhtml(xhtmlDocument.toString(-1)), true);
 	xhtmlFile.append(file);
 
 	struct EPUBExportContentItem contentItem;
@@ -418,11 +423,11 @@ void EpubExport::exportCSS()
 		{
 			wr += "    font-variant:italic;\n";
 		}
-		QRegExp regexpBold("(\\bbold\\b)");
+		QRegExp regexpBold("(\\bbold\\b)"); // TODO: add other keywords for bold
 		regexpBold.setCaseSensitivity(Qt::CaseInsensitive);
 		if (regexpBold.indexIn(fontname) >= 0)
 		{
-			wr += "    font-weight:bold;\n";
+			wr += "    font-weight:bold;\n"; // TODO: add other keywords for italic
 		}
 
 		QStringList featureList = charStyle.features();
@@ -990,189 +995,151 @@ void EpubExport::exportOPF()
 	epubFile->add("OEBPS/content.opf", xmlDocument.toString(), true);
 }
 
+/**
+ * example of charStyle() use in svgexplugin.cpp 
+ * cf. short-words/parse.cpp
+ * cf. Scribus150Format::writeITEXTs() for getting the local formatting
+ * in plugins/fileloader/scribus150format/scribus150format_save.cpp
+ *
+ * - get the list of runs (chunks different formatting) in the text frame
+ * - foreach run:
+ *   - if it's a p
+ *     - create a p element with it's style name
+ *     - set this element as the latest inserted paragraph
+ *     - set the the dom element as the current one
+ *   - get the character style
+ *   - get the local formatting of the first char in the run
+ *     - font name
+ *       - if the the font name suggests an italic or bold add italic or bold to the list of the formatting
+ *   - foreach formatting (feature)
+ *     - if it's bold, italic, superscript, subscript create an element with the specfic tag
+ *     - if it's underline, strikethrough add the formatting to the span's style attribute
+ *   - if there is a character style of a local formatting:
+ *     - if not specific tag has been createdi create a span element
+ *     - add the class and style attributes to the element
+ *     - add the span to the paragraph element and set it as the current element
+ *   - insert the text line by line (with a br at the end of each but the last line)
+ *   - add the p to the dom
+ *   - set the current element as the latest element paragraph created
+ */
 void EpubExport::addText(PageItem* docItem)
 {
-	/*
-	//  example of use in svgexplugin.cpp 
-	const CharStyle& charStyle(docItem->itemText.charStyle(0));
-	qDebug() << "font size: " << charStyle.fontSize();
-	*/
+    // initialize the local variables
+    QDomElement elementCurrent;
+    QDomElement elementParagraph;
+    QString paragraphStyleName;
+    QString characterStyleName;
+    QString run_text;
+
     if ((docItem->prevInChain() == NULL) && (docItem->itemText.length() > 0))
     {
-        // cf. short-words/parse.cpp
-        // cf. Scribus150Format::writeITEXTs() for getting the local formatting
-        // in plugins/fileloader/scribus150format/scribus150format_save.cpp
-        initOfRuns(docItem);
-        int n = nrOfRuns();
-        QString content = docItem->itemText.text(0, docItem->itemText.length());
-        qDebug() << "content: " << content;
-        QDomElement element;
-        QDomElement elementCurrent;
-        QDomElement elementParagraph;
-        QString paragraphStyleName;
-        QString characterStyleName;
-        QString run_text;
-		bool hasCharacterStyle;
-		bool hasCharacterClass;
-        for (int i = 0; i < n; i++) {
-            // use QString mid() to get substrings...
-            EPUBExportRuns run = runs[i];
-            // qDebug() << "run.pos:" << run.pos;
-            // qDebug() << "run.length:" << run.length;
-            // qDebug() << "run.type:" << run.type;
-			hasCharacterStyle = false;
-			hasCharacterClass = false;
+        // parse the text and define the runs list
+        initOfRuns(docItem); // find a way to make it clear that this fills the runs' object variable
+        // qDebug() << "runs:" << runs;
 
-            if (run.type == 'p') {
+        foreach (EPUBExportRuns run, runs)
+        {
+            // qDebug() << "run:" << run;
+            if (run.type == 'p')
+            {
+                elementParagraph = xhtmlDocument.createElement("p");
+
                 paragraphStyleName = docItem->itemText.paragraphStyle(run.pos + 1).parent();
 				paragraphStyleName = getStylenameSanitized(paragraphStyleName);
                 // qDebug() << "paragraphStyle:" << paragraphStyleName;
-                elementParagraph = xhtmlDocument.createElement("p");
 				if (paragraphStyleName != "")
 					elementParagraph.setAttribute("class", paragraphStyleName);
-                xhtmlBody.appendChild(elementParagraph);
+
 				elementCurrent = elementParagraph;
             }
 
-			element = xhtmlDocument.createElement("span");
-
 			characterStyleName = docItem->itemText.charStyle(run.pos + 1).displayName();
 			characterStyleName = getStylenameSanitized(characterStyleName);
-			// qDebug() << "p characterstyle: " << characterStyleName;
+			// qDebug() << "character style: " << characterStyleName;
 
-			if (characterStyleName != "")
-			{
-				element.setAttribute("class", characterStyleName);
-				hasCharacterClass = true;
-			}
-
-			/*
-			if (run.type == 'f')
-			{
-				// hasCharacterStyle = true;
-			}
-			*/
-
-            run_text = content.mid(run.pos, run.length);
-			// qDebug() << "run text -->" << run_text << "<--";
             const CharStyle& style(docItem->itemText.charStyle(run.pos));
 
 			QString fontname = style.font().scName();
 			// qDebug() << "fontname:" << fontname;
 
-			QStringList featureList = style.features();
-			// qDebug() << "featureList" << featureList;
+			QStringList characterFeatures = style.features();
+			// qDebug() << "characterFeatures" << characterFeatures;
+
 			// as long as bold and italic are not in the features list, get the property
 			// by guessing from the font name (ale/20120916)
-			// rule.pattern = QRegExp("[\\\\|\\<|\\>|\\=|\\!|\\+|\\-|\\*|\\/|\\%]+");
-			QRegExp regexpItalic("(\\bitalic\\b)");
+			QRegExp regexpItalic("(\\bitalic\\b)"); // TODO: use other keywords for italics (also for style.css)
 			regexpItalic.setCaseSensitivity(Qt::CaseInsensitive);
 			if (regexpItalic.indexIn(fontname) >= 0)
-			{
-				featureList << CharStyle::ITALIC;
-			}
-			QRegExp regexpBold("(\\bbold\\b)");
+				characterFeatures << CharStyle::ITALIC;
+
+			QRegExp regexpBold("(\\bbold\\b)"); // TODO: use also other keywords for bold (also for style.css)
 			regexpBold.setCaseSensitivity(Qt::CaseInsensitive);
 			if (regexpBold.indexIn(fontname) >= 0)
-			{
-				featureList << CharStyle::BOLD;
-			}
-			QStringList styleAttribute;
-			QStringList::ConstIterator it;
-			for (it = featureList.begin(); it != featureList.end(); ++it)
-			{
-				QString feature = it->trimmed();
+				characterFeatures << CharStyle::BOLD;
+			// qDebug() << "characterFeatures" << characterFeatures;
+
+            QDomElement element;
+			QStringList characterFormatting;
+
+            foreach (QString feature, characterFeatures)
+            {
+				feature = feature.trimmed();
 				// qDebug() << "feature" << feature;
 				if (feature == CharStyle::BOLD)
-				{
-					QDomElement bElement = xhtmlDocument.createElement("b");
-					elementCurrent.appendChild(bElement);
-					elementCurrent = bElement;
-				}
+					element = xhtmlDocument.createElement("b");
 				else if (feature == CharStyle::ITALIC)
-				{
-					QDomElement iElement = xhtmlDocument.createElement("i");
-					elementCurrent.appendChild(iElement);
-					elementCurrent = iElement;
-				}
+					element = xhtmlDocument.createElement("i");
 				else if (feature == CharStyle::SUPERSCRIPT)
-				{
-					QDomElement iElement = xhtmlDocument.createElement("sup");
-					elementCurrent.appendChild(iElement);
-					elementCurrent = iElement;
-				}
+					element = xhtmlDocument.createElement("sup");
 				else if (feature == CharStyle::SUBSCRIPT)
-				{
-					QDomElement iElement = xhtmlDocument.createElement("sub");
-					elementCurrent.appendChild(iElement);
-					elementCurrent = iElement;
-				}
+					element = xhtmlDocument.createElement("sub");
 				else if ((feature == CharStyle::UNDERLINE) || (feature == CharStyle::UNDERLINEWORDS))
-				{
-					styleAttribute << "text-decoration:underline";
-					hasCharacterStyle = true;
-				}
+					characterFormatting << "text-decoration:underline";
 				else if (feature == CharStyle::STRIKETHROUGH)
-				{
-					styleAttribute << "text-decoration:line-through";
-					hasCharacterStyle = true;
-				}
+					characterFormatting << "text-decoration:line-through";
 				else if (feature != CharStyle::INHERIT)
-				{
 					qDebug() << "else feature" << feature;
-					hasCharacterStyle = true;
 					/*
 					 * The following character formats are supported by Scribus
-					 * but not exported to epub:
+					 * but not (yet) exported to epub:
 					 * OUTLINE: text-outline: 1px 1px #ccc;
 					 * SHADOWED: text-shadow: 2px 2px #ff0000;
 					 * ALLCAPS: text-transform:uppercase;
 					 * SMALLCAPS: font-variant:small-caps;
 					 * SHYPHEN: hyphenation is possible... how to use it?
 					 */
-				}
-			}
-			// qDebug() << "tag name: " << element.tagName();
-			if (hasCharacterStyle)
-			{
-				element.setAttribute("style", styleAttribute.join("; ") + ";");
-			}
+            }
 
-			if (hasCharacterClass || hasCharacterStyle)
-			{
+			// qDebug() << "tag name: " << element.tagName();
+			if ((element.tagName() != "") || !characterFormatting.isEmpty() || (characterStyleName != ""))
+            {
+                if (element.tagName() == "")
+                    element = xhtmlDocument.createElement("span");
+                // qDebug() << "tag name: " << element.tagName();
+
+                if (characterStyleName != "")
+                    element.setAttribute("class", characterStyleName);
+
+                if (!characterFormatting.isEmpty())
+                    element.setAttribute("style", characterFormatting.join("; ") + ";");
+
 				elementCurrent.appendChild(element);
 				elementCurrent = element;
-			}
+            }
 
-            QString text_chunk = run_text;
-            if (run.hasBr)
+            foreach (QVector<QString> content, run.content)
             {
-                // run_text = run_text.replace(QChar(SpecialChars::LINEBREAK), "<br />");
-                QStringList run_text_chunks = run_text.split(QChar(SpecialChars::LINEBREAK));
-                text_chunk = run_text_chunks.last();
-                run_text_chunks.removeLast();
-                QString chunk;
-                foreach (chunk, run_text_chunks)
-                {
-                    // QDomText t = xhtmlDocument.createTextNode(chunk.simplified()); // simplified() removes nasty \r
-                    chunk = chunk.replace("\r", "");
-                    if (chunk != "") {
-                        QDomText t = xhtmlDocument.createTextNode(chunk); // simplified() removes nasty \r
-                        elementCurrent.appendChild(t);
+                QVectorIterator<QString> list(content);
+                while (list.hasNext()) {
+                    QDomText elementText = xhtmlDocument.createTextNode(list.next());
+                    elementCurrent.appendChild(elementText);
+                    if (list.hasNext())
                         elementCurrent.appendChild(xhtmlDocument.createElement("br"));
-                    }
                 }
             }
-            // QDomText t = xhtmlDocument.createTextNode(text_chunk.simplified()); // simplified() removes nasty \r
-            // text_chunk = text_chunk.replace(SpecialChars::NBSPACE, "&nbsp;");
-            text_chunk = text_chunk.replace("\r", "");
-            if (text_chunk != "") {
-                QDomText t = xhtmlDocument.createTextNode(text_chunk); // simplified() removes nasty \r
-                elementCurrent.appendChild(t);
-            }
-            // run_text = subString(content, run.pos, run.length);
-			// qDebug() << "next round ";
-            // lineStart += line.length() + 1;
+            if (elementParagraph.text() != "")
+                xhtmlBody.appendChild(elementParagraph);
+
 			elementCurrent = elementParagraph;
         }
     }
@@ -1360,14 +1327,24 @@ void EpubExport::initOfRuns(PageItem* docItem)
     struct EPUBExportRuns runsItem;
     runsItem.pos = 0;
     runsItem.type = 'p';
-    runsItem.hasBr = false;
+    runsItem.content.clear();
+    qDebug() << "content empty:" << runsItem.content;
     int n = docItem->itemText.length();
+
+    QVector<QString> lines;
+    QString line = "";
+
     if (n == 0) {
         runsItem.length = 0;
         runs.append(runsItem);
     } else {
+        lines.clear();
+        QString content = docItem->itemText.text(0, docItem->itemText.length());
+
         for(int i = 0; i < n; ++i)
         {
+            bool output = true;
+
             const CharStyle& style1(docItem->itemText.charStyle(i));
             const QChar ch = docItem->itemText.text(i);
 
@@ -1388,22 +1365,36 @@ void EpubExport::initOfRuns(PageItem* docItem)
                 ch == SpecialChars::FRAMEBREAK
             )
             {
-                qDebug() << "ch" << ch.unicode();
+                // qDebug() << "ch" << ch.unicode();
                 runsItem.length = i - runsItem.pos;
-                runs.append(runsItem);
+                if (line != "")
+                {
+                    lines.append(line);
+                    line = "";
+                }
+                if (!lines.isEmpty())
+                {
+                    runsItem.content.append(lines);
+                    lines.clear();
+                }
+                if (!runsItem.content.isEmpty())
+                    runs.append(runsItem);
                 runsItem.pos = i;
                 runsItem.type = 'p';
-                runsItem.hasBr = false;
-                runsItem.hasNbsp = false;
+                runsItem.content.clear();
+                output = false;
             }
             if (ch == SpecialChars::LINEBREAK)
             {
-                runsItem.hasBr = true;
+                if (line != "")
+                {
+                    lines.append(line);
+                    line = "";
+                }
+                output = false;
             }
-            if (ch == SpecialChars::NBSPACE)
-            {
-                runsItem.hasNbsp = true;
-            }
+            // accepted special chars:
+            // ch == SpecialChars::NBSPACE
 
             if (
                 style1 != lastStyle
@@ -1420,11 +1411,22 @@ void EpubExport::initOfRuns(PageItem* docItem)
                     // docu.writeAttribute("CH", textWithSoftHyphens(item->itemText, lastPos, i));
                 }
                 // runs.append(i);
+                if (line != "")
+                {
+                    lines.append(line);
+                    line = "";
+                }
+                if (!lines.isEmpty())
+                {
+                    runsItem.content.append(lines);
+                    lines.clear();
+                }
                 runsItem.length = i - runsItem.pos;
-                runs.append(runsItem);
+                if (runsItem.type == 'p' || !runsItem.content.isEmpty())
+                    runs.append(runsItem);
                 runsItem.pos = i;
                 runsItem.type = 'f';
-                // runs.insert(i, 'f');
+                runsItem.content.clear();
                 lastStyle = style1;
                 lastPos = i;
             }
@@ -1449,9 +1451,18 @@ void EpubExport::initOfRuns(PageItem* docItem)
             {
             }
 
+            if (output)
+                line += ch;
         }
         runsItem.length = n - runsItem.pos;
-        runs.append(runsItem);
+        if (line != "")
+            lines.append(line);
+
+        if (!lines.isEmpty())
+            runsItem.content.append(lines);
+
+        if (!runsItem.content.isEmpty())
+            runs.append(runsItem);
     }
     // qDebug() << "runs: " << runs;
     // qDebug() << "paragraph: " << paragraph;
@@ -1472,13 +1483,21 @@ int EpubExport::endOfRun(uint index)
 	return index + 1;
 }
 
-// does not work (does not get called)
-QDebug operator<<(QDebug dbg, const QList<EPUBExportRuns> &v)
+// not tested yet
+QDebug operator<<(QDebug dbg, const EPUBExportRuns run)
 {
-    for (int i = 0; i < v.length(); i++) {
-        EPUBExportRuns r = v[i];
-        dbg.nospace() << "(" << r.pos << ", " << r.type << ")";
+    dbg.nospace() << "(pos:" << run.pos << ", lenght:" << run.length  << ", type:" << run.type  << ", content:" << run.content << ")";
+    return dbg.space();
+}
+
+QDebug operator<<(QDebug dbg, const QVector<EPUBExportRuns> &runs)
+{
+    dbg.nospace() << "[" ;
+    foreach (EPUBExportRuns run, runs)
+    {
+        dbg.nospace() << run;
     }
+    dbg.nospace() << "]" ;
     return dbg.space();
 }
 

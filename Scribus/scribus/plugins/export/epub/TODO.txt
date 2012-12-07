@@ -1,17 +1,15 @@
 #ASAP
 
+- make sure that getStylenameSanitized returns unique names
+
 - bug to add:
   -> when replacing the font, is there any other outcome than the font being replaced? if not, please remove
      the confirmation dialog
-
-- keep nbsp;
-  SpecialChars::NBSPACE ---> what does epub want? should we just keep the unicode char?
   (SpecialChars::NBHYPHEN)
 - define what the sample tests:
   - rennes_600.jpg must be included as is
   - penguin.jpg should be cropped, included once, used twice
 
-- check why the pictures are dpulicated in the content file
 - correctly handle images that are used multiple times in a file
   - still missing the second penguin
   - check for images that are inserted 1:1 (which don't need resizing nor cropping)
@@ -32,7 +30,6 @@ BEFORE 1.0
 - if the images are not jpg or png (or .gif?) convert them to jpg or png.
 - implement TOC with the fix h\d.* style names if cezary implemention of a real TOC does not make it in 1.5
 - correctly set dtb:depth with the TOC depth (TODO)
-- test that everything works correctly with 0 elements (on a specific page)
 - add the font files
 - font sizes: 12 pt = 16px = 1 em = 100%
 - convert all colors to rgb
