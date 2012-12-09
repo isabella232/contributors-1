@@ -66,6 +66,9 @@ EpubExport::EpubExport(ScribusDoc* doc)
     progressDialog = 0;
     itemNumber = 0;
 	this->doc = doc;
+
+    qDebug() << "marksList" << doc->marksList();
+    qDebug() << "notesList" << doc->notesList();
 }
 
 EpubExport::~EpubExport()
@@ -88,8 +91,8 @@ void EpubExport::doExport(EPUBExportOptions &Opts)
     if (progressDialog)
         progressDialog->setOverallTotalSteps(itemNumber);
 
-	// targetFilename = "/tmp/"+targetFilename;
-	// qDebug() << "forcing the output of the .epub file to /tmp";
+	targetFilename = "/tmp/"+targetFilename;
+	qDebug() << "forcing the output of the .epub file to /tmp";
 	epubFile = new FileZip(targetFilename);
 	epubFile->create();
 
@@ -350,7 +353,7 @@ void EpubExport::exportContainer()
 
 QString EpubExport::getStylenameSanitized(QString stylename)
 {
-	return stylename.replace(' ', '_');
+    return stylename.remove(QRegExp("[^a-zA-Z\\d_-]"));
 }
 
 /**
@@ -1328,7 +1331,6 @@ void EpubExport::initOfRuns(PageItem* docItem)
     runsItem.pos = 0;
     runsItem.type = 'p';
     runsItem.content.clear();
-    qDebug() << "content empty:" << runsItem.content;
     int n = docItem->itemText.length();
 
     QVector<QString> lines;
