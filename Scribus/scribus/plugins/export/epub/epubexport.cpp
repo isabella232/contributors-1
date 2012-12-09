@@ -91,8 +91,8 @@ void EpubExport::doExport(EPUBExportOptions &Opts)
     if (progressDialog)
         progressDialog->setOverallTotalSteps(itemNumber);
 
-	targetFilename = "/tmp/"+targetFilename;
-	qDebug() << "forcing the output of the .epub file to /tmp";
+	// targetFilename = "/tmp/"+targetFilename;
+	// qDebug() << "forcing the output of the .epub file to /tmp";
 	epubFile = new FileZip(targetFilename);
 	epubFile->create();
 
