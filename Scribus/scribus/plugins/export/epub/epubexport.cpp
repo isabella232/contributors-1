@@ -57,6 +57,9 @@
 
 #include "util.h" // for parsing the list of pages (remove it when the function is moved to ScribusDoc)
 #include "scribusstructs.h" // for getPageRect() remove it, it's moved to ScPage
+#include "util_text.h" // contains desaxeString() to get the note's content
+#include "sctextstruct.h" // for for getting  the char properties (notes...)
+#include "marks.h" // for the footnotes (and in the future other marks...)
 
 #include "cmsettings.h" // for cropping the image to the frame
 
@@ -91,8 +94,8 @@ void EpubExport::doExport(EPUBExportOptions &Opts)
     if (progressDialog)
         progressDialog->setOverallTotalSteps(itemNumber);
 
-	// targetFilename = "/tmp/"+targetFilename;
-	// qDebug() << "forcing the output of the .epub file to /tmp";
+	targetFilename = "/tmp/"+targetFilename;
+	qDebug() << "forcing the output of the .epub file to /tmp";
 	epubFile = new FileZip(targetFilename);
 	epubFile->create();
 
@@ -627,6 +630,11 @@ void EpubExport::exportXhtml()
             docItem = itemList[i].at(j);
             if (docItem->asTextFrame())
             {
+                if (!docItem->isNoteFrame()) {
+                    // what to do with footnotes?
+                    // TODO: store the footnote text and add it to the end of the section or the document
+                }
+                else
                 addText(docItem);
             }
             else if (docItem->asImageFrame())
@@ -1349,6 +1357,26 @@ void EpubExport::initOfRuns(PageItem* docItem)
 
             const CharStyle& style1(docItem->itemText.charStyle(i));
             const QChar ch = docItem->itemText.text(i);
+            ScText* chProperties = docItem->itemText.item(i);
+            if (chProperties->mark) {
+                Mark* footnoteCall = chProperties->mark;
+                if (footnoteCall->getType() == MARKNoteMasterType) {
+                    TextNote* footnote = chProperties->mark->getData().notePtr;
+                    qDebug() << "calling mark:" << footnoteCall->getString();
+                    if (!footnote->saxedText().isEmpty()) {
+                        StoryText footnoteText = desaxeString(doc, footnote->saxedText());
+                        qDebug() << "note text:" << footnoteText.text(0, footnoteText.length());
+                        // TODO: refactor to be able to recursively call the html formatting!
+                    }
+                    qDebug() << "note text:" << footnote->saxedText();
+                    qDebug() << "note mark:" << footnote->num();
+                    qDebug() << "note style:" << footnote->notesStyle()->name();
+
+                    // apptend 
+                } else if (footnoteCall->getType() == MARKNoteFrameType) {
+                }
+                continue; // don't insert the marks as such!
+            }
 
             /*
             // store formatting struct for:
