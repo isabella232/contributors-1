@@ -7,23 +7,23 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef EPUBEXPORTMETADATA_H
-#define EPUBEXPORTMETADATA_H
+#ifndef EPUBEXPORTIMAGE_H
+#define EPUBEXPORTIMAGE_H
 
 #include <QObject>
 #include <QDebug>
 
 #include "scribusapi.h" // for SCRIBUS_API
 
-class EpubExportMetadata : public QObject
+class EpubExportImage : public QObject
 {
     Q_OBJECT
 };
 
 public:
-	EpubExportMetadata();
-	~EpubExportMetadata();
+	EpubExportImage();
+	~EpubExportImage();
 
-QDebug operator<<(QDebug dbg, const EpubExportMetadata &metadata);
+QDebug operator<<(QDebug dbg, const EpubExportImage &image);
 
-#endif // EPUBEXPORTMETADATA_H
+#endif // EPUBEXPORTIMAGE_H

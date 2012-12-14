@@ -7,23 +7,27 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef EPUBEXPORTMETADATA_H
-#define EPUBEXPORTMETADATA_H
+/***************************************************************************
+    begin                : Fri Dec 29 18:30:00 CEST 2012
+    copyright            : (C) 2012 by Ale Rimoldi
+    email                : a.l.e@ideale.ch
 
-#include <QObject>
+ ***************************************************************************/
+
 #include <QDebug>
 
-#include "scribusapi.h" // for SCRIBUS_API
+#include "epubexportText.h"
 
-class EpubExportMetadata : public QObject
+EpubExportText::EpubExportText()
 {
-    Q_OBJECT
-};
+}
 
-public:
-	EpubExportMetadata();
-	~EpubExportMetadata();
+EpubExportText::~EpubExportText()
+{
+}
 
-QDebug operator<<(QDebug dbg, const EpubExportMetadata &metadata);
-
-#endif // EPUBEXPORTMETADATA_H
+QDebug operator<<(QDebug dbg, const EpubExportText &text)
+{
+    dbg.nospace() << "(" << "Debug not implemented" << ")";
+    return dbg.space();
+}

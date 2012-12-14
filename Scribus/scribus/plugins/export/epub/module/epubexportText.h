@@ -7,23 +7,23 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef EPUBEXPORTCSS_H
-#define EPUBEXPORTCSS_H
+#ifndef EPUBEXPORTTEXT_H
+#define EPUBEXPORTTEXT_H
 
 #include <QObject>
 #include <QDebug>
 
 #include "scribusapi.h" // for SCRIBUS_API
 
-QDebug operator<<(QDebug dbg, const EpubExportCSS &css);
-
-class EpubExportCss : public QObject
+class EpubExportText : public QObject
 {
     Q_OBJECT
 };
 
 public:
-	EpubExportCss();
-	~EpubExportCss();
+	EpubExportText();
+	~EpubExportText();
 
-#endif // EPUBEXPORT_H
+QDebug operator<<(QDebug dbg, const EpubExportText &text);
+
+#endif // EPUBEXPORTTEXT_H
