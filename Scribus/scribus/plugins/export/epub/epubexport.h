@@ -38,6 +38,12 @@ struct EpubExportOptions
     QList<int> pageRange;
     int imageMaxWidth;
     int imageMaxWidthThreshold;
+    EpubExportOptions()
+    {
+        targetFilename = "";
+        imageMaxWidth = 0;
+        imageMaxWidthThreshold = 0;
+    }
 };
 
 struct EPUBExportOptions
@@ -103,7 +109,7 @@ public:
 	~EpubExport();
 
 	EpubExportOptions options;
-    void setOptions(EpubExportOptions options) {options = this->options;}
+    void setOptions(EpubExportOptions options) {this->options = options;}
 
 	/*!
 	\author Ale Rimoldi
@@ -188,6 +194,8 @@ private:
     QVector<EPUBExportRuns> runs; // the indexes where the runs start
 
 };
+
+QDebug operator<<(QDebug dbg, const EpubExportOptions options);
 
 QDebug operator<<(QDebug dbg, const QList<ScPage*> &pages);
 QDebug operator<<(QDebug dbg, const QVector<EPUBExportRuns> &runs);

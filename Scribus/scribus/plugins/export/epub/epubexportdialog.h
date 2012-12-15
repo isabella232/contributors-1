@@ -25,7 +25,8 @@ class EpubExportDialog : public QDialog, Ui::EpubExportDialog
 	public:
 		EpubExportDialog( QWidget* parent = 0, ScribusDoc* doc = 0, const char* name = 0, bool modal = FALSE, Qt::WFlags fl = 0 );
 		~EpubExportDialog();
-        void setOptions(EpubExportOptions options) {options = this->options;}
+        void setOptions(EpubExportOptions options) {this->options = options;}
+        EpubExportOptions getOptions() {return options;}
 
 	private:
 		//! \brief a parent doc reference

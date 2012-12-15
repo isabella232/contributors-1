@@ -86,15 +86,16 @@ bool EpubExport::isDocItemTopLeftLessThan(const PageItem *docItem1, const PageIt
 
 void EpubExport::doExport()
 {
-    qDebug() << "pageRange" << pageRange;
+    qDebug() << "options" << options;
+    qDebug() << "pageRange" << options.pageRange;
 	readMetadata();
 	readItems();
     if (progressDialog)
         progressDialog->setOverallTotalSteps(itemNumber);
 
-	targetFilename = "/tmp/"+targetFilename;
+	options.targetFilename = "/tmp/"+options.targetFilename;
 	qDebug() << "forcing the output of the .epub file to /tmp";
-	epubFile = new FileZip(targetFilename);
+	epubFile = new FileZip(options.targetFilename);
 	epubFile->create();
 
 	exportMimetype();
@@ -122,7 +123,7 @@ void EpubExport::readMetadata()
 	documentMetadata = doc->documentInfo();
 	// make sure that all mandatory fields are filled
 	if (documentMetadata.title() == "")
-		documentMetadata.setTitle(targetFilename);
+		documentMetadata.setTitle(options.targetFilename);
 	// TODO: if (documentMetadata.author() == "") // -> it's recommended not obligatory!
 	// TODO: if (documentMetadata.authorSort() == "") // -> it's recommended not obligatory!
 	if (documentMetadata.langInfo() == "")
@@ -214,11 +215,11 @@ QList<ScPage *> EpubExport::getPagesWithItem(PageItem* item)
     {
         // TODO: if creating the QRect is expensive, we can create a list of pages' QRects
         // before cycling through the items
-        bool allPages = pageRange.isEmpty();
-        int n = allPages ? doc->DocPages.count() : pageRange.count();
+        bool allPages = options.pageRange.isEmpty();
+        int n = allPages ? doc->DocPages.count() : options.pageRange.count();
         for (int i = 0; i < n; ++i)
         {
-            ScPage* page = doc->DocPages.at(allPages ? i : pageRange.at(i) - 1);
+            ScPage* page = doc->DocPages.at(allPages ? i : options.pageRange.at(i) - 1);
             if (getPageRect(page).intersects(itemRect))
                 result.append(page);
             // TODO: we can use rect.intersected() to get a rectangle and calculate the area of the page
@@ -1224,20 +1225,20 @@ void EpubExport::addImage(PageItem* docItem)
     }
 
 	qDebug() << "frameW" << frameW;
-	qDebug() << "imageMaxWidth" << imageMaxWidth;
+	qDebug() << "imageMaxWidth" << options.imageMaxWidth;
     int scaling = 100;
 
     ScPage* page = doc->DocPages.at(docItem->OwnPage); // TODO: use the real page that we are handling
     qDebug() << "item width" << docItem->width();
     double proportion = docItem->width() / (page->width() - page->rightMargin() - page->leftMargin());
     qDebug() << "proportion" << proportion;
-    qDebug() << "imageMaxWidthThreshold" << imageMaxWidthThreshold;
+    qDebug() << "imageMaxWidthThreshold" << options.imageMaxWidthThreshold;
 
     int scaledWidth;
-    if (proportion > static_cast<double>(imageMaxWidthThreshold) / 100)
-        scaledWidth = imageMaxWidth;
+    if (proportion > static_cast<double>(options.imageMaxWidthThreshold) / 100)
+        scaledWidth = options.imageMaxWidth;
     else
-        scaledWidth = static_cast<int>(proportion * imageMaxWidth);
+        scaledWidth = static_cast<int>(proportion * options.imageMaxWidth);
     qDebug() << "scaledWidth" << scaledWidth;
 
     qDebug() << "image width" << image.width();
@@ -1509,6 +1510,17 @@ int EpubExport::startOfRun(uint index)
 int EpubExport::endOfRun(uint index)
 {
 	return index + 1;
+}
+
+QDebug operator<<(QDebug dbg, const EpubExportOptions options)
+{
+    dbg.nospace() << "(targetFilename:" << options.targetFilename;
+    QStringList output;
+    foreach (int pageRange, options.pageRange) {
+        output << QString::number(pageRange);
+    }
+    dbg.nospace() << ", (" << output.join(", ") << ")" << ", imageMaxWidth:" << options.imageMaxWidth  << ", imageMaxWidthThreshold:" << options.imageMaxWidthThreshold << ")";
+    return dbg.space();
 }
 
 // not tested yet
