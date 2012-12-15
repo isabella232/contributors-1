@@ -32,6 +32,14 @@ class PageItem;
 
 class MarginStruct; // for getPageRect() remove it, it's moved to ScPage
 
+struct EpubExportOptions
+{
+    QString targetFilename;
+    QList<int> pageRange;
+    int imageMaxWidth;
+    int imageMaxWidthThreshold;
+};
+
 struct EPUBExportOptions
 {
     /*
@@ -94,13 +102,15 @@ public:
 	EpubExport(ScribusDoc* doc);
 	~EpubExport();
 
+	EpubExportOptions options;
+    void setOptions(EpubExportOptions options) {options = this->options;}
+
 	/*!
 	\author Ale Rimoldi
 	\brief Create the SVG exporter
 	\param doc QString file name
 	 */
-	void doExport(EPUBExportOptions &Opts);
-	EPUBExportOptions Options;
+	void doExport();
 
     /*!
         \author Ale Rimoldi
@@ -108,12 +118,6 @@ public:
         \return boolean
     */
     static bool isDocItemTopLeftLessThan(const PageItem *docItem1, const PageItem *docItem2);
-
-    void setTargetFilename(QString filename) {targetFilename = filename;}
-    QString getTargetFilename() {return targetFilename;}
-    void setPageRange(QList<int> range) {pageRange = range;}
-    void setImageMaxWidth(int width) {imageMaxWidth = width;}
-    void setImageMaxWidthThreshold(int threshold) {imageMaxWidthThreshold = threshold;}
 
     void setProgressDialog(MultiProgressDialog* dialog) {progressDialog = dialog;}
 

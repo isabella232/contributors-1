@@ -99,14 +99,18 @@ bool EpubExportPlugin::run(ScribusDoc* doc, QString target)
 		currDoc = ScCore->primaryMainWindow()->doc;
 	if (currDoc == 0)
 		return false;
-    EpubExport *action = new EpubExport(currDoc);
+
+    EpubExportOptions options;
+
 	EpubExportDialog *dialog = new EpubExportDialog(currDoc->scMW(), currDoc, "dlg", true, 0);
+    dialog->setOptions(options);
 	if (dialog)
 	{
-        dialog->setAction(action);
         if (dialog->exec() == QDialog::Accepted)
         {
-            MultiProgressDialog* progressDialog = new MultiProgressDialog(tr("Exporting: %1").arg(action->getTargetFilename()), CommonStrings::tr_Cancel, currDoc->scMW());
+
+            EpubExport *action = new EpubExport(currDoc);
+            MultiProgressDialog* progressDialog = new MultiProgressDialog(tr("Exporting: %1").arg(options.targetFilename), CommonStrings::tr_Cancel, currDoc->scMW());
             progressDialog->setOverallTotalSteps(0);
             progressDialog->setOverallProgress(0);
             progressDialog->show();
@@ -115,11 +119,12 @@ bool EpubExportPlugin::run(ScribusDoc* doc, QString target)
 
             action->setProgressDialog(progressDialog);
 
-            EPUBExportOptions options;
-            action->doExport(options);
+            action->setOptions(options);
+            action->doExport();
 
             progressDialog->hide();
             delete progressDialog;
+            delete action;
         }
 		delete dialog;
 		return true;
@@ -127,5 +132,4 @@ bool EpubExportPlugin::run(ScribusDoc* doc, QString target)
 	else
 		return false;
 
-    delete action;
 }

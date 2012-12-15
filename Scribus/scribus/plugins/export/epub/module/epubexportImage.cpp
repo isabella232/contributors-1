@@ -16,7 +16,7 @@
 
 #include <QDebug>
 
-#include "epubexportImage.h"
+#include "module/epubexportImage.h"
 
 EpubExportImage::EpubExportImage()
 {

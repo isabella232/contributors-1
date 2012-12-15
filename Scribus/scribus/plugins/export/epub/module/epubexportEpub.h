@@ -15,16 +15,21 @@
 
 #include "scribusapi.h" // for SCRIBUS_API
 
+class FileZip;
+
 class EpubExportEpub : public QObject
 {
     Q_OBJECT
-};
 
 public:
 	EpubExportEpub();
 	~EpubExportEpub();
+private:
+	FileZip *file;
+    QString filename;
+};
 
-QDebug operator<<(QDebug dbg, const EpubExportStyle &epub);
+QDebug operator<<(QDebug dbg, const EpubExportEpub &epub);
 
 #endif // EPUBEXPORTEPUB_H
 

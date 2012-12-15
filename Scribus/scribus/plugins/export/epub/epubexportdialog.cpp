@@ -116,8 +116,6 @@ void EpubExportDialog::cancelButton_clicked()
 void EpubExportDialog::exportButton_clicked()
 {
     // see gtfiledialog.ui for a way to integrate a file manager
-    // EpubExport *action = new EpubExport(m_Doc);
-    // EPUBExportOptions options;
 	// qDebug() << "fileOutput->text()" << fileOutput->text();
     QString pagesString = "";
     if (thisPageRadio->isChecked())
@@ -130,12 +128,10 @@ void EpubExportDialog::exportButton_clicked()
         pagesString = QString("%1-%2").arg(m_Doc->sections()[i].fromindex + 1).arg(m_Doc->sections()[i].toindex + 1);
     }
 	// qDebug() << "pagesString" << pagesString;
-    action->setTargetFilename(fileOutput->text());
-    action->setPageRange(getPagesListFromString(pagesString));
-    action->setImageMaxWidth(imageMaxWidthSpinBox->value());
-    action->setImageMaxWidthThreshold(imageMaxWidthThresholdSpinBox->value());
-    // action->doExport(options);
-    // delete action;
+    options.targetFilename = fileOutput->text();
+    options.pageRange = getPagesListFromString(pagesString);
+    options.imageMaxWidth = imageMaxWidthSpinBox->value();
+    options.imageMaxWidthThreshold = imageMaxWidthThresholdSpinBox->value();
 	accept();
 }
 

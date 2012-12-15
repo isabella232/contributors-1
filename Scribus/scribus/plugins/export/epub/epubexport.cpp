@@ -84,10 +84,8 @@ bool EpubExport::isDocItemTopLeftLessThan(const PageItem *docItem1, const PageIt
            ((docItem1->gXpos == docItem2->gXpos) && (docItem1->gYpos < docItem2->gYpos));
 }
 
-void EpubExport::doExport(EPUBExportOptions &Opts)
+void EpubExport::doExport()
 {
-	Options = Opts; // what is this good for? (ale/20120901)
-
     qDebug() << "pageRange" << pageRange;
 	readMetadata();
 	readItems();

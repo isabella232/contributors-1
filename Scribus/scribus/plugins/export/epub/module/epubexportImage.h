@@ -18,11 +18,11 @@
 class EpubExportImage : public QObject
 {
     Q_OBJECT
-};
 
 public:
 	EpubExportImage();
 	~EpubExportImage();
+};
 
 QDebug operator<<(QDebug dbg, const EpubExportImage &image);
 

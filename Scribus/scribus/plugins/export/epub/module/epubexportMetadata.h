@@ -18,11 +18,11 @@
 class EpubExportMetadata : public QObject
 {
     Q_OBJECT
-};
 
 public:
 	EpubExportMetadata();
 	~EpubExportMetadata();
+};
 
 QDebug operator<<(QDebug dbg, const EpubExportMetadata &metadata);
 

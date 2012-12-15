@@ -16,7 +16,7 @@
 
 #include <QDebug>
 
-#include "epubexportMetadata.h"
+#include "module/epubexportMetadata.h"
 
 EpubExportMetadata::EpubExportMetadata()
 {

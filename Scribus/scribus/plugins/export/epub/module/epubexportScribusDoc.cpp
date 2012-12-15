@@ -16,7 +16,7 @@
 
 #include <QDebug>
 
-#include "epubexportScribusDoc.h"
+#include "module/epubexportScribusDoc.h"
 
 EpubExportScribusDoc::EpubExportScribusDoc()
 {

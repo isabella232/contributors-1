@@ -18,11 +18,11 @@
 class EpubExportXhtml : public QObject
 {
     Q_OBJECT
-};
 
 public:
 	EpubExportXhtml();
 	~EpubExportXhtml();
+};
 
 QDebug operator<<(QDebug dbg, const EpubExportXhtml &xhtml);
 

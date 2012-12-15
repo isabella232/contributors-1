@@ -16,7 +16,7 @@
 
 #include <QDebug>
 
-#include "epubexportEpub.h"
+#include "module/epubexportEpub.h"
 
 EpubExportEpub::EpubExportEpub()
 {

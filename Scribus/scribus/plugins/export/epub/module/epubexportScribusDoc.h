@@ -18,11 +18,11 @@
 class EpubExportScribusDoc : public QObject
 {
     Q_OBJECT
-};
 
 public:
 	EpubExportScribusDoc();
 	~EpubExportScribusDoc();
+};
 
 QDebug operator<<(QDebug dbg, const EpubExportScribusDoc &scribusDoc);
 
