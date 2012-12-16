@@ -122,6 +122,7 @@ void EpubExport::doExport()
 	exportXhtml();
 
 	exportNCX();
+	// epub->get()->add("OEBPS/toc.ncx", structure.getNCX(), true);
 	exportOPF();
 
 	epub->close();
@@ -282,6 +283,7 @@ QString EpubExport::getFixedXhtml(QString xhtml) {
  */
 void EpubExport::addXhtml()
 {
+    // TODO: put EPUBExportXhtmlFile into Structure::content <-----------!!!!!!!!
 	EPUBExportXhtmlFile file;
 	file.section = section;
 	file.filename = QString("Section%1.xhtml").arg(section + 1, 4, 10, QChar('0'));
@@ -296,6 +298,7 @@ void EpubExport::addXhtml()
 	contentItem.id = file.filename;
 	contentItem.href = "Text/" + file.filename;
 	contentItem.mediaType = "application/xhtml+xml";
+	contentItem.title = QString("Section %1").arg(section + 1, 4, 10, QChar('0')); // TODO: as soon as we have a TOC, take the title from the text
 	contentItems.append(contentItem);
 }
 
@@ -640,336 +643,19 @@ void EpubExport::exportXhtml()
 }
 
 /**
-  * add OEBPS/toc.ncx to the current epub file
-  * <?xml version="1.0" encoding="UTF-8"?>
-  * <!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"
-  * "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
-  * <ncx version="2005-1" xml:lang="en" xmlns="http://www.daisy.org/z3986/2005/ncx/">
-  *   <head>
-  *     <meta name="dtb:uid" content="123456789X"/> <!-- same as in .opf -->
-  *     <meta name="dtb:depth" content="1"/> <!-- 1 or higher -->
-  *     <meta name="dtb:totalPageCount" content="0"/> <!-- must be 0 -->
-  *     <meta name="dtb:maxPageNumber" content="0"/> <!-- must be 0 -->
-  *   </head>
-  *   <docTitle>
-  *     <text>Pride and Prejudice</text>
-  *   </docTitle>
-  *   <docAuthor>
-  *     <text>Austen, Jane</text>
-  *   </docAuthor>
-  *   <navMap>
-  *     <navPoint class="chapter" id="chapter1" playOrder="1">
-  *       <navLabel><text>Chapter 1</text></navLabel>
-  *       <content src="chapter1.xhtml"/>
-  *     </navPoint>
-  *   </navMap>
-  * </ncx>
-  */ 
+ * add OEBPS/toc.ncx to the current epub file
+ */
 void EpubExport::exportNCX()
 {
-	QDomElement element;
-	QDomElement elementText;
-	QDomText text;
-
-    const QDomDocumentType doctype = (new QDomImplementation())->createDocumentType("ncx", "-//NISO//DTD ncx 2005-1//EN", "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd");
-    QDomDocument xmlDocument = QDomDocument(doctype);
-
-	QDomProcessingInstruction xmlDeclaration = xmlDocument.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
-	xmlDocument.appendChild(xmlDeclaration);
-
-
-	QDomElement ncx = xmlDocument.createElement("ncx");
-	ncx.setAttribute("version", "2005-1");
-	ncx.setAttribute("xml:lang", documentMetadata.langInfo());
-	ncx.setAttribute("xmlns", "http://www.daisy.org/z3986/2005/ncx/");
-	xmlDocument.appendChild(ncx);
-
-    QDomElement head = xmlDocument.createElement("head");
-    ncx.appendChild(head);
-
-	element = xmlDocument.createElement("meta");
-	element.setAttribute("name", "dtb:uid");
-	element.setAttribute("content", documentMetadata.ident());  // same as in .opf
-	head.appendChild(element);
-
-	element = xmlDocument.createElement("meta");
-	element.setAttribute("name", "dtb:depth");
-	element.setAttribute("content", "1");  // 1 or higher // TODO: set it to the correct value
-	head.appendChild(element);
-
-	element = xmlDocument.createElement("meta");
-	element.setAttribute("name", "dtb:totalPageCount");
-	element.setAttribute("content", "0");  // must be 0
-	head.appendChild(element);
-
-	element = xmlDocument.createElement("meta");
-	element.setAttribute("name", "dtb:maxPageNumber");
-	element.setAttribute("content", "0"); // must be 0
-	head.appendChild(element);
-
-    element = xmlDocument.createElement("docTitle");
-    ncx.appendChild(element);
-	elementText = xmlDocument.createElement("text");
-	element.appendChild(elementText);
-	text = xmlDocument.createTextNode(documentMetadata.title());
-	elementText.appendChild(text);
-
-    element = xmlDocument.createElement("docAuthor");
-    ncx.appendChild(element);
-	elementText = xmlDocument.createElement("text");
-	element.appendChild(elementText);
-	text = xmlDocument.createTextNode(documentMetadata.author());
-	elementText.appendChild(text);
-
-	QDomElement nav = xmlDocument.createElement("navMap");
-	ncx.appendChild(nav);
-
-	for (int i = 0;  i < xhtmlFile.count(); i++) {
-		EPUBExportXhtmlFile file = xhtmlFile[i];
-		QDomElement navPoint = xmlDocument.createElement("navPoint");
-		navPoint.setAttribute("class", "chapter");
-		navPoint.setAttribute("id", file.filename);
-		navPoint.setAttribute("playOrder", i + 1);
-		nav.appendChild(navPoint);
-
-		element = xmlDocument.createElement("navLabel");
-		navPoint.appendChild(element);
-		elementText = xmlDocument.createElement("text");
-		element.appendChild(elementText);
-		text = xmlDocument.createTextNode(file.title);
-		elementText.appendChild(text);
-
-		element = xmlDocument.createElement("content");
-		element.setAttribute("src", "Text/" + file.filename);
-		navPoint.appendChild(element);
-	}
-
-	epub->get()->add("OEBPS/toc.ncx", xmlDocument.toString(), true);
+	epub->get()->add("OEBPS/toc.ncx", structure.getNCX(), true);
 }
 
 /**
-  * add OEBPS/content.opf to the current epub file
-  * The OPF file, traditionally named content.opf, houses the EPUB book's metadata,
-  * file manifest, and linear reading order.
-  * on the IDPF site you can find the full list of the possible metadata
-  * http://idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.2
-  * <?xml version="1.0"?>
-  * <package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId">
-  *   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
-  *     <dc:title>Pride and Prejudice</dc:title>
-  *     <dc:language>en</dc:language>
-  *     <dc:identifier id="BookId" opf:scheme="ISBN">123456789X</dc:identifier>
-  *     <dc:creator opf:file-as="Austen, Jane" opf:role="aut">Jane Austen</dc:creator>
-  *   </metadata>
-  *   <manifest>
-  *     <item id="chapter1" href="chapter1.xhtml" media-type="application/xhtml+xml"/>
-  *     <item id="stylesheet" href="style.css" media-type="text/css"/>
-  *     <item id="ch1-pic" href="ch1-pic.png" media-type="image/png"/>
-  *     <item id="myfont" href="css/myfont.otf" media-type="application/x-font-opentype"/>
-  *     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
-  *   </manifest>
-  *   <spine toc="ncx">
-  *     <itemref idref="chapter1" />
-  *   </spine>
-  *   <guide>
-  *     <reference type="loi" title="List Of Illustrations" href="appendix.html#figures" />
-  *   </guide>
-  * </package>
-  */
+ * add OEBPS/content.opf to the current epub file
+ */
 void EpubExport::exportOPF()
 {
-	QDomDocument xmlDocument = QDomDocument();
-	QDomElement element;
-	QDomText text;
-
-	QDomProcessingInstruction xmlDeclaration = xmlDocument.createProcessingInstruction("xml", "version=\"1.0\"");
-	xmlDocument.appendChild(xmlDeclaration);
-
-	QDomElement xmlRoot = xmlDocument.createElement("package");
-	xmlRoot.setAttribute("version", "2.0");
-	xmlRoot.setAttribute("xmlns", "http://www.idpf.org/2007/opf");
-	xmlRoot.setAttribute("unique-identifier", "BookId");
-	xmlDocument.appendChild(xmlRoot);
-
-	QDomElement metadata = xmlDocument.createElement("metadata");
-	metadata.setAttribute("xmlns:dc", "http://purl.org/dc/elements/1.1/");
-	metadata.setAttribute("xmlns:opf", "http://www.idpf.org/2007/opf");
-	xmlRoot.appendChild(metadata);
-
-	element = xmlDocument.createElement("dc:title");
-	text = xmlDocument.createTextNode(documentMetadata.title());
-	element.appendChild(text);
-	metadata.appendChild(element);
-
-	element = xmlDocument.createElement("dc:language");
-	text = xmlDocument.createTextNode(documentMetadata.langInfo());
-	element.appendChild(text);
-	metadata.appendChild(element);
-
-	element = xmlDocument.createElement("dc:identifier");
-	element.setAttribute("id", "BookId");
-	element.setAttribute("opf:scheme", "UUID");
-	text = xmlDocument.createTextNode(documentMetadata.ident());
-	element.appendChild(text);
-	metadata.appendChild(element);
-
-	element = xmlDocument.createElement("dc:creator");
-	element.setAttribute("opf:file-as", documentMetadata.author()); // TODO: use the to be created authorFileAs / authorSort
-	element.setAttribute("opf:role", "aut");
-	text = xmlDocument.createTextNode(documentMetadata.author());
-	element.appendChild(text);
-	metadata.appendChild(element);
-
-	element = xmlDocument.createElement("dc:date");
-	element.setAttribute("opf:event", "publication");
-	text = xmlDocument.createTextNode(documentMetadata.date());
-	element.appendChild(text);
-	metadata.appendChild(element);
-
-	// non mandatory fields from the main screen
-	if (documentMetadata.subject() != "")
-	{
-        element = xmlDocument.createElement("dc:subject");
-        text = xmlDocument.createTextNode(documentMetadata.subject());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	if (documentMetadata.keywords() != "")
-	{
-        element = xmlDocument.createElement("dc:subject");
-        text = xmlDocument.createTextNode(documentMetadata.keywords());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	if (documentMetadata.comments() != "") // labelled as description in scribus
-	{
-        element = xmlDocument.createElement("dc:description");
-        text = xmlDocument.createTextNode(documentMetadata.comments());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	if (documentMetadata.publisher() != "")
-	{
-		element = xmlDocument.createElement("dc:publisher");
-		text = xmlDocument.createTextNode(documentMetadata.publisher());
-		element.appendChild(text);
-		metadata.appendChild(element);
-	}
-
-	if (documentMetadata.contrib() != "")
-	{
-        element = xmlDocument.createElement("dc:contributor");
-        text = xmlDocument.createTextNode(documentMetadata.contrib());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	if (documentMetadata.type() != "")
-	{
-        element = xmlDocument.createElement("dc:type");
-        text = xmlDocument.createTextNode(documentMetadata.type());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	if (documentMetadata.format() != "")
-	{
-        element = xmlDocument.createElement("dc:format");
-        text = xmlDocument.createTextNode(documentMetadata.format());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	if (documentMetadata.source() != "")
-	{
-        
-        element = xmlDocument.createElement("dc:source");
-        text = xmlDocument.createTextNode(documentMetadata.source());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	if (documentMetadata.relation() != "")
-	{
-        element = xmlDocument.createElement("dc:relation");
-        text = xmlDocument.createTextNode(documentMetadata.relation());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	if (documentMetadata.cover() != "") // that's not the cover, but the coverage... space and time covered by the work
-	{
-        element = xmlDocument.createElement("dc:coverage");
-        text = xmlDocument.createTextNode(documentMetadata.cover());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	if (documentMetadata.rights() != "")
-	{
-        element = xmlDocument.createElement("dc:rights");
-        text = xmlDocument.createTextNode(documentMetadata.rights());
-        element.appendChild(text);
-        metadata.appendChild(element);
-	}
-
-	element = xmlDocument.createElement("meta");
-	// element.setAttribute("properties", "cover-image");
-	element.setAttribute("content", "cover.png");
-	element.setAttribute("name", "cover");
-	metadata.appendChild(element);
-
-	QDomElement manifest = xmlDocument.createElement("manifest");
-	xmlRoot.appendChild(manifest);
-
-	// dynamically add the content items (contentItems.add(EPUBExportContentItem))
-	int n = contentItems.count();
-	for (int i = 0; i < n; i++)
-	{
-		EPUBExportContentItem contentItem = contentItems[i];
-
-		element = xmlDocument.createElement("item");
-		element.setAttribute("id", contentItem.id);
-		element.setAttribute("href", contentItem.href);
-		element.setAttribute("media-type", contentItem.mediaType);
-		manifest.appendChild(element);
-	}
-
-	// TODO: dynamically add the fonts
-	// <item id="myfont" href="css/myfont.otf" media-type="application/x-font-opentype"/>
-
-	element = xmlDocument.createElement("item");
-	element.setAttribute("id", "ncx"); // TODO: set chapter name
-	element.setAttribute("href", "toc.ncx");
-	element.setAttribute("media-type", "application/x-dtbncx+xml");
-	manifest.appendChild(element);
-
-	QDomElement spine = xmlDocument.createElement("spine");
-	spine.setAttribute("toc", "ncx");
-	xmlRoot.appendChild(spine);
-
-	for (int i = 0;  i < xhtmlFile.count(); i++) {
-		element = xmlDocument.createElement("itemref");
-		element.setAttribute("idref", xhtmlFile[i].filename);
-		spine.appendChild(element);
-	}
-
-	QDomElement guide = xmlDocument.createElement("guide");
-	xmlRoot.appendChild(guide);
-
-	// TODO: what goes into the reference?
-	/*
-	element = xmlDocument.createElement("reference");
-	element.setAttribute("type", "loi");
-	element.setAttribute("title", "List of Illustrations");
-	element.setAttribute("href", "appendix.html#figures");
-	manifest.appendChild(element);
-	*/
-
-	epub->get()->add("OEBPS/content.opf", xmlDocument.toString(), true);
+	epub->get()->add("OEBPS/content.opf", structure->getOPF(), true);
 }
 
 /**

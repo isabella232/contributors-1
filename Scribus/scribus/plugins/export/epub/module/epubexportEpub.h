@@ -31,6 +31,8 @@ public:
 
     void create();
     void close();
+
+    void add(QString fileContent);
 private:
 	FileZip *file;
     QString filename;

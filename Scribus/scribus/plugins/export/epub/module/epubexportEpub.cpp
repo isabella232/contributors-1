@@ -38,6 +38,10 @@ void EpubExportEpub::close()
     file->close();
 }
 
+void EpubExportEpub::add(QString filename, QString fileContent)
+{
+}
+
 QDebug operator<<(QDebug dbg, const EpubExportEpub &epub)
 {
     dbg.nospace() << "(" << "Debug not implemented" << ")";

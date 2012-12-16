@@ -73,6 +73,21 @@ struct EpubExportStructureMetadata
     }
 };
 
+struct EpubExportStructureContent
+{
+    QString id;
+    QString href;
+    QString mediaType;
+    QString title; // TODO: not filled yet: fill this instead of xhtmlFile
+    EpubExportStructureContent()
+    {
+        id = "";
+        href = "";
+        mediaType = "";
+        title = ""; // TODO: not filled yet: fill this instead of xhtmlFile
+    }
+};
+
 
 class EpubExportStructure : public QObject
 {
@@ -85,12 +100,18 @@ public:
 	void read(EpubExportStructureMetadata metadata);
 
 	void setFilename(QString filename) {this->filename = filename;}
+	void addContent(EpubExportStructureContent content) {this->content.add(content);}
+    QString getOPF();
+    QString getNCX();
 private:
     EpubExportStructureMetadata metadata;
     QString filename;
+    // QVector<EPUBExportContentItem> contentItems;
+    QVector<EpubExportStructureContent> content;
 };
 
 QDebug operator<<(QDebug dbg, const EpubExportStructure &structure);
 QDebug operator<<(QDebug dbg, const EpubExportStructureMetadata &metadata);
+QDebug operator<<(QDebug dbg, const EpubExportStructureContent &content);
 
 #endif // EPUBEXPORTSTRUCTURE_H
