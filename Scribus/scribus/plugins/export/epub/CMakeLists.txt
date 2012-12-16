@@ -13,7 +13,7 @@ SET(SCRIBUS_EPUBEXPORT_PLUGIN_MOC_CLASSES
   epubexport.h
   module/epubexportEpub.h
   module/epubexportImage.h
-  module/epubexportMetadata.h
+  module/epubexportStructure.h
   module/epubexportScribusDoc.h
   module/epubexportStyle.h
   module/epubexportText.h
@@ -26,7 +26,7 @@ SET(SCRIBUS_EPUBEXPORT_PLUGIN_SOURCES
   epubexport.cpp
   module/epubexportEpub.cpp
   module/epubexportImage.cpp
-  module/epubexportMetadata.cpp
+  module/epubexportStructure.cpp
   module/epubexportScribusDoc.cpp
   module/epubexportStyle.cpp
   module/epubexportText.cpp

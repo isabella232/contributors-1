@@ -63,15 +63,23 @@
 
 #include "cmsettings.h" // for cropping the image to the frame
 
+// includes after the refactoring
+
+#include "epubexport.h"
+
+#include "module/epubexportEpub.h"
+#include "module/epubexportStructure.h"
+
 
 EpubExport::EpubExport(ScribusDoc* doc)
 {
     progressDialog = 0;
     itemNumber = 0;
-	this->doc = doc;
+    this->doc = new EpubExportScribusDoc();
+    this->doc->add(doc);
 
-    qDebug() << "marksList" << doc->marksList();
-    qDebug() << "notesList" << doc->notesList();
+    qDebug() << "marksList" << this->doc->get()->marksList();
+    qDebug() << "notesList" << this->doc->get()->notesList();
 }
 
 EpubExport::~EpubExport()
@@ -88,15 +96,21 @@ void EpubExport::doExport()
 {
     qDebug() << "options" << options;
     qDebug() << "pageRange" << options.pageRange;
-	readMetadata();
-	readItems();
-    if (progressDialog)
-        progressDialog->setOverallTotalSteps(itemNumber);
 
 	options.targetFilename = "/tmp/"+options.targetFilename;
 	qDebug() << "forcing the output of the .epub file to /tmp";
-	epubFile = new FileZip(options.targetFilename);
-	epubFile->create();
+
+    epub = new EpubExportEpub();
+    epub->setFilename(options.targetFilename);
+    epub->create();
+
+    structure = new EpubExportStructure();
+    structure->setFilename(options.targetFilename);
+    structure->read(doc->getMetadata());
+
+	readItems();
+    if (progressDialog)
+        progressDialog->setOverallTotalSteps(itemNumber);
 
 	exportMimetype();
 	exportContainer();
@@ -110,34 +124,9 @@ void EpubExport::doExport()
 	exportNCX();
 	exportOPF();
 
-	epubFile->close();
+	epub->close();
 }
 
-/**
- * read the metadata from the documentInfo() and ensure that all mandatory fields are filled.
- * some values may be written back to the document information
- */
-void EpubExport::readMetadata()
-{
-	// read the document information
-	documentMetadata = doc->documentInfo();
-	// make sure that all mandatory fields are filled
-	if (documentMetadata.title() == "")
-		documentMetadata.setTitle(options.targetFilename);
-	// TODO: if (documentMetadata.author() == "") // -> it's recommended not obligatory!
-	// TODO: if (documentMetadata.authorSort() == "") // -> it's recommended not obligatory!
-	if (documentMetadata.langInfo() == "")
-		documentMetadata.setLangInfo(ScCore->getGuiLanguage());
-	if (documentMetadata.langInfo() == "")
-		documentMetadata.setLangInfo("en"); // scribus' default language is english (or rather en-GB?)
-		// TODO: doc->hyphLanguage()); the current hyphenation language could be a better guess for the language
-	// TODO: store the generated uuid in the scribus document information?
-	if (documentMetadata.ident() == "")
-		documentMetadata.setIdent("urn:uuid:"+QUuid::createUuid().toString().remove("{" ).remove("}" )); // Sigil/Misc/Utility.cpp -> Utility::CreateUUID()
-	// TODO: store the generated date in the scribus document information?
-	if (documentMetadata.date() == "")
-		documentMetadata.setDate(QDate::currentDate().toString(Qt::ISODate));
-}
 
 /**
  * TODO:
@@ -149,7 +138,7 @@ void EpubExport::readMetadata()
 MarginStruct EpubExport::getPageBleeds(const ScPage* page)
 {
     MarginStruct result;
-    doc->getBleeds(page, result);
+    doc->get()->getBleeds(page, result);
     return result;
 }
 
@@ -203,7 +192,7 @@ QList<ScPage *> EpubExport::getPagesWithItem(PageItem* item)
     // OwnPage is an indicator of where the item could be, but it's not reliable.
     if (item->OwnPage > -1)
     {
-        ScPage* page = doc->DocPages.at(item->OwnPage); // TODO: use the real page that we are handling
+        ScPage* page = doc->get()->DocPages.at(item->OwnPage); // TODO: use the real page that we are handling
         if (getPageRect(page).contains(itemRect)) {
             result.append(page);
             fullyOnOwnPage = true;
@@ -216,10 +205,10 @@ QList<ScPage *> EpubExport::getPagesWithItem(PageItem* item)
         // TODO: if creating the QRect is expensive, we can create a list of pages' QRects
         // before cycling through the items
         bool allPages = options.pageRange.isEmpty();
-        int n = allPages ? doc->DocPages.count() : options.pageRange.count();
+        int n = allPages ? doc->get()->DocPages.count() : options.pageRange.count();
         for (int i = 0; i < n; ++i)
         {
-            ScPage* page = doc->DocPages.at(allPages ? i : options.pageRange.at(i) - 1);
+            ScPage* page = doc->get()->DocPages.at(allPages ? i : options.pageRange.at(i) - 1);
             if (getPageRect(page).intersects(itemRect))
                 result.append(page);
             // TODO: we can use rect.intersected() to get a rectangle and calculate the area of the page
@@ -238,23 +227,23 @@ QList<ScPage *> EpubExport::getPagesWithItem(PageItem* item)
  */
 void EpubExport::readItems()
 {
-	for (int i = 0; i < doc->Layers.count(); i++)
+	for (int i = 0; i < doc->get()->Layers.count(); i++)
     {
-        ScLayer layer = doc->Layers.at(i);
+        ScLayer layer = doc->get()->Layers.at(i);
         if (!layer.isPrintable)
             layerNotPrintableList.append(layer.ID);
     }
 
-    int n = doc->DocPages.count();
+    int n = doc->get()->DocPages.count();
     // qDebug() << "readItems n: " << n;
     itemList.resize(n);
-    int m = doc->DocItems.count();
+    int m = doc->get()->DocItems.count();
     // qDebug() << "readItems m: " << m;
     PageItem* docItem = NULL;
     for (int i = 0; i < m; ++i )
     {
         // qDebug() << "i: " << i;
-        docItem = doc->DocItems[i];
+        docItem = doc->get()->DocItems[i];
 
 		if (!docItem->printEnabled())
 			continue;
@@ -300,7 +289,7 @@ void EpubExport::addXhtml()
 	file.title = QString("Section %1").arg(section + 1, 4, 10, QChar('0')); // TODO: as soon as we have a TOC, take the title from the text
 	// passing somethign else then -1 to toString() adds indenting line breaks. we prefer to manually add
     // some breaks with getFixedXhtml()
-	epubFile->add("OEBPS/Text/" + file.filename, getFixedXhtml(xhtmlDocument.toString(-1)), true);
+	epub->get()->add("OEBPS/Text/" + file.filename, getFixedXhtml(xhtmlDocument.toString(-1)), true);
 	xhtmlFile.append(file);
 
 	struct EPUBExportContentItem contentItem;
@@ -317,7 +306,7 @@ void EpubExport::addXhtml()
   */
 void EpubExport::exportMimetype()
 {
-	epubFile->add("mimetype", QString("application/epub+zip"), false);
+	epub->get()->add("mimetype", QString("application/epub+zip"), false);
 }
 
 /**
@@ -350,7 +339,7 @@ void EpubExport::exportContainer()
 	element.setAttribute("media-type", "application/oebps-package+xml");
 	rootfiles.appendChild(element);
 
-	epubFile->add("META-INF/container.xml", xmlDocument.toString(), true);
+	epub->get()->add("META-INF/container.xml", xmlDocument.toString(), true);
 }
 
 QString EpubExport::getStylenameSanitized(QString stylename)
@@ -372,7 +361,7 @@ QString EpubExport::getStylenameSanitized(QString stylename)
  */
 void EpubExport::exportCover()
 {
-	QImage image = doc->view()->PageToPixmap(0, 750, false);
+	QImage image = doc->get()->view()->PageToPixmap(0, 750, false);
 
 	QByteArray bytearray;
 	QBuffer buffer(&bytearray);
@@ -380,7 +369,7 @@ void EpubExport::exportCover()
 	image.save(&buffer, "PNG");
 	// qDebug() << "image.size" << image.size();
 
-	epubFile->add("OEBPS/Images/cover.png", bytearray, false);
+	epub->get()->add("OEBPS/Images/cover.png", bytearray, false);
 
 	struct EPUBExportContentItem contentItem;
 	contentItem.id = "cover.png";
@@ -396,7 +385,7 @@ void EpubExport::exportCSS()
     int n = 0;
 	QString wr = QString();
 
-    const StyleSet<ParagraphStyle>* paragraphStyles = & doc->paragraphStyles();
+    const StyleSet<ParagraphStyle>* paragraphStyles = & doc->get()->paragraphStyles();
     n = paragraphStyles->count();
     // qDebug() << "n pstyle: " << n;
     for (int i = 0; i < n; ++i )
@@ -481,7 +470,7 @@ void EpubExport::exportCSS()
         wr += "}\n";
     }
 
-    const StyleSet<CharStyle>* charStyles = & doc->charStyles();
+    const StyleSet<CharStyle>* charStyles = & doc->get()->charStyles();
     n = charStyles->count();
     // qDebug() << "n cstyle: " << n;
     for (int i = 0; i < n; ++i )
@@ -511,7 +500,7 @@ void EpubExport::exportCSS()
     wr += "}\n";
 
     // write the stylesheet
-	epubFile->add("OEBPS/Styles/style.css", wr, true);
+	epub->get()->add("OEBPS/Styles/style.css", wr, true);
 
 	struct EPUBExportContentItem contentItem;
 	contentItem.id = "stylesheet";
@@ -589,16 +578,16 @@ void EpubExport::exportXhtml()
 {
 	initializeXhtml();
 
-    int n = doc->DocPages.count();
-    int m = doc->DocItems.count();
+    int n = doc->get()->DocPages.count();
+    int m = doc->get()->DocItems.count();
 	if (m == 0)
 	{
 		addXhtml();
 		return;
 	}
 
-    doc->scMW()->setStatusBarInfoText(tr("Exporting to EPUB"));
-    doc->scMW()->mainWindowProgressBar->setMaximum(m);
+    doc->get()->scMW()->setStatusBarInfoText(tr("Exporting to EPUB"));
+    doc->get()->scMW()->mainWindowProgressBar->setMaximum(m);
     int mm = 0;
     int jj = 0;
 	QString content = QString();
@@ -609,7 +598,7 @@ void EpubExport::exportXhtml()
 		// TODO: if the page is on a new section, create a new file
 		if (itemList[i].count() == 0)
 			continue;
-		int sectionId = doc->getSectionKeyForPageIndex(itemList[i][0]->OwnPage); // TODO: use the real page that we are handling
+		int sectionId = doc->get()->getSectionKeyForPageIndex(itemList[i][0]->OwnPage); // TODO: use the real page that we are handling
 		// TODO: create the file as Section0001 ... check the name from sigil
         // qDebug() << "sectionId" << sectionId;
         // qDebug() << "section" << section;
@@ -624,7 +613,7 @@ void EpubExport::exportXhtml()
         mm = itemList[i].count();
         jj = jj + mm;
 
-        doc->scMW()->mainWindowProgressBar->setValue(jj);
+        doc->get()->scMW()->mainWindowProgressBar->setValue(jj);
         for (int j = 0; j < mm; j++) {
             docItem = itemList[i].at(j);
             if (docItem->asTextFrame())
@@ -644,8 +633,8 @@ void EpubExport::exportXhtml()
                 progressDialog->setOverallProgress(progressDialog->overallProgress() + 1);
         }
     }
-    doc->scMW()->mainWindowProgressBar->setValue(mm);
-    doc->scMW()->setStatusBarInfoText("");
+    doc->get()->scMW()->mainWindowProgressBar->setValue(mm);
+    doc->get()->scMW()->setStatusBarInfoText("");
 
 	addXhtml();
 }
@@ -755,7 +744,7 @@ void EpubExport::exportNCX()
 		navPoint.appendChild(element);
 	}
 
-	epubFile->add("OEBPS/toc.ncx", xmlDocument.toString(), true);
+	epub->get()->add("OEBPS/toc.ncx", xmlDocument.toString(), true);
 }
 
 /**
@@ -817,29 +806,13 @@ void EpubExport::exportOPF()
 	element.appendChild(text);
 	metadata.appendChild(element);
 
-	// <URN> ::= "urn:" <NID> ":" <NSS>
-	// <dc:identifier id="bookid">urn:uuid:ba151a94-2581-dbd1-144a-3ae968f738c7</dc:identifier>
-	// <dc:identifier id="BookId" opf:scheme="ISBN">123456789X</dc:identifier>
 	element = xmlDocument.createElement("dc:identifier");
 	element.setAttribute("id", "BookId");
-	element.setAttribute("opf:scheme", "UUID"); // TODO: add scheme to settings (http://en.wikipedia.org/wiki/Uniform_resource_name)
+	element.setAttribute("opf:scheme", "UUID");
 	text = xmlDocument.createTextNode(documentMetadata.ident());
 	element.appendChild(text);
 	metadata.appendChild(element);
 
-    /*
-     * Publications with multiple co-authors should provide multiple creator elements,
-     * each containing one author. The order of creator elements is presumed
-     * to define the order in which the creators' names should be presented by the Reading System.
-     *
-     * This specification recommends that the content of the creator elements hold the text
-     * for a single name as it would be presented to the Reader.
-     *
-     * This specification adds to the creator element two optional attributes: role and file-as.
-     * The set of values for role are identical to those defined in Section 2.2.6
-     * for the contributor element. The file-as attribute should be used
-     * to specify a normalized form of the contents, suitable for machine processing.
-     */
 	element = xmlDocument.createElement("dc:creator");
 	element.setAttribute("opf:file-as", documentMetadata.author()); // TODO: use the to be created authorFileAs / authorSort
 	element.setAttribute("opf:role", "aut");
@@ -856,7 +829,6 @@ void EpubExport::exportOPF()
 	// non mandatory fields from the main screen
 	if (documentMetadata.subject() != "")
 	{
-        // multiple instances are allowed
         element = xmlDocument.createElement("dc:subject");
         text = xmlDocument.createTextNode(documentMetadata.subject());
         element.appendChild(text);
@@ -865,8 +837,6 @@ void EpubExport::exportOPF()
 
 	if (documentMetadata.keywords() != "")
 	{
-        // it seems that keywords are treated as subjects in epub...
-        // sould we separate the keywords by ","? (ale/20120912)
         element = xmlDocument.createElement("dc:subject");
         text = xmlDocument.createTextNode(documentMetadata.keywords());
         element.appendChild(text);
@@ -881,7 +851,6 @@ void EpubExport::exportOPF()
         metadata.appendChild(element);
 	}
 
-	// non mandatory fields from the further information screen
 	if (documentMetadata.publisher() != "")
 	{
 		element = xmlDocument.createElement("dc:publisher");
@@ -890,9 +859,8 @@ void EpubExport::exportOPF()
 		metadata.appendChild(element);
 	}
 
-	if (documentMetadata.contrib() != "") // labelled as contributors in scribus
+	if (documentMetadata.contrib() != "")
 	{
-        // A party whose contribution to the publication is secondary to those named in creator elements. 
         element = xmlDocument.createElement("dc:contributor");
         text = xmlDocument.createTextNode(documentMetadata.contrib());
         element.appendChild(text);
@@ -907,7 +875,7 @@ void EpubExport::exportOPF()
         metadata.appendChild(element);
 	}
 
-	if (documentMetadata.format() != "") // should be one of: event, image, interactive resource, moving image, physical object, service, software, sound, still image, text
+	if (documentMetadata.format() != "")
 	{
         element = xmlDocument.createElement("dc:format");
         text = xmlDocument.createTextNode(documentMetadata.format());
@@ -917,7 +885,7 @@ void EpubExport::exportOPF()
 
 	if (documentMetadata.source() != "")
 	{
-        // Information regarding a prior resource from which the publication was derived;
+        
         element = xmlDocument.createElement("dc:source");
         text = xmlDocument.createTextNode(documentMetadata.source());
         element.appendChild(text);
@@ -942,7 +910,6 @@ void EpubExport::exportOPF()
 
 	if (documentMetadata.rights() != "")
 	{
-        // A statement about rights, or a reference to one. In this specification, the copyright notice and any further rights description should appear directly.
         element = xmlDocument.createElement("dc:rights");
         text = xmlDocument.createTextNode(documentMetadata.rights());
         element.appendChild(text);
@@ -1002,7 +969,7 @@ void EpubExport::exportOPF()
 	manifest.appendChild(element);
 	*/
 
-	epubFile->add("OEBPS/content.opf", xmlDocument.toString(), true);
+	epub->get()->add("OEBPS/content.opf", xmlDocument.toString(), true);
 }
 
 /**
@@ -1228,7 +1195,7 @@ void EpubExport::addImage(PageItem* docItem)
 	qDebug() << "imageMaxWidth" << options.imageMaxWidth;
     int scaling = 100;
 
-    ScPage* page = doc->DocPages.at(docItem->OwnPage); // TODO: use the real page that we are handling
+    ScPage* page = doc->get()->DocPages.at(docItem->OwnPage); // TODO: use the real page that we are handling
     qDebug() << "item width" << docItem->width();
     double proportion = docItem->width() / (page->width() - page->rightMargin() - page->leftMargin());
     qDebug() << "proportion" << proportion;
@@ -1302,7 +1269,7 @@ void EpubExport::addImage(PageItem* docItem)
         {
             qDebug() << "standard file add";
             QFile file(fileinfo.filePath()); // TODO: if we already have a scimage we may have to change this
-            epubFile->add("OEBPS/"+filepath, &file, true);
+            epub->get()->add("OEBPS/"+filepath, &file, true);
         }
         else
         {
@@ -1310,7 +1277,7 @@ void EpubExport::addImage(PageItem* docItem)
             QBuffer buffer(&imageBytes);
             buffer.open(QIODevice::WriteOnly);
             image.save(&buffer, mediaType == FormatsManager::JPEG ? "jpg" : "png");
-            epubFile->add("OEBPS/"+filepath, imageBytes, false);
+            epub->get()->add("OEBPS/"+filepath, imageBytes, false);
 
 
         }
@@ -1363,7 +1330,7 @@ void EpubExport::initOfRuns(PageItem* docItem)
                     TextNote* footnote = chProperties->mark->getData().notePtr;
                     qDebug() << "calling mark:" << footnoteCall->getString();
                     if (!footnote->saxedText().isEmpty()) {
-                        StoryText footnoteText = desaxeString(doc, footnote->saxedText());
+                        StoryText footnoteText = desaxeString(doc->get(), footnote->saxedText());
                         qDebug() << "note text:" << footnoteText.text(0, footnoteText.length());
                         // TODO: refactor to be able to recursively call the html formatting!
                     }

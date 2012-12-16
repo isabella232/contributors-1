@@ -18,13 +18,16 @@
 
 #include "scribusapi.h" // for SCRIBUS_API
 #include "documentinformation.h" // for SCRIBUS_API
+#include "module/epubexportScribusDoc.h"
+// #include "module/epubexportEpub.h"
+class EpubExportEpub;
+class EpubExportStructure;
 
 class QString;
 class ScribusDoc;
 class DocumentInformation; // for the metadata
 class ScPage;
 class ScLayer;
-class FileZip;
 
 class MultiProgressDialog;
 
@@ -44,35 +47,6 @@ struct EpubExportOptions
         imageMaxWidth = 0;
         imageMaxWidthThreshold = 0;
     }
-};
-
-struct EPUBExportOptions
-{
-    /*
-	bool inlineImages;
-	bool exportPageBackground;
-	bool compressFile;
-    */
-};
-
-struct EPUBExportFormattingParagraph
-{
-	bool hasLinespacing;
-	int linespacing; // 1..n
-	bool hasAlignement;
-	char alignement; // L R C J F
-	bool hasIndentleft;
-	int indentleft; // -n..n
-	bool hasIndentright;
-	int indentright; // -n..n
-	bool hasIndentfirst;
-	int indentfirst; // -n..n
-	bool hasPaddingtop;
-	int paddingtop; // -n..n
-	bool hasPaddingbottom;
-	int paddingbottom; // -n..n
-	bool hasDropcaps;
-	int dropcapsFontsize; // -n..n
 };
 
 struct EPUBExportRuns
@@ -131,15 +105,13 @@ public slots:
     void cancelRequested();
 
 private:
-    QString targetFilename;
     MultiProgressDialog* progressDialog;
-    QList<int> pageRange;
-    int imageMaxWidth;
-    int imageMaxWidthThreshold;
-	ScribusDoc* doc;
+
+    EpubExportScribusDoc* doc;
+    EpubExportEpub* epub;
+    EpubExportStructure* structure;
 
 	DocumentInformation documentMetadata;
-	void readMetadata();
     QVector< QList<PageItem*> > itemList;
     int itemNumber;
 
@@ -153,8 +125,6 @@ private:
 
     // QMap<int, ScLayer*> layerList;
     QList<int> layerNotPrintableList;
-
-	FileZip *epubFile;
 
     QVector<EPUBExportContentItem> contentItems;
 

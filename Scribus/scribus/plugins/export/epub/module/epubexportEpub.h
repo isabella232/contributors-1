@@ -24,6 +24,13 @@ class EpubExportEpub : public QObject
 public:
 	EpubExportEpub();
 	~EpubExportEpub();
+
+    FileZip* get() {return file;} // TODO: remove this as soon as the refactoring is over
+
+    void setFilename(QString filename) {this->filename = filename;}
+
+    void create();
+    void close();
 private:
 	FileZip *file;
     QString filename;

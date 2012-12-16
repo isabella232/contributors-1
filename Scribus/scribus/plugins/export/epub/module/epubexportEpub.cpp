@@ -17,6 +17,7 @@
 #include <QDebug>
 
 #include "module/epubexportEpub.h"
+#include "filezip.h"
 
 EpubExportEpub::EpubExportEpub()
 {
@@ -24,6 +25,17 @@ EpubExportEpub::EpubExportEpub()
 
 EpubExportEpub::~EpubExportEpub()
 {
+}
+
+void EpubExportEpub::create()
+{
+    file = new FileZip(filename);
+    file->create();
+}
+
+void EpubExportEpub::close()
+{
+    file->close();
 }
 
 QDebug operator<<(QDebug dbg, const EpubExportEpub &epub)

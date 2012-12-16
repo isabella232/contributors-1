@@ -15,18 +15,45 @@
  ***************************************************************************/
 
 #include <QDebug>
+#include <QUuid> // for generated the uuid if no isbn&co has been defined
 
-#include "module/epubexportMetadata.h"
+#include "module/epubexportStructure.h"
+#include "scribuscore.h" // for reading the gui language
 
-EpubExportMetadata::EpubExportMetadata()
+#include "documentinformation.h"
+
+EpubExportStructure::EpubExportStructure()
 {
 }
 
-EpubExportMetadata::~EpubExportMetadata()
+EpubExportStructure::~EpubExportStructure()
 {
 }
 
-QDebug operator<<(QDebug dbg, const EpubExportMetadata &metadata)
+void EpubExportStructure::read(EpubExportStructureMetadata metadata)
+{
+    this->metadata = metadata;
+	if (this->metadata.title == "")
+		this->metadata.title =filename;
+	// TODO: if (documentMetadata.author() == "") // -> it's recommended not obligatory!
+	// TODO: if (documentMetadata.authorSort() == "") // -> it's recommended not obligatory!
+	if (metadata.language == "")
+		metadata.language = ScCore->getGuiLanguage();
+	if (metadata.language == "")
+		metadata.language = "en_GB"; // scribus' default language is english (or rather en-GB?)
+	if (metadata.id == "")
+		metadata.id = "urn:uuid:"+QUuid::createUuid().toString().remove("{" ).remove("}" ); // Sigil/Misc/Utility.cpp -> Utility::CreateUUID()
+	// TODO: store the generated uuid in the scribus document information?
+	if (metadata.date == "")
+		metadata.date = QDate::currentDate().toString(Qt::ISODate);
+}
+
+QDebug operator<<(QDebug dbg, const EpubExportStructure &structure)
+{
+    dbg.nospace() << "(" << "Debug not implemented" << ")";
+    return dbg.space();
+}
+QDebug operator<<(QDebug dbg, const EpubExportStructureMetadata &metadata)
 {
     dbg.nospace() << "(" << "Debug not implemented" << ")";
     return dbg.space();

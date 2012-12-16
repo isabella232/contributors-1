@@ -110,8 +110,9 @@ bool EpubExportPlugin::run(ScribusDoc* doc, QString target)
         {
 
             options = dialog->getOptions();
-            qDebug() << "options:" << options;
+            // qDebug() << "options:" << options;
             EpubExport *model = new EpubExport(currDoc);
+
             // TODO: find a way to avoid to pass the progress dialog to the model... eventually, it should
             // be the model that communicates back its progresses to the plugin...
             MultiProgressDialog* progressDialog = new MultiProgressDialog(tr("Exporting: %1").arg(options.targetFilename), CommonStrings::tr_Cancel, currDoc->scMW());

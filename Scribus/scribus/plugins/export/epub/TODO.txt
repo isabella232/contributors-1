@@ -2,6 +2,10 @@
 
 - make sure that getStylenameSanitized returns unique names
 
+- doc->get()->scMW() should be replaced by the current window!
+  ---> currDoc = ScCore->primaryMainWindow()->doc;
+  ... if any... (it's used for the status bar and for managing dialogs...)
+
 - bug to add:
   -> when replacing the font, is there any other outcome than the font being replaced? if not, please remove
      the confirmation dialog
