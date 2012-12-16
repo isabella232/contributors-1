@@ -78,13 +78,17 @@ struct EpubExportStructureContent
     QString id;
     QString href;
     QString mediaType;
+    int section; // TODO: not filled yet: fill this instead of xhtmlFile
     QString title; // TODO: not filled yet: fill this instead of xhtmlFile
+    QString filename; // TODO: not filled yet: fill this instead of xhtmlFile
     EpubExportStructureContent()
     {
         id = "";
         href = "";
         mediaType = "";
-        title = ""; // TODO: not filled yet: fill this instead of xhtmlFile
+        section = 0;
+        title = "";
+        filename = "";
     }
 };
 
@@ -100,7 +104,7 @@ public:
 	void read(EpubExportStructureMetadata metadata);
 
 	void setFilename(QString filename) {this->filename = filename;}
-	void addContent(EpubExportStructureContent content) {this->content.add(content);}
+	void addContent(EpubExportStructureContent content) {this->content.append(content);}
     QString getOPF();
     QString getNCX();
 private:

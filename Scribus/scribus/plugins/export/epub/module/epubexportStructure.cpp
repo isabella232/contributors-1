@@ -36,7 +36,7 @@ void EpubExportStructure::read(EpubExportStructureMetadata metadata)
 {
     this->metadata = metadata;
 	if (this->metadata.title == "")
-		this->metadata.title =filename;
+		this->metadata.title = filename;
 	// TODO: if (documentMetadata.author() == "") // -> it's recommended not obligatory!
 	// TODO: if (documentMetadata.authorSort() == "") // -> it's recommended not obligatory!
 	if (metadata.language == "")
@@ -203,10 +203,10 @@ QString EpubExportStructure::getOPF()
         elementMetadata.appendChild(element);
 	}
 
-	if (metadata.cover != "") // that's not the cover, but the coverage... space and time covered by the work
+	if (metadata.coverage != "") // that's not the cover, but the coverage... space and time covered by the work
 	{
         element = xmlDocument.createElement("dc:coverage");
-        text = xmlDocument.createTextNode(metadata.cover);
+        text = xmlDocument.createTextNode(metadata.coverage);
         element.appendChild(text);
         elementMetadata.appendChild(element);
 	}
@@ -251,9 +251,10 @@ QString EpubExportStructure::getOPF()
 	spine.setAttribute("toc", "ncx");
 	xmlRoot.appendChild(spine);
 
-	for (int i = 0;  i < xhtmlFile.count(); i++) {
+    foreach (EpubExportStructureContent contentItem, content)
+    {
 		element = xmlDocument.createElement("itemref");
-		element.setAttribute("idref", xhtmlFile[i].filename);
+		element.setAttribute("idref", filename);
 		spine.appendChild(element);
 	}
 
@@ -356,6 +357,7 @@ QString EpubExportStructure::getNCX()
 	QDomElement nav = xmlDocument.createElement("navMap");
 	xmlRoot.appendChild(nav);
 
+    int i = 0; // TODO: shouldn't i be in EpubExportStructureContent?
     foreach (EpubExportStructureContent contentItem, content)
     {
 		QDomElement navPoint = xmlDocument.createElement("navPoint");
@@ -374,6 +376,7 @@ QString EpubExportStructure::getNCX()
 		element = xmlDocument.createElement("content");
 		element.setAttribute("src", "Text/" + contentItem.filename);
 		navPoint.appendChild(element);
+        i++;
 	}
 
     return xmlDocument.toString();

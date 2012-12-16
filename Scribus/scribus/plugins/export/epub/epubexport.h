@@ -133,15 +133,12 @@ private:
 	QDomElement xhtmlRoot;
 	QDomElement xhtmlBody;
     QVector<EPUBExportXhtmlFile> xhtmlFile; // list of the xhtml files for the toc
-    void exportMimetype();
     void exportContainer();
     QString getStylenameSanitized(QString stylename);
     void exportCover();
     void exportCSS();
     void exportItems();
     void exportXhtml();
-    void exportNCX();
-    void exportOPF();
     void initializeXhtml();
     QString getFixedXhtml(QString);
     void addXhtml();

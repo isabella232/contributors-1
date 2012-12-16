@@ -112,7 +112,6 @@ void EpubExport::doExport()
     if (progressDialog)
         progressDialog->setOverallTotalSteps(itemNumber);
 
-	exportMimetype();
 	exportContainer();
 
     exportCover();
@@ -121,9 +120,9 @@ void EpubExport::doExport()
 
 	exportXhtml();
 
-	exportNCX();
-	// epub->get()->add("OEBPS/toc.ncx", structure.getNCX(), true);
-	exportOPF();
+	epub->add("OEBPS/toc.ncx", structure->getNCX());
+
+	epub->add("OEBPS/content.opf", structure->getOPF());
 
 	epub->close();
 }
@@ -298,18 +297,8 @@ void EpubExport::addXhtml()
 	contentItem.id = file.filename;
 	contentItem.href = "Text/" + file.filename;
 	contentItem.mediaType = "application/xhtml+xml";
-	contentItem.title = QString("Section %1").arg(section + 1, 4, 10, QChar('0')); // TODO: as soon as we have a TOC, take the title from the text
+	// contentItem.title = QString("Section %1").arg(section + 1, 4, 10, QChar('0')); // TODO: as soon as we have a TOC, take the title from the text
 	contentItems.append(contentItem);
-}
-
-/**
-  * add mimetype to the current epub file
-  * The mimetype file must be a text document in ASCII that contains the string application/epub+zip.
-  * It must also be uncompressed, unencrypted, and the first file in the ZIP archive.
-  */
-void EpubExport::exportMimetype()
-{
-	epub->get()->add("mimetype", QString("application/epub+zip"), false);
 }
 
 /**
@@ -642,21 +631,6 @@ void EpubExport::exportXhtml()
 	addXhtml();
 }
 
-/**
- * add OEBPS/toc.ncx to the current epub file
- */
-void EpubExport::exportNCX()
-{
-	epub->get()->add("OEBPS/toc.ncx", structure.getNCX(), true);
-}
-
-/**
- * add OEBPS/content.opf to the current epub file
- */
-void EpubExport::exportOPF()
-{
-	epub->get()->add("OEBPS/content.opf", structure->getOPF(), true);
-}
 
 /**
  * example of charStyle() use in svgexplugin.cpp 

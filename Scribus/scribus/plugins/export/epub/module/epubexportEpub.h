@@ -32,7 +32,8 @@ public:
     void create();
     void close();
 
-    void add(QString fileContent);
+    void add(QString filename, QString content);
+    void addUncompressed(QString filename, QString content);
 private:
 	FileZip *file;
     QString filename;
