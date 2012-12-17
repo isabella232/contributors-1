@@ -104,21 +104,24 @@ void EpubExport::doExport()
     epub->setFilename(options.targetFilename);
     epub->create();
 
-    structure = new EpubExportStructure();
-    structure->setFilename(options.targetFilename);
-    structure->read(doc->getMetadata());
+    while (doc->next())
+    {
+        structure = new EpubExportStructure();
+        structure->setFilename(options.targetFilename);
+        structure->read(doc->getMetadata());
 
-	readItems();
-    if (progressDialog)
-        progressDialog->setOverallTotalSteps(itemNumber);
+        readItems();
+        if (progressDialog)
+            progressDialog->setOverallTotalSteps(itemNumber);
 
-	exportContainer();
+        exportContainer();
 
-    exportCover();
+        exportCover();
 
-    exportCSS();
+        exportCSS();
 
-	exportXhtml();
+        exportXhtml();
+    }
 
 	epub->add("OEBPS/toc.ncx", structure->getNCX());
 

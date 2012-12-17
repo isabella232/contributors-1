@@ -30,10 +30,23 @@ EpubExportScribusDoc::~EpubExportScribusDoc()
 {
 }
 
+bool EpubExportScribusDoc::next()
+{
+    bool result = false;
+    docCurrent = NULL;
+    if (!doc.isEmpty())
+    {
+        docCurrent = doc.takeFirst();
+        // TODO: add here the content of readItems()
+        result = true;
+    }
+    return result;
+}
+
 EpubExportStructureMetadata EpubExportScribusDoc::getMetadata()
 {
     EpubExportStructureMetadata metadata = EpubExportStructureMetadata();
-	DocumentInformation documentMetadata = doc.first()->documentInfo();
+	DocumentInformation documentMetadata = docCurrent->documentInfo();
 
 	// for mandatory fields we make later sure that they are filled
     metadata.title = documentMetadata.title();
