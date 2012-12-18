@@ -22,6 +22,7 @@
 // #include "module/epubexportEpub.h"
 class EpubExportEpub;
 class EpubExportStructure;
+class EpubExportXhtml;
 
 class QString;
 class ScribusDoc;
@@ -110,6 +111,7 @@ private:
     EpubExportScribusDoc* doc;
     EpubExportEpub* epub;
     EpubExportStructure* structure;
+    EpubExportXhtml* xhtml;
 
 	DocumentInformation documentMetadata;
     QVector< QList<PageItem*> > itemList;

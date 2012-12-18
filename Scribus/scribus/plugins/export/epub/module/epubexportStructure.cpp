@@ -32,7 +32,7 @@ EpubExportStructure::~EpubExportStructure()
 {
 }
 
-void EpubExportStructure::read(EpubExportStructureMetadata metadata)
+void EpubExportStructure::readMetadata(EpubExportStructureMetadata metadata)
 {
     this->metadata = metadata;
 	if (this->metadata.title == "")
@@ -234,7 +234,7 @@ QString EpubExportStructure::getOPF()
 		element = xmlDocument.createElement("item");
 		element.setAttribute("id", contentItem.id);
 		element.setAttribute("href", contentItem.href);
-		element.setAttribute("media-type", contentItem.mediaType);
+		element.setAttribute("media-type", contentItem.mediatype);
 		manifest.appendChild(element);
 	}
 
@@ -414,7 +414,7 @@ QDebug operator<<(QDebug dbg, const EpubExportStructureContent &content)
     dbg.nospace() << "( title:" << content.title << "\n"
                   << ", id:" << content.id << "\n"
                   << ", href:" << content.href << "\n"
-                  << ", mediaType:" << content.mediaType << "\n"
+                  << ", mediatype:" << content.mediatype << "\n"
                   << ", title:" << content.title << "\n"
                   << " )";
     return dbg.space();

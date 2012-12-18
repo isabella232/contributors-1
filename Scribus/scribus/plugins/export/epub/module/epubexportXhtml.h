@@ -15,6 +15,11 @@
 
 #include "scribusapi.h" // for SCRIBUS_API
 
+#include "module/epubexportStructure.h"
+
+#include <QDomDocument>
+#include <QDomElement>
+
 class EpubExportXhtml : public QObject
 {
     Q_OBJECT
@@ -22,6 +27,26 @@ class EpubExportXhtml : public QObject
 public:
 	EpubExportXhtml();
 	~EpubExportXhtml();
+
+    void setMetadata(EpubExportStructureMetadata metadata) {this->metadata = metadata;}
+    void setTitle(QString title) {this->title = title;}
+    QString getId() {return id;}
+    QString getFilename() {return filename;}
+
+
+    void initialize();
+    QString get();
+
+
+private:
+    EpubExportStructureMetadata metadata;
+    QString title;
+    QString id;
+    QString filename;
+
+    QDomDocument document;
+    QDomElement elementRoot;
+    QDomElement elementBody;
 };
 
 QDebug operator<<(QDebug dbg, const EpubExportXhtml &xhtml);
