@@ -22,6 +22,7 @@
 // #include "module/epubexportEpub.h"
 class EpubExportEpub;
 class EpubExportStructure;
+class EpubExportCssParser;
 class EpubExportXhtml;
 
 class QString;
@@ -111,6 +112,7 @@ private:
     EpubExportScribusDoc* doc;
     EpubExportEpub* epub;
     EpubExportStructure* structure;
+    EpubExportCssParser* cssParser;
     EpubExportXhtml* xhtml;
 
 	DocumentInformation documentMetadata;
@@ -135,9 +137,7 @@ private:
 	QDomElement xhtmlRoot;
 	QDomElement xhtmlBody;
     QVector<EPUBExportXhtmlFile> xhtmlFile; // list of the xhtml files for the toc
-    void exportContainer();
     QString getStylenameSanitized(QString stylename);
-    void exportCover();
     void exportCSS();
     void exportItems();
     void exportXhtml();

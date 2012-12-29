@@ -1,12 +1,20 @@
 #ifndef EPUBEXPORTCSSPARSE_H
 #define EPUBEXPORTCSSPARSE_H
 
-struct BoardElement {
-    QString id;
+#include <QObject>
+#include <QMap>
+
+struct EpubExportCssParserStyle
+{
+    QString tag; // p, h1..9, em, strong, b, i, ...
+    QChar type; // [p]aragraph, [c]haracter, [i]d, [ ]all
+    QString name;
+    int headingLevel;
 };
 
-struct FrameElement {
-    QList<BoardElement *> boardElements;
+struct EpubExportCssParserFormatting
+{
+    QString format; // TODO: replace it with a list of property => format
 };
 
 class EpubExportCssParser : public QObject
@@ -19,8 +27,26 @@ public:
     void start();
 
 private:
+    static const int STATE_TAG;
+    static const int STATE_STYLENAME;
+    static const int STATE_FORMAT;
+    static const int STATE_PROPERTY_NAME;
+    static const int STATE_PROPERTY_VALUE;
+    static const int STATE_COMMENT_START;
+    static const int STATE_COMMENT;
+    static const int STATE_COMMENT_STOP;
+
     QString filepath;
+
+    QMap<QString, EpubExportCssParserFormatting> *style; // TODO: only for first testing replace with the ones below
+    QMap<QString, EpubExportCssParserFormatting> *pStyle;
+    QMap<QString, EpubExportCssParserFormatting> *spanStyle;
+    QMap<QString, EpubExportCssParserFormatting> *hStyle;
+    QMap<QString, EpubExportCssParserFormatting> *idStyle;
 };
+
+QDebug operator<<(QDebug dbg, const EpubExportCssParserStyle &style);
+QDebug operator<<(QDebug dbg, const EpubExportCssParserFormatting &formatting);
 
 /*
  this is a modified syntax build upon the example from
@@ -30,6 +56,7 @@ private:
   - comments
   - @import
   - @media
+  - "sub styles" are not recognized (ul li { }) or only the last one is recognized
 
 styleEntry    ::= <classNameSeq> "{"
         [ <styleAttributeSeq> ]

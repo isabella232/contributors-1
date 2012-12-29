@@ -53,6 +53,16 @@ void EpubExportEpub::addUncompressed(QString filename, QString content)
     file->add(filename, content, false);
 }
 
+void EpubExportEpub::add(QString filename, QByteArray content)
+{
+    file->add(filename, content, true);
+}
+
+void EpubExportEpub::addUncompressed(QString filename, QByteArray content)
+{
+    file->add(filename, content, false);
+}
+
 QDebug operator<<(QDebug dbg, const EpubExportEpub &epub)
 {
     dbg.nospace() << "(" << "Debug not implemented" << ")";

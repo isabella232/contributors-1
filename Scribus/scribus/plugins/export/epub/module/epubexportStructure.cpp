@@ -14,6 +14,11 @@
 
  ***************************************************************************/
 
+/**
+ * Store information related to the structure of content
+ * and return the strings for the "structural" files for the .epub file
+ */
+
 #include <QDebug>
 #include <QUuid> // for generated the uuid if no isbn&co has been defined
 
@@ -26,6 +31,7 @@
 
 EpubExportStructure::EpubExportStructure()
 {
+    cover = QByteArray();
 }
 
 EpubExportStructure::~EpubExportStructure()
@@ -48,6 +54,15 @@ void EpubExportStructure::readMetadata(EpubExportStructureMetadata metadata)
 	// TODO: store the generated uuid in the scribus document information?
 	if (metadata.date == "")
 		metadata.date = QDate::currentDate().toString(Qt::ISODate);
+}
+
+void EpubExportStructure::addContent(QString id, QString path, QString mediatype)
+{
+        EpubExportStructureContent content = EpubExportStructureContent();
+        content.id = id;
+        content.filename = path;
+        content. mediatype = mediatype;
+        addContent(content);
 }
 
 /**
@@ -380,6 +395,44 @@ QString EpubExportStructure::getNCX()
 	}
 
     return xmlDocument.toString();
+}
+
+/**
+  * add META-INF/container.xml to the current epub file
+  * <?xml version="1.0" encoding="UTF-8" ?>
+  * <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  *   <rootfiles>
+  * 	<rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  *   </rootfiles>
+  * </container>
+  */ 
+QString EpubExportStructure::getContainer()
+{
+	QDomDocument xmlDocument = QDomDocument();
+	QDomElement element;
+
+	QDomProcessingInstruction xmlDeclaration = xmlDocument.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
+	xmlDocument.appendChild(xmlDeclaration);
+
+	QDomElement xmlRoot = xmlDocument.createElement("container");
+	xmlRoot.setAttribute("version", "1.0");
+	xmlRoot.setAttribute("xmlns", "urn:oasis:names:tc:opendocument:xmlns:container");
+	xmlDocument.appendChild(xmlRoot);
+
+	QDomElement rootfiles = xmlDocument.createElement("rootfiles");
+	xmlRoot.appendChild(rootfiles);
+
+	element = xmlDocument.createElement("rootfile");
+	element.setAttribute("full-path", "OEBPS/content.opf");
+	element.setAttribute("media-type", "application/oebps-package+xml");
+	rootfiles.appendChild(element);
+
+    return xmlDocument.toString();
+}
+
+QByteArray EpubExportStructure::getCover()
+{
+    return cover;
 }
 
 QDebug operator<<(QDebug dbg, const EpubExportStructure &structure)

@@ -12,17 +12,29 @@
 #include <QTextStream>
 #include <QDebug>
 
-MainWindow::MainWindow(QWidget *parent) :
+EpubExportCssParser::EpubExportCssParser()
+{
     filepath = "";
 }
 
-MainWindow::~MainWindow()
+EpubExportCssParser::~EpubExportCssParser()
+{
 }
 
-void MainWindow::start()
+//states tell the parser which element it is parsing.
+const int EpubExportCssParser::STATE_TAG = 1;
+const int EpubExportCssParser::STATE_STYLENAME = 2;
+const int EpubExportCssParser::STATE_FORMAT = 3;
+const int EpubExportCssParser::STATE_PROPERTY_NAME = 4;
+const int EpubExportCssParser::STATE_PROPERTY_VALUE = 5;
+const int EpubExportCssParser::STATE_COMMENT_START = 6;
+const int EpubExportCssParser::STATE_COMMENT = 7;
+const int EpubExportCssParser::STATE_COMMENT_STOP = 8;
+
+void EpubExportCssParser::start()
 {
-    if (!filepath != "") 
-        return
+    if (filepath == "") 
+        return;
 
     QFile file(filepath);
     if (!file.open(QFile::ReadOnly))
@@ -30,91 +42,170 @@ void MainWindow::start()
 
     QTextStream ts(&file);
 
-    FrameElement *frameElement;
-    BoardElement *boardElement;
-
     QChar ch;
-    int depth = 0;
-    int currentState = 0;
-    //states tell the parser which element it is parsing.
-    // 0 = empty
-    // 1 = context (p, span, h1, ..., id)
-    // 2 = stylename
-    // 3 = formatting
-    // 4 = propertyName
-    // 5 = propertyValue
-    // 6 = ignore
+    int currentState = 1;
+    int previousState = 1;
 
-    QList<int> stateList;
+    EpubExportCssParserStyle currentStyle = EpubExportCssParserStyle();
+    QList<EpubExportCssParserStyle> currentStyles;
+    EpubExportCssParserFormatting currentFormat = EpubExportCssParserFormatting();
+    bool valid = true;
+    QString comment = "";
 
-    QString element = "";
-    do {
+    while (valid && !ts.atEnd()) {
         ts >> ch;
-
-        if (ch == '(') {
-            ++depth;
-
-            if (element == "Frame" || element == "frame") {
-                stateList.append(1);
-                frameElement = new FrameElement;
-                qDebug() << "Found a Frame element";
+        // qDebug() << "ch:" << ch;
+        if (ch == '/')
+        {
+            if (currentState == EpubExportCssParser::STATE_COMMENT_STOP)
+            {
+                currentState = previousState;
+                previousState = 0;
             }
-            if (element == "BoardList" || element == "boardlist") {
-                stateList.append(2);
-                qDebug() << "Found a BoardList element";
-            }
-            if (element == "Board" || element == "board") {
-                stateList.append(3);
-                if (!frameElement) {
-                    qDebug() << "Parsing error: no frame element found!";
-                    return;
+            else
+            {
+                comment = "";
+                if (currentState != STATE_COMMENT)
+                {
+                    previousState = currentState;
+                    currentState = EpubExportCssParser::STATE_COMMENT_START;
                 }
-                boardElement = new BoardElement;
-                frameElement->boardElements.append(boardElement);
-                qDebug() << "Found a Board element";
+                continue;
             }
-            if (element == "Id" || element == "id" || element == "ID") {                
-                stateList.append(4);
-                qDebug() << "Found an Id element";
-            }
-
-
-            element = "";
         }
-        else if (ch == ')') {
-            --depth;
 
-            if (element.startsWith("\"")) {
-                if (stateList.count() < 2) {
-                    //parsing error, the list should have at least 2 items
-                    return;
+        if (currentState == EpubExportCssParser::STATE_TAG)
+        {
+            if (ch.isSpace())
+            {
+                if ((currentStyle.tag != "") || (currentStyle.name != ""))
+                {
+                    qDebug() << "add current tag" << currentStyle.tag;
+                    currentStyles << currentStyle;
+                    currentStyle = EpubExportCssParserStyle();
                 }
-                int currentState = stateList.at(stateList.count() - 2); // Go back two states, the previous is the id, the one before the id
-                                                                        // tells wich object receives the name
-                qDebug() << "Found a name element in state " << currentState;
-
-                element = element.section("\"",1,1);
-                if (currentState == 3) {
-                    boardElement->id = element;
-                    qDebug() << "Set the board element id to:" << boardElement->id;
-                }
-
             }
+            else if (ch == '.')
+                currentState = EpubExportCssParser::STATE_STYLENAME;
+            else if (ch == '#')
+            {
+                currentState = EpubExportCssParser::STATE_STYLENAME;
+                currentStyle.type = 'i';
+            }
+            else if (ch == '{')
+            {
+                if ((currentStyle.tag != "") || (currentStyle.name != ""))
+                {
+                    qDebug() << "add current tag" << currentStyle.tag;
+                    currentStyles << currentStyle;
+                    currentStyle = EpubExportCssParserStyle();
+                }
+                currentState = EpubExportCssParser::STATE_FORMAT;
+            }
+            else
+                currentStyle.tag += ch;
+            qDebug() << "current tag" << currentStyle.tag;
+        }
+        else if (currentState == EpubExportCssParser::STATE_STYLENAME)
+        {
+            if (ch.isSpace())
+            {
+                qDebug() << "add currentStyle :" << currentStyle.tag+"."+currentStyle.name;
+                currentStyles << currentStyle;
+                currentStyle = EpubExportCssParserStyle();
+                currentState = EpubExportCssParser::STATE_TAG;
+            }
+            else if (ch == '{')
+            {
+                qDebug() << "add currentStyle {:" << currentStyle.tag+"."+currentStyle.name;
+                currentStyles << currentStyle;
+                currentStyle = EpubExportCssParserStyle();
+                currentState = EpubExportCssParser::STATE_FORMAT;
+            }
+            else
+                currentStyle.name += ch;
+        }
+        else if (currentState == STATE_FORMAT)
+        {
+            if (ch == '}')
+            {
+                // TODO: for each current style
+                // qDebug() << "first style name:" <<  currentStyles.first().name;
+                if (!currentStyles.isEmpty())
+                {
+                    QString styleName = currentStyles.first().name;
+                    if (styleName == "")
+                        styleName = (currentStyles.first().type == 'c' ? "Default Character Style" : "Default Paragraph Style"); 
 
-            if (!stateList.isEmpty())
-                stateList.removeLast();
-            element = "";
+                    // qDebug() << "first style tag name:" <<  currentStyles.first().tag;
+                    // qDebug() << "current format:" << currentFormat.format;
+                        style->insert(styleName, currentFormat);
+                    currentStyles.clear();
+                }
+                currentFormat = EpubExportCssParserFormatting();
+                currentState = STATE_TAG;
+            }
+            else
+            {
+                currentFormat.format += ch;
+            }
         }
-        else if (ch == '\r' || ch == '\n' || ch == ' ') {
-            // do nothing
-            // If you are able to use spaces in names, then create a boolean value to check if you're parsing a name.
-            // If you do (boolean = true), do not swallow spaces but add them to the parsed string.
-            // If you don't (boolean = false), swallow the spaces
+        else if (currentState == EpubExportCssParser::STATE_COMMENT_START)
+        {
+            if (ch == '*')
+                currentState = EpubExportCssParser::STATE_COMMENT;
+            else
+                valid = false;
         }
-        else {
-            element += ch;
+        else if (currentState == EpubExportCssParser::STATE_COMMENT)
+        {
+            // qDebug() << "/* ch */:" << ch;
+            if (ch == '*')
+                currentState = EpubExportCssParser::STATE_COMMENT_STOP;
+            comment += ch;
         }
-    } while (!ts.atEnd());
+        else if (currentState == EpubExportCssParser::STATE_COMMENT_STOP)
+        {
+            if (ch != '*')
+                currentState = EpubExportCssParser::STATE_COMMENT;
+            comment += ch;
+        }
+
+    }
+
+    qDebug() << "style:" << style;
 
     file.close();
+}
+
+QDebug operator<<(QDebug dbg, const EpubExportCssParserStyle &style)
+{
+    dbg.nospace() << "("
+                  << "tag:" << style.tag
+                  << "type:" << style.type
+                  << "name:" << style.name
+                  << "headingLevel:" << style.headingLevel
+                  << ")";
+    return dbg.space();
+}
+
+QDebug operator<<(QDebug dbg, const EpubExportCssParserFormatting &formatting)
+{
+    dbg.nospace() << "("
+                  << "format:" << formatting.format
+                  << ")";
+    return dbg.space();
+}
+
+    QMap<QString, EpubExportCssParserFormatting> *pStyle;
+QDebug operator<<(QDebug dbg, const QMap<QString, EpubExportCssParserFormatting> &style)
+{
+
+    QMapIterator<QString, EpubExportCssParserFormatting> i(style);
+    while (i.hasNext()) {
+        i.next();
+        dbg.nospace() << "[" << i.key() << ": " << i.value() << "]";
+    }
+
+    return dbg.space();
 }

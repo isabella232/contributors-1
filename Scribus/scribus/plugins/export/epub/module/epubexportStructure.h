@@ -106,13 +106,19 @@ public:
 
 	void setFilename(QString filename) {this->filename = filename;}
 	void addContent(EpubExportStructureContent content) {this->content.append(content);}
+	void addContent(QString id, QString path, QString mediatype);
     QString getOPF();
     QString getNCX();
+    QString getContainer();
+	void setCover(QByteArray cover) {this->cover = cover;}
+    bool hasCover() {return this->cover.isEmpty();}
+    QByteArray getCover();
 private:
     EpubExportStructureMetadata metadata;
     QString filename;
     // QVector<EPUBExportContentItem> contentItems;
     QVector<EpubExportStructureContent> content;
+    QByteArray cover; // byte representation of the cover image
 };
 
 QDebug operator<<(QDebug dbg, const EpubExportStructure &structure);

@@ -69,6 +69,7 @@
 
 #include "module/epubexportEpub.h"
 #include "module/epubexportStructure.h"
+#include "module/epubexportCssParser.h"
 #include "module/epubexportXhtml.h"
 
 
@@ -105,6 +106,13 @@ void EpubExport::doExport()
     epub->setFilename(options.targetFilename);
     epub->create();
 
+    /*
+    cssParser = new EpubExportCssParser();
+    cssParser->setFilepath("/tmp/style.css");
+    cssParser->start();
+    */
+
+    EpubExportStructureContent content;
     while (doc->next())
     {
         structure = new EpubExportStructure();
@@ -121,26 +129,27 @@ void EpubExport::doExport()
         xhtml->initialize(); // TODO: we have to initialize for each chapter
 
         epub->add("Text/" + xhtml->getFilename(), xhtml->get());
-        // structure->addContent(id, path, mediatype);
-        EpubExportStructureContent content;
-        content.id = xhtml->getId();
-        content.filename = "Text/" + xhtml->getFilename();
-        content. mediatype = "application/xhtml+xml";
+        structure->addContent(xhtml->getId(), "Text/" + xhtml->getFilename(), "application/xhtml+xml");
 
-        structure->addContent(content);
-
-        exportContainer();
-
-        exportCover();
-
-        exportCSS();
+        if (!structure->hasCover())
+        {
+            structure->setCover(doc->getCover());
+            structure->addContent("cover.png", "Images/cover.png", "image/png");
+        }
 
         exportXhtml();
     }
 
+	epub->add("META-INF/container.xml", structure->getContainer());
+
 	epub->add("OEBPS/toc.ncx", structure->getNCX());
 
 	epub->add("OEBPS/content.opf", structure->getOPF());
+
+	epub->addUncompressed("OEBPS/Images/cover.png", structure->getCover());
+
+
+    exportCSS();
 
 	epub->close();
 }
@@ -185,74 +194,13 @@ void EpubExport::addXhtml()
 	contentItems.append(contentItem);
 }
 
-/**
-  * add META-INF/container.xml to the current epub file
-  * <?xml version="1.0" encoding="UTF-8" ?>
-  * <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
-  *   <rootfiles>
-  * 	<rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
-  *   </rootfiles>
-  * </container>
-  */ 
-void EpubExport::exportContainer()
-{
-	QDomDocument xmlDocument = QDomDocument();
-	QDomElement element;
-
-	QDomProcessingInstruction xmlDeclaration = xmlDocument.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
-	xmlDocument.appendChild(xmlDeclaration);
-
-	QDomElement xmlRoot = xmlDocument.createElement("container");
-	xmlRoot.setAttribute("version", "1.0");
-	xmlRoot.setAttribute("xmlns", "urn:oasis:names:tc:opendocument:xmlns:container");
-	xmlDocument.appendChild(xmlRoot);
-
-	QDomElement rootfiles = xmlDocument.createElement("rootfiles");
-	xmlRoot.appendChild(rootfiles);
-
-	element = xmlDocument.createElement("rootfile");
-	element.setAttribute("full-path", "OEBPS/content.opf");
-	element.setAttribute("media-type", "application/oebps-package+xml");
-	rootfiles.appendChild(element);
-
-	epub->get()->add("META-INF/container.xml", xmlDocument.toString(), true);
-}
 
 QString EpubExport::getStylenameSanitized(QString stylename)
 {
     return stylename.remove(QRegExp("[^a-zA-Z\\d_-]"));
 }
 
-/**
- * create a cover as a png of the first page of the .sla
- * From the Sigil documentation:
- * - Image size should be 590 pixels wide x 750 pixels high
- * - Image resolution should be 72 pixels per inch (ppi) or higher
- * - Use color images, saved in RGB color space
- * - Image format can be JPEG, GIF, or PNG.
- * TODO:
- * - make sure that a cover.png image does not yet exist
- * - create an xhtml file with the cover?
- *   http://blog.threepress.org/2009/11/20/best-practices-in-epub-cover-images/
- */
-void EpubExport::exportCover()
-{
-	QImage image = doc->get()->view()->PageToPixmap(0, 750, false);
 
-	QByteArray bytearray;
-	QBuffer buffer(&bytearray);
-	buffer.open(QIODevice::WriteOnly);
-	image.save(&buffer, "PNG");
-	// qDebug() << "image.size" << image.size();
-
-	epub->get()->add("OEBPS/Images/cover.png", bytearray, false);
-
-	struct EPUBExportContentItem contentItem;
-	contentItem.id = "cover.png";
-	contentItem.href = "Images/cover.png";
-	contentItem.mediaType = "image/png";
-	contentItems.append(contentItem);
-}
 /**
   * add OEBPS/Styles/style.css to the current epub file
   */ 
@@ -633,6 +581,9 @@ void EpubExport::addText(PageItem* docItem)
     }
 }
 
+/**
+ * TODO: if the file is called cover.png renamed it, in order not to overwrite the generated cover
+ */
 void EpubExport::addImage(PageItem* docItem)
 {
 	QString filename(docItem->Pfile);

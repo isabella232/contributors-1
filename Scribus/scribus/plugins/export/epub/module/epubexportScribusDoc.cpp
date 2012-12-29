@@ -16,11 +16,14 @@
 
 #include <QDebug>
 
+#include <QBuffer>
+
 #include "module/epubexportStructure.h"
 
 #include "module/epubexportScribusDoc.h"
 
 #include "scribusdoc.h"
+#include "scribusview.h"
 #include "scribusstructs.h" // for getPageRect() remove it, it's moved to ScPage
 
 EpubExportScribusDoc::EpubExportScribusDoc()
@@ -203,6 +206,30 @@ void EpubExportScribusDoc::readItems()
         docItemList[itemPages.first()->pageNr()].append(docItem);
         // itemCounter++; eventually, for the progress bar... but we should probably count the pages
     }
+}
+
+/**
+ * create a cover as a png of the first page of the .sla
+ * From the Sigil documentation:
+ * - Image size should be 590 pixels wide x 750 pixels high
+ * - Image resolution should be 72 pixels per inch (ppi) or higher
+ * - Use color images, saved in RGB color space
+ * - Image format can be JPEG, GIF, or PNG.
+ * TODO:
+ * - make sure that a cover.png image does not yet exist
+ * - create an xhtml file with the cover?
+ *   http://blog.threepress.org/2009/11/20/best-practices-in-epub-cover-images/
+ */
+QByteArray EpubExportScribusDoc::getCover()
+{
+	QImage image = docCurrent->view()->PageToPixmap(0, 750, false);
+
+	QByteArray bytearray;
+	QBuffer buffer(&bytearray);
+	buffer.open(QIODevice::WriteOnly);
+	image.save(&buffer, "PNG");
+	// qDebug() << "image.size" << image.size();
+    return bytearray;
 }
 
 QVector<EpubExportScribusDocTextRun> EpubExportScribusDoc::getTextRuns()
