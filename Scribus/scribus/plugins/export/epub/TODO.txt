@@ -76,5 +76,6 @@ LATER
 - QDomDocument has some limitations (like putting newlines around <span>s): in the future we should probably rather use SAX
 - allow a separate folder for low-res images (this should probably be a general feature in scribus, since it also useful for web oriented PDFs: it should be carefully designed)
 - load an external css
+- as long as the TOC is not implemetned, use the information loaded from the css to define the titles
 - show a report
   - which styles are not matching between .sla and .css?
