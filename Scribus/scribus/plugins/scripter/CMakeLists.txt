@@ -18,6 +18,7 @@ api_page.h
 api_dialogs.h
 api_window.h
 api_document.h
+api_styleparagraph.h
 api_color.h
 )
 
@@ -36,6 +37,7 @@ api_page.cpp
 api_dialogs.cpp
 api_window.cpp
 api_document.cpp
+api_styleparagraph.cpp
 api_color.cpp
 utils.cpp
 )

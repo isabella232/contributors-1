@@ -14,6 +14,7 @@ for which a new license (GPL+exception) is in place.
 #include "api_printer.h"
 #include "api_textitem.h"
 #include "api_imageitem.h"
+#include "api_styleparagraph.h"
 #include "util.h"
 #include "utils.h"
 #include "pageitem_textframe.h"
@@ -94,7 +95,26 @@ bool DocumentAPI::modified()
 	return ScCore->primaryMainWindow()->doc->isModified();
 }
 
+/**
+ * Scripter.activeDocument.unit
+ * Property
+ * boolean flag current measurement unit of the document
+ *
+ * When starting a script you should query its current unit,
+ * Use your preferred unit during the script life and don't forget
+ * to set again the previous unit before finishing the script
+ */
+void DocumentAPI::setUnit(int value)
+{
+	if (!check()) return;
+	ScCore->primaryMainWindow()->doc->setUnitIndex(value);
+}
 
+int DocumentAPI::unit()
+{
+	if (!check()) return NULL;
+	return ScCore->primaryMainWindow()->doc->unitIndex();
+}
 
 /**
  * Scripter.activeDocument.close()
@@ -159,7 +179,7 @@ int DocumentAPI::pageCount()
  */
 QObject *DocumentAPI::activePage()
 {
-	return new PageAPI(ScCore->primaryMainWindow()->doc->currentPage());
+	return new PageAPI(this);
 }
 
 
@@ -528,38 +548,16 @@ void DocumentAPI::editMasterPage(QString name)
 	ScCore->primaryMainWindow()->view->showMasterPage(*it);
 }
 
-QList< QVariant > DocumentAPI::pages()
-{
-	QList<QVariant> pages;
-	if (!check())
-		return pages;
-	QList<ScPage*> *allPages = ScCore->primaryMainWindow()->doc->Pages;
-	for(int i=0; i< allPages->count(); i++) {
-	  pages.append(qVariantFromValue((QObject *)(new PageAPI(allPages->at(i)))));
-	}
-	return pages;
-}
-
-
-void DocumentAPI::setActivePage(int pageNumber)
-{
-	if(!check())
-	    return;
-	pageNumber--;
-	if ((pageNumber < 0) || (pageNumber > static_cast<int>(ScCore->primaryMainWindow()->doc->Pages->count())-1))
-	{
-		RAISE("Page number out of range.");
-		return;
-	}
-	ScCore->primaryMainWindow()->view->GotoPage(pageNumber);
-}
-
-
 void DocumentAPI::loadStylesFromFile(QString name)
 {
 	if (!check())
 		return;
 	ScCore->primaryMainWindow()->doc->loadStylesFromFile(name);
+}
+
+QObject* DocumentAPI::createParagraphStyle(QString name)
+{
+    return new StyleParagraphAPI(name);
 }
 
 QObject* DocumentAPI::selectItem(QString name)

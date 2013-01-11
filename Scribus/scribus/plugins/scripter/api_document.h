@@ -33,7 +33,7 @@ class DocumentAPI : public QObject
     Q_PROPERTY(QList<QVariant> layers READ layers)
     Q_PROPERTY(QList<QVariant> masterPages READ masterPages)
     Q_PROPERTY(QList<QVariant> styles READ styles)
-    Q_PROPERTY(QList<QVariant> pages READ pages)
+    Q_PROPERTY(int unit READ unit WRITE setUnit)
 
 public:
 	DocumentAPI();
@@ -44,6 +44,8 @@ public slots:
 	bool close();
 	bool save();
 	bool saveAs(QString name);
+	QList<QVariant> items(); //TODO move this to private section
+	QList<QVariant> layers(); //TODO move this to private section
 	void setInformation(QString author, QString title, QString desc);
 
 	QObject *newLayer(QString name);
@@ -67,10 +69,8 @@ public slots:
 	void closeMasterPage(QString name);
 	void editMasterPage(QString name);
 	
-	QList<QVariant> pages();
-	void setActivePage(int pageNumber);
-	
 	void loadStylesFromFile(QString name);
+	QObject* createParagraphStyle(QString name);
 
 	void moveSelectionToFront()
 	{
@@ -97,6 +97,8 @@ private:
 	bool available();
 	bool modified();
 	void setModified(bool flag);
+	int unit();
+	void setUnit(int value);
 	QObject *activePage();
 	int pageCount();
 	QList<QVariant> selection();
@@ -105,8 +107,6 @@ private:
 	QObject *dimensions();
 	QList<QVariant> colors();
 	QList<QVariant> styles();
-	QList<QVariant> items();
-	QList<QVariant> layers();
 };
 
 
