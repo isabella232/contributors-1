@@ -179,7 +179,7 @@ int DocumentAPI::pageCount()
  */
 QObject *DocumentAPI::activePage()
 {
-	return new PageAPI(this);
+    return new PageAPI(ScCore->primaryMainWindow()->doc->currentPage());
 }
 
 
