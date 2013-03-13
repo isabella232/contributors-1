@@ -183,6 +183,7 @@ public:
 	void restoreUngrouping(SimpleState *state, bool isUndo);
 	void restoreAddPage(SimpleState *state, bool isUndo);
 	void restoreDeletePage(SimpleState *state, bool isUndo);
+	void restoreFileLoader(SimpleState *state, bool isUndo);
 	void setPreviewToolbar();
 	struct CopyContentsBuffer contentsBuffer;
 	bool internalCopy;
@@ -296,14 +297,8 @@ public slots:
 	bool loadPage(QString fileName, int Nr, bool Mpa, const QString& renamedPageName=QString::null);
 
 	void slotGetContent();
-	void slotGetContent2(); // kk2006
 	void slotGetClipboardImage();
 	void toogleInlineState();
-	/*!
-	\author Franz Schmid
-	\brief Appends a Textfile to the Text in the selected Textframe at the Cursorposition
-	*/
-	void slotFileAppend();
 
 	void removeRecent(QString fn, bool fromFileWatcher = false);
 	void removeRecentFromWatcher(QString fn);
@@ -312,7 +307,6 @@ public slots:
 	void rebuildRecentPasteMenu();
 	void pasteRecent(QString fn);
 	void pasteFromScrapbook(QString fn);
-	void importVectorFile();
 	void rebuildLayersList();
 	bool slotDocOpen();
 	bool loadDoc(QString);

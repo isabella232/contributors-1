@@ -596,7 +596,6 @@ HEADERS += scribus/actionmanager.h \
            scribus/ui/gradientpreview.h \
            scribus/ui/gradientvectordialog.h \
            scribus/ui/gtdialogs.h \
-           scribus/ui/gtfiledialog.h \
            scribus/ui/guidemanager.h \
            scribus/ui/helpbrowser.h \
            scribus/ui/helpnavigation.h \
@@ -1129,7 +1128,8 @@ HEADERS += scribus/actionmanager.h \
            scribus/styles/cellstyle.attrdefs.cxx \
            scribus/main_nix.cpp \
            scribus/main_win32.cpp \
-           scribus/styles/linestyle.attrdefs.cxx
+           scribus/styles/linestyle.attrdefs.cxx \
+           scribus/canvasmode_importdata.h
 FORMS += scribus/ui/aboutplugins.ui \
          scribus/ui/aligndistribute.ui \
          scribus/ui/arcvectorbase.ui \
@@ -1143,7 +1143,6 @@ FORMS += scribus/ui/aboutplugins.ui \
          scribus/ui/gradientaddedit.ui \
          scribus/ui/gradienteditor.ui \
          scribus/ui/gradientvectorbase.ui \
-         scribus/ui/gtfiledialog.ui \
          scribus/ui/guidemanager.ui \
          scribus/ui/helpbrowser.ui \
          scribus/ui/helpbrowsernavigation.ui \
@@ -1607,7 +1606,6 @@ SOURCES += scribus/actionmanager.cpp \
            scribus/ui/gradientpreview.cpp \
            scribus/ui/gradientvectordialog.cpp \
            scribus/ui/gtdialogs.cpp \
-           scribus/ui/gtfiledialog.cpp \
            scribus/ui/guidemanager.cpp \
            scribus/ui/helpbrowser.cpp \
            scribus/ui/helpnavigation.cpp \
@@ -2178,7 +2176,8 @@ SOURCES += scribus/actionmanager.cpp \
            scribus/plugins/tools/2geomtools/meshdistortion/meshdistortion.cpp \
            scribus/plugins/tools/2geomtools/meshdistortion/meshdistortiondialog.cpp \
            scribus/plugins/tools/2geomtools/pathalongpath/pathalongpath.cpp \
-           scribus/plugins/tools/2geomtools/pathalongpath/pathdialog.cpp
+           scribus/plugins/tools/2geomtools/pathalongpath/pathdialog.cpp \
+           scribus/canvasmode_importdata.cpp
 RESOURCES += scribus/plugins/scripter/python/sceditor/dockwidget_icons.qrc
 TRANSLATIONS += resources/translations/po/scribus.af.ts \
                 resources/translations/po/scribus.ar.ts \

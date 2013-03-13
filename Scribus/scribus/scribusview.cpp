@@ -77,7 +77,7 @@ for which a new license (GPL+exception) is in place.
 #include "canvasgesture.h"
 #include "canvasmode.h"
 #include "canvasmode_objimport.h"
-#include "canvasmode_imageimport.h"
+#include "canvasmode_importdata.h"
 #include "actionmanager.h"
 #include "commonstrings.h"
 #include "filewatcher.h"
@@ -164,6 +164,7 @@ ScribusView::ScribusView(QWidget* win, ScribusMainWindow* mw, ScribusDoc *doc) :
 	_isGlobalMode(true),
 	linkAfterDraw(false),
 	ImageAfterDraw(false),
+	TextAfterDraw(false),
 	m_vhRulerHW(17)
 {
 	setObjectName("s");
@@ -4356,15 +4357,25 @@ bool ScribusView::eventFilter(QObject *obj, QEvent *event)
 		}
 		if (ImageAfterDraw)
 		{
-			//user creates new frame using linking tool
 			PageItem * frame = Doc->m_Selection->itemAt(0);
-			requestMode(modeImportImage);
+			requestMode(modeImportData);
 			if (frame)
 			{
-				dynamic_cast<CanvasMode_ImageImport*>(canvasMode())->setImage(frame);
-				dynamic_cast<CanvasMode_ImageImport*>(canvasMode())->updateList();
+				dynamic_cast<CanvasMode_ImportData*>(canvasMode())->setImage(frame);
+				dynamic_cast<CanvasMode_ImportData*>(canvasMode())->updateList();
 			}
 			ImageAfterDraw = false;
+		}
+		else if (TextAfterDraw)
+		{
+			PageItem * frame = Doc->m_Selection->itemAt(0);
+			requestMode(modeImportData);
+			if (frame)
+			{
+				dynamic_cast<CanvasMode_ImportData*>(canvasMode())->setText(frame->asTextFrame());
+				dynamic_cast<CanvasMode_ImportData*>(canvasMode())->updateList();
+			}
+			TextAfterDraw = false;
 		}
 		return true;
 	}
@@ -4385,10 +4396,12 @@ bool ScribusView::eventFilter(QObject *obj, QEvent *event)
 		}
 		else
 			firstFrame = NULL;
-		if(Doc->appMode == modeImportImage && ImageAfterDraw)
+		if(Doc->appMode == modeImportData && (ImageAfterDraw || TextAfterDraw))
 		{
-			//switch to drawing new text frame
-			requestMode(modeDrawImage);
+			if(TextAfterDraw)
+				requestMode(modeDrawText);
+			else
+				requestMode(modeDrawImage);
 			m_canvasMode->mousePressEvent(m);
 		}
 		m_canvas->m_viewMode.m_MouseButtonPressed = true;

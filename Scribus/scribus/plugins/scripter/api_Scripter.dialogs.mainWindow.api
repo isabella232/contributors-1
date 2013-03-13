@@ -804,14 +804,6 @@
 */
 
 /**
-* Scripter.dialogs.mainWindow.slotGetContent2()
-*/
-
-/**
-* Scripter.dialogs.mainWindow.slotFileAppend()
-*/
-
-/**
 * Scripter.dialogs.mainWindow.removeRecent(fn)
 * fn is a QString
 */
@@ -837,10 +829,6 @@
 /**
 * Scripter.dialogs.mainWindow.pasteFromScrapbook(fn)
 * fn is a QString
-*/
-
-/**
-* Scripter.dialogs.mainWindow.importVectorFile()
 */
 
 /**

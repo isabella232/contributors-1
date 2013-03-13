@@ -631,6 +631,7 @@ public:
 	static QString MultipleDuplicate;
 	static QString Duplicate;
 	static QString Transform;
+	static QString ImportFile;
 	static QString ApplyTextStyle;
 	static QString RemoveTextStyle;
 	static QString Columns;

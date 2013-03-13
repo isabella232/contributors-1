@@ -154,6 +154,12 @@ void Prefs_ItemTools::restoreDefaults(struct ApplicationPrefs *prefsData)
 			onscreenResolutionLowRadioButton->setChecked(true);
 			break;
 	}
+	basepoint->setCheckedId(prefsData->itemToolPrefs.imageDefaultBasePoint);
+	imageSize->setChecked(!(prefsData->itemToolPrefs.imageDefaultSize & 1));
+	defaultSize->setChecked(prefsData->itemToolPrefs.imageDefaultSize & 1);
+	askOneClick->setChecked(prefsData->itemToolPrefs.imageDefaultSize & 2);
+	defaultWidth->setValue(prefsData->itemToolPrefs.imageDefaultWidth);
+	defaultHeight->setValue(prefsData->itemToolPrefs.imageDefaultHeight);
 
 	//Shape Tool
 	shapeFrameLineColorComboBox->initColorList(colorList, m_doc, prefsData->itemToolPrefs.shapeLineColor);
@@ -274,7 +280,10 @@ void Prefs_ItemTools::saveGuiToPrefs(struct ApplicationPrefs *prefsData) const
 	if (onscreenResolutionLowRadioButton->isChecked())
 		haRes = 2;
 	prefsData->itemToolPrefs.imageLowResType = haRes;
-
+	prefsData->itemToolPrefs.imageDefaultBasePoint = basepoint->checkedId();
+	prefsData->itemToolPrefs.imageDefaultSize = defaultSize->isChecked() + askOneClick->isChecked()*2 ;
+	prefsData->itemToolPrefs.imageDefaultHeight = defaultHeight->value() / unitRatio;
+	prefsData->itemToolPrefs.imageDefaultWidth = defaultWidth->value() / unitRatio;
 
 	//Shape tool
 	prefsData->itemToolPrefs.shapeLineColor = shapeFrameLineColorComboBox->currentText();

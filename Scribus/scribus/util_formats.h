@@ -31,6 +31,21 @@ bool SCRIBUS_API extensionIndicatesPattern(const QString &ext);
 bool SCRIBUS_API extensionIndicatesTIFF(const QString &ext);
 QString SCRIBUS_API getImageType(QString filename);
 
+
+// A struct for holding the Importer specific information.
+struct ImporterData {
+	QString     soFilePath;			// Path to the Importer
+	QString     fileFormatName;		// Name of the Importer
+	QStringList fileEndings;		// Array of filenames supported by the importer
+};
+
+// A Struct for holding the results of the File selection Dialog
+struct ImportSetup {
+	QStringList filename;			// What filename is to be loaded?
+	bool textOnly;					// Do we import as text only?
+	QString encoding;				// File encoding
+};
+
 class SCRIBUS_API FormatsManager
 {
 	public:
@@ -126,7 +141,15 @@ class SCRIBUS_API FormatsManager
 		
 		//! Returns in the form of "All Supported Formats (*.eps *.EPS *.epsf *.EPSF *.epsi *.EPSI);;EPS (*.eps *.EPS);;EPSI (*.epsf *.EPSF);;EPSI (*.epsi *.EPSI);;All Files (*)"
 		QString fileDialogFormatList(int type);
-		
+		QString fileDialogTextFormatList();
+		QString fileDialogVectorFormatList();
+
+		bool isVectorFile(QString);
+
+		QMap<QString, ImporterData*> getMap(){return importerMap;}
+		QList<ImporterData> getImporters(){return importers;}
+		QStringList getIlist(){return ilist;}
+
 	protected:
 		QMap<int, QString> m_fmtNames;
 		QMap<int, QStringList> m_fmtMimeTypes;
@@ -146,6 +169,20 @@ class SCRIBUS_API FormatsManager
 	 * instance().
 	 */
 	static FormatsManager* _instance;
+
+//we need some informations about importer and dll to know which text format can be use
+
+	QMap<QString, ImporterData*> importerMap; 	// QMap of the supported extensions to their relevant importers entry for easy access
+	QStringList ilist;							// List of supported importers, used with dialogs
+	QList<ImporterData> importers;				// Vector of the loaded importers
+
+	void loadImporterPlugins();					// Find the available plugins based on the environment, validate they load, and
+												// create quick lookup mappings.
+	void createMap();							// Create the importer Qmap.
+
+	bool DLLName(QString name, QString *ffName, QStringList *fileEndings);
+												// Loads the "DLL", validates the importer is good, populates the passed parameters with
+												// the plugin information.
 };
 
 #endif

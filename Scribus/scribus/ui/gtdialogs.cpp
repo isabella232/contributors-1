@@ -38,7 +38,6 @@ for which a new license (GPL+exception) is in place.
 #include <QPushButton>
 #include "commonstrings.h"
 #include "util_icon.h"
-#include "ui/gtfiledialog.h"
 
 extern QString DocDir;
 
@@ -114,44 +113,19 @@ gtImporterDialog::~gtImporterDialog()
 gtDialogs::gtDialogs()
 {
 	fdia = NULL;
-	fileName = "";
-	encoding = "";
 	importer = -1;
 	prefs = PrefsManager::instance()->prefsFile->getContext("gtDialogs");
-	pwd = QDir::currentPath();
 }
 
-bool gtDialogs::runFileDialog(const QString& filters, const QStringList& importers)
-{
-	bool accepted = false;
-	PrefsContext* dirs = PrefsManager::instance()->prefsFile->getContext("dirs");
-	QString dir = dirs->get("get_text", ".");
-	fdia = new gtFileDialog(filters, importers, dir);
-	
-	if (fdia->exec() == QDialog::Accepted)
-	{
-		fileName = fdia->selectedFile();
-		if (!fileName.isEmpty())
-			accepted = true;
-		encoding = fdia->encodingCombo->currentText();
-//		if (encoding == "UTF-16")
-//			encoding = "ISO-10646-UCS-2";
-		importer = fdia->importerCombo->currentIndex() - 1;
-		dirs->set("get_text", fileName.left(fileName.lastIndexOf("/")));
-	}
-	QDir::setCurrent(pwd);
-	return accepted;
-}
-
-bool gtDialogs::runImporterDialog(const QStringList& importers)
+bool gtDialogs::runImporterDialog(const QStringList& importers, QString filename)
 {
 	int curSel = prefs->getInt("curSel", 0);
 	QString extension = "";
-	QString shortName = fileName.right(fileName.length() - fileName.lastIndexOf("/") - 1);
+	QString shortName = filename.right(filename.length() - filename.lastIndexOf("/") - 1);
 	if (shortName.indexOf(".") == -1)
 		extension = ".no_extension";
 	else
-		extension = fileName.right(fileName.length() - fileName.lastIndexOf("."));
+		extension = filename.right(filename.length() - filename.lastIndexOf("."));
 	int extensionSel = prefs->getInt(extension, -1);
 	QString imp = prefs->get("remember"+extension, QString("false"));
 	QString res = "";
@@ -190,12 +164,12 @@ bool gtDialogs::runImporterDialog(const QStringList& importers)
 			{
 				importer = i;
 				prefs->set("curSel", static_cast<int>(i));
-				if (fileName.indexOf(".") != -1)
+				if (filename.indexOf(".") != -1)
 				{
 					if (shortName.indexOf(".") == -1)
 						fileExtension = ".no_extension";
 					else
-						fileExtension = fileName.right(fileName.length() - fileName.lastIndexOf("."));
+						fileExtension = filename.right(filename.length() - filename.lastIndexOf("."));
 					if (!fileExtension.isEmpty())
 					{
 						prefs->set(fileExtension, static_cast<int>(i));
@@ -210,27 +184,9 @@ bool gtDialogs::runImporterDialog(const QStringList& importers)
 	return ok;
 }
 
-const QString& gtDialogs::getFileName()
-{
-	return fileName;
-}
-
-const QString& gtDialogs::getEncoding()
-{
-	return encoding;
-}
-
 int gtDialogs::getImporter()
 {
 	return importer;
-}
-
-bool gtDialogs::importTextOnly()
-{
-	bool ret = false;
-	if (fdia)
-		ret = fdia->textOnlyCheckBox->isChecked();
-	return ret;
 }
 
 gtDialogs::~gtDialogs()

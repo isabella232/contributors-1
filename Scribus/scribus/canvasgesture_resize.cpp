@@ -268,7 +268,7 @@ void ResizeGesture::doResize(bool scaleContent)
 			double imgScX = (newBounds.width() - m_extraWidth) / divX * currItem->imageXScale();
 			double imgScY = (newBounds.height() - m_extraHeight) / divY * currItem->imageYScale();
 			// The aspect ratio has been fixed, so make the modification in the direction of the larger movement.
-			if (currItem->keepAspectRatio() && currItem->fitImageToFrame()) 
+			if (currItem->keepAspectRatio() && currItem->fitImageToFrame())
 			{
 				if (qAbs((newBounds.width() - m_extraWidth) - currItem->width()) > qAbs((newBounds.height() - m_extraHeight) - currItem->height()))
 					imgScY = imgScX;
@@ -305,10 +305,10 @@ void ResizeGesture::doResize(bool scaleContent)
 		}
 		// We do not want to scale the text of a linked frame
 		// as it would alter text in other frames of the string
-		else if((currItem->itemType() == PageItem::TextFrame) 
-				       && (currItem->nextInChain() == 0) 
-				       && (currItem->prevInChain() == 0) 
-				       && scaleContent)
+		else if((currItem->itemType() == PageItem::TextFrame)
+					   && (currItem->nextInChain() == 0)
+					   && (currItem->prevInChain() == 0)
+					   && scaleContent)
 		{
 			double divX = (currItem->width() != 0) ? currItem->width() : 1.0;
 			double divY = (currItem->height() != 0) ? currItem->height() : 1.0;
@@ -331,7 +331,7 @@ void ResizeGesture::doResize(bool scaleContent)
 #endif
 
 					// We need to scale the linespacing _only once_ per paragraph.
-					if((aa == 0) 
+					if((aa == 0)
 						|| ( SpecialChars::isBreak(currItem->itemText.itemText(aa - 1).at(0))))
 					{
 						ParagraphStyle ps(currItem->itemText.paragraphStyle(aa));
@@ -353,8 +353,8 @@ void ResizeGesture::doResize(bool scaleContent)
 		if (mm.m22() < 0)
 			dy *= -1;
 		currItem->moveBy(-dx, -dy, true);
-		currItem->setWidth(newBounds.width() / m_scaleX - m_extraWidth);
-		currItem->setHeight(newBounds.height() / m_scaleY - m_extraHeight);
+		currItem->setWidth(newBounds.width() / m_scaleX - m_extraWidth + currItem->lineWidth());
+		currItem->setHeight(newBounds.height() / m_scaleY - m_extraHeight + currItem->lineWidth());
 		if (mm.m11() < 0)
 			currItem->moveBy(-currItem->width(), 0);
 		if (mm.m22() < 0)

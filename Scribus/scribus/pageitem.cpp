@@ -4996,6 +4996,14 @@ void PageItem::restore(UndoState *state, bool isUndo)
 			restoreUniteItem(ss, isUndo);
 		else if (ss->contains("SPLITITEM"))
 			restoreSplitItem(ss, isUndo);
+		else if (ss->contains("CREATE_MESH_GRAD"))
+			restoreCreateMeshGrad(ss, isUndo);
+		else if (ss->contains("MOVE_MESH_GRAD"))
+			restoreMoveMeshGrad(ss, isUndo);
+		else if (ss->contains("RESET_MESH_GRAD"))
+			restoreResetMeshGrad(ss, isUndo);
+		else if (ss->contains("REMOVE_MESH_PATCH"))
+			restoreRemoveMeshPatch(ss, isUndo);
 		else if (ss->contains("MIRROR_PATH_H"))
 		{
 			bool editContour = m_Doc->nodeEdit.isContourLine;
@@ -5565,6 +5573,7 @@ void PageItem::restoreTransform(SimpleState *ss, bool isUndo)
 	}
 }
 
+
 void PageItem::restoreSnapToPatchGrid(SimpleState *state, bool isUndo)
 {
 	if (isUndo)
@@ -5573,7 +5582,6 @@ void PageItem::restoreSnapToPatchGrid(SimpleState *state, bool isUndo)
 		snapToPatchGrid = !state->getBool("OLD");
 	update();
 }
-
 
 void PageItem::restoreMaskType(SimpleState *state, bool isUndo)
 {
@@ -9082,7 +9090,7 @@ bool PageItem::loadImage(const QString& filename, const bool reload, const int g
 				}
 			}
 		}
-		
+
 		Pfile = fi.absoluteFilePath();
 		if (reload && pixm.imgInfo.PDSpathData.contains(clPath))
 		{
@@ -9423,7 +9431,7 @@ void PageItem::AdjustPictScale()
 {
 	if (itemType() != PageItem::ImageFrame)
 		return;
-	if (ScaleType)
+	if (ScaleType || !(doc()->prefsData().itemToolPrefs.imageDefaultSize &1))
 		return;
 	if (OrigW == 0 || OrigH == 0)
 		return;

@@ -424,7 +424,6 @@ bool PageItem_ImageFrame::createInfoGroup(QFrame *infoGroup, QGridLayout *infoGr
 
 void PageItem_ImageFrame::applicableActions(QStringList & actionList)
 {
-	actionList << "fileImportImage";
 	actionList << "itemConvertToTextFrame";
 	actionList << "itemImageIsVisible";
 	actionList << "itemPreviewFull";

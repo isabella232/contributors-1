@@ -5,11 +5,16 @@ a copyright and/or license notice that predates the release of Scribus 1.3.2
 for which a new license (GPL+exception) is in place.
 */
 
+#include <QDir>
 #include <QImageReader>
 #include <QMapIterator>
 #include <QObject>
 
 #include "commonstrings.h"
+#include "plugins/formatidlist.h"
+#include "loadsaveplugin.h"
+#include "pluginmanager.h"
+#include "scpaths.h"
 #include "util_formats.h"
 
 FormatsManager* FormatsManager::_instance = 0;
@@ -93,6 +98,7 @@ FormatsManager::FormatsManager()
 	m_qtSupportedImageFormats=QImageReader::supportedImageFormats();
 	m_supportedImageFormats=m_qtSupportedImageFormats;
 	updateSupportedImageFormats(m_supportedImageFormats);
+	loadImporterPlugins();
 }
 
 FormatsManager::~FormatsManager()
@@ -214,7 +220,7 @@ QString FormatsManager::extensionListForFormat(int type, int listType)
 
 void FormatsManager::fileTypeStrings(int type, QString& formatList, QString& formatText, QString& formatAll, bool lowerCaseOnly)
 {
-	QString fmtList = QObject::tr("All Supported Formats")+" (";
+	QString fmtList = QObject::tr("All Supported Image Formats")+" (";
 	QString fmtText;
 	QMapIterator<int, QStringList> it(m_fmts);
 	bool first=true;
@@ -351,4 +357,215 @@ QString getImageType(QString filename)
 		}
 	}
 	return ret;
+}
+
+// Find the available plugins based on the environment, validate they load, and
+// create quick lookup mappings.
+void FormatsManager::loadImporterPlugins()
+{
+	// Get the path to the plugins
+	QString gtdir = ScPaths::instance().pluginDir();
+	// Append the gettext path to the plugin
+	gtdir += "gettext";
+	// Set the search parameteer for the platform specific extension for the plugins ( DLL, so, etc. )
+	QString libPattern = QString("*.%1*").arg(PluginManager::platformDllExtension());
+	// Search for matches.
+	QDir d(gtdir, libPattern, QDir::Name, (QDir::Filter) PluginManager::platformDllSearchFlags());
+
+	// Initialize a structure for the importers found
+	struct ImporterData ida;
+	ida.fileFormatName = "";
+
+	// Check and see if the directory existed and if the count of files matching is greater than 0.
+	if ((d.exists()) && (d.count() != 0))
+	{
+		// loop through the entries.
+		for (uint dc = 0; dc < d.count(); ++dc)
+		{
+			// Verify the Plugin will load. If it does, collect the info on the plugin ( Name, extension, format, etc )
+			if (DLLName(d[dc], &ida.fileFormatName, &ida.fileEndings))
+			{
+				// no plugin's "format name" marks "don't load plug"
+				if (ida.fileFormatName.isNull())
+					continue;
+				// Store the path to the plugin.
+				ida.soFilePath = d[dc];
+				// If the plugin path does not begin with /, prepend a /.
+				if (ida.soFilePath.left(1) != "/")
+					ida.soFilePath = "/" + ida.soFilePath;
+				// Add the plugin data to the end of the importer's vector.
+				importers.push_back(ida);
+			}	// if (DLLName(d[dc], &ida.fileFormatName, &ida.fileEndings))
+		}  // for (uint dc = 0; dc < d.count(); ++dc)
+	}  // if ((d.exists()) && (d.count() != 0))
+	// Create the Importer Extension to Plugin data qmap.
+	createMap();
+	// Populate ilist with the file importer names.
+	for (uint i = 0;  i < importers.size(); ++i)
+		ilist.append(importers[i].fileFormatName);
+}  // void gtGetText::loadImporterPlugins()
+
+// Create the importer Qmap.
+void FormatsManager::createMap()
+{
+	// Loop through the importers Vector
+	for (uint i = 0; i < importers.size(); ++i)
+	{
+		// Loop through each file extension the importer uses/importers and create an individual
+		// Qmap entry for it.
+		for (int j = 0; j < importers[i].fileEndings.count(); ++j)
+				importerMap.insert(importers[i].fileEndings[j], &importers[i]);
+	}  // for (uint i = 0; i < importers.size(); ++i)
+}  // void gtGetText::createMap()
+
+QString FormatsManager::fileDialogTextFormatList()
+{
+	// Initialize a filters list.
+	QString filters = "";
+	// Create a string for the "All supported files filter". Start with the label then loop through
+	// the importers vector and add all of the file extensions supported.
+	QString allSupported = QObject::tr("All Supported Text Formats") + " (";
+	// Loop through the importers vector.
+	for (uint i = 0; i < importers.size(); ++i)
+	{
+		// If there are any file extnsions declared by the importer
+		if (importers[i].fileEndings.count() != 0)
+		{
+			// Add the importer name to the filters list
+			filters += importers[i].fileFormatName + " (";
+			// Loop though the extensions supported by the importer
+			for (int j = 0; j < importers[i].fileEndings.count(); ++j)
+			{
+				// Add the extension to both the filter and allSupported strings
+				filters += "*." + importers[i].fileEndings[j] + " ";
+				allSupported += "*." + importers[i].fileEndings[j] + " ";
+			}  // for (int j = 0; j < importers[i].fileEndings.count(); ++j)
+			// Trim the Qstring
+			filters = filters.trimmed();
+			// Append "entry of entry" information to the end of the filter.
+			filters += ");;";
+		}  // if (importers[i].fileEndings.count() != 0)
+	}  // for (uint i = 0; i < importers.size(); ++i)
+	// Trim the allSupported QString and append "end of entry" data to the end of it.
+	allSupported = allSupported.trimmed();
+	allSupported += ");;";
+	// Prepend allSupported to the filters Qstring.
+	filters = allSupported + filters;
+	// Add an "all files" entry to the end of the filters QString
+	filters += QObject::tr("All Files (*)");
+	return filters;
+}
+
+// Loads the "DLL", validates the importer is good, populates the passed parameters with
+// the plugin information.
+bool FormatsManager::DLLName(QString name, QString *ffName, QStringList *fEndings)
+{
+	// Pointer to the plugin, once loaded
+	void* gtplugin;
+	// typedef of Qstring to map the importer name (FileFormatName) method results to.
+	typedef QString (*sdem0)();
+	// typedef of QStringList to map the file extensions supported method results to.
+	typedef QStringList (*sdem1)();
+	// The actual importer name object
+	sdem0 fp_FileFormatName;
+	// The actual extensions supported object
+	sdem1 fp_FileExtensions;
+	// Initialise the plugin file path ( with filename )
+	QString pluginFilePath = QString("%1/gettext/%2").arg(ScPaths::instance().pluginDir()).arg(name);
+	// Attempt to load the plugin.
+	gtplugin = PluginManager::loadDLL(pluginFilePath);
+	// if gtplugin is NULL we were unable to load the plugin. Return an error and exit the method.
+	if (!gtplugin)
+	{
+		qWarning("Failed to load plugin %s", pluginFilePath.toAscii().constData());
+		return false;
+	}
+	// Attempt to resolve the plugin symbol to the importer name (FileFormatName)
+	fp_FileFormatName = (sdem0) PluginManager::resolveSym( gtplugin, "FileFormatName");
+	// if fp_FileFormatName is NULL, we could not find the FileFormatName symbol. The plugin is incomplete.
+	// Report an error, unload the plugin, and exit the method.
+	if (!fp_FileFormatName)
+	{
+		qWarning("Failed to get FileFormatName() from %s", pluginFilePath.toAscii().constData());
+		PluginManager::unloadDLL(gtplugin);
+		return false;
+	}
+	// Attempt to resolve the plugin symbol to the list of supported file extensions.
+	fp_FileExtensions = (sdem1) PluginManager::resolveSym( gtplugin, "FileExtensions");
+	// if fp_FileExtensions is NULL, we could not find the FileExtensions symbol. The plugin is incomplete.
+	// Report an error, unload the plugin, and exit the method.
+	if (!fp_FileExtensions)
+	{
+		qWarning("Failed to get FileExtensions() from %s", pluginFilePath.toAscii().constData());
+		PluginManager::unloadDLL(gtplugin);
+		return false;
+	}
+	// Set the format name based on the resolved method.
+	*ffName = (*fp_FileFormatName)();
+	// Set the extensions list based on the resolved method.
+	*fEndings = (*fp_FileExtensions)();
+	// Unload the plugin
+	PluginManager::unloadDLL(gtplugin);
+	// Successfully return!
+	return true;
+}  // bool gtGetText::DLLName(QString name, QString *ffName, QStringList *fEndings)
+
+
+QString FormatsManager::fileDialogVectorFormatList()
+{
+	QStringList formats;
+	QString allFormats = QObject::tr("All Supported Vector Formats")+" (";
+	int fmtCode = FORMATID_FIRSTUSER;
+	const FileFormat *fmt = LoadSavePlugin::getFormatById(fmtCode);
+	while (fmt != 0)
+	{
+		if (fmt->load)
+		{
+			formats.append(fmt->filter);
+			int an = fmt->filter.indexOf("(");
+			int en = fmt->filter.indexOf(")");
+			while (an != -1)
+			{
+				allFormats += fmt->filter.mid(an+1, en-an-1)+" ";
+				an = fmt->filter.indexOf("(", en);
+				en = fmt->filter.indexOf(")", an);
+			}
+		}
+		fmtCode++;
+		fmt = LoadSavePlugin::getFormatById(fmtCode);
+	}
+	allFormats += "*.sce *.SCE);;";
+	formats.append("Scribus Objects (*.sce *.SCE)");
+	qSort(formats);
+	allFormats += formats.join(";;");
+	return allFormats;
+}
+
+bool FormatsManager::isVectorFile(QString fileName)
+{
+	QStringList formats;
+	QFileInfo fi(fileName);
+	int fmtCode = FORMATID_FIRSTUSER;
+	const FileFormat *fmt = LoadSavePlugin::getFormatById(fmtCode);
+	while (fmt != 0)
+	{
+		if (fmt->load)
+		{
+			formats.append(fmt->filter);
+			int an = fmt->filter.indexOf("(");
+			int en = fmt->filter.indexOf(")");
+			while (an != -1)
+			{
+				if(fmt->filter.mid(an+1, en-an-1).toLower().contains(fi.suffix().toLower()))
+					return true;
+				an = fmt->filter.indexOf("(", en);
+				en = fmt->filter.indexOf(")", an);
+			}
+		}
+		fmtCode++;
+		fmt = LoadSavePlugin::getFormatById(fmtCode);
+	}
+	if(QString("*.sce *.SCE").toLower().contains(fi.suffix().toLower()))
+					return true;
+	return false;
 }

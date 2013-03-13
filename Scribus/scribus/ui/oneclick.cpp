@@ -23,7 +23,7 @@ for which a new license (GPL+exception) is in place.
 #include "units.h"
 #include "commonstrings.h"
 
-OneClick::OneClick( QWidget* parent, QString titel, int unitIndex, double defW, double defH, bool remember, int origin, int mode ) : QDialog( parent )
+OneClick::OneClick( QWidget* parent, QString titel, int unitIndex, double defW, double defH, int origin, int mode ) : QDialog( parent )
 {
 	double m_unitRatio = unitGetRatioFromIndex(unitIndex);
 	QString m_suffix = unitGetSuffixFromIndex(unitIndex);
@@ -97,11 +97,6 @@ OneClick::OneClick( QWidget* parent, QString titel, int unitIndex, double defW, 
 		SizeGroupLayout->addWidget( linkSize, 0, 2, 2, 1 );
 	}
 	editLayout->addWidget( SizeGroup, 0, 1 );
-
-	checkRemember = new QCheckBox(this);
-	checkRemember->setText( tr("Remember Values"));
-	checkRemember->setChecked(remember);
-	editLayout->addWidget( checkRemember, 1, 0, 1, 2 );
 
 	queryLayout->addLayout( editLayout );
 	okCancelLayout = new QHBoxLayout;

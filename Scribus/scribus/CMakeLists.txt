@@ -84,7 +84,6 @@ SET(SCRIBUS_UI_SRC
   ui/gradientaddedit.ui
   ui/gradienteditor.ui
   ui/gradientvectorbase.ui
-  ui/gtfiledialog.ui
   ui/guidemanager.ui
   ui/insertaframe.ui
   ui/inserttablecolumnsdialog.ui
@@ -316,7 +315,6 @@ SET(SCRIBUS_MOC_CLASSES
   ui/gradientvectordialog.h
   ui/gradientpreview.h
   ui/gtdialogs.h
-  ui/gtfiledialog.h
   ui/guidemanager.h
   ui/helpbrowser.h
   ui/hruler.h
@@ -520,7 +518,7 @@ SET(SCRIBUS_SOURCES
   canvasmode_drawfreehand.cpp
   canvasmode_eyedropper.cpp
   canvasmode_framelinks.cpp
-  canvasmode_imageimport.cpp
+  canvasmode_importdata.cpp
   canvasmode_edit.cpp
   canvasmode_editarc.cpp
   canvasmode_editgradient.cpp
@@ -761,7 +759,6 @@ SET(SCRIBUS_SOURCES
   ui/gradientvectordialog.cpp
   ui/gradientpreview.cpp
   ui/gtdialogs.cpp
-  ui/gtfiledialog.cpp
   ui/guidemanager.cpp
   ui/helpbrowser.cpp
   ui/hruler.cpp

@@ -4585,6 +4585,7 @@ PageItem* Scribus150Format::pasteItem(ScribusDoc *doc, ScXmlStreamAttributes& at
 		break;
 	}
 
+	UndoManager::instance()->setUndoEnabled(false);
 	currItem->FrameType = attrs.valueAsInt("FRTYPE", 0);
 	int startArrowIndex = attrs.valueAsInt("startArrowIndex", 0);
 	if ((startArrowIndex < 0) || (startArrowIndex > static_cast<int>(doc->arrowStyles().size())))
@@ -5213,6 +5214,7 @@ PageItem* Scribus150Format::pasteItem(ScribusDoc *doc, ScXmlStreamAttributes& at
 
 	//currItem->setRedrawBounding();
 	//currItem->OwnPage = view->OnPage(currItem);
+	UndoManager::instance()->setUndoEnabled(true);
 	return currItem;
 }
 

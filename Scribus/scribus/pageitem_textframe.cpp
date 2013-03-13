@@ -5214,14 +5214,13 @@ void PageItem_TextFrame::togleEditModeActions()
 
 void PageItem_TextFrame::applicableActions(QStringList & actionList)
 {
+	actionList << "fileImport";
 	actionList << "insertMarkVariableText";
 	if (!m_Doc->masterPageMode())
 		actionList << "insertMarkAnchor";
 	//notes frames are not simply text frames
 	if (isNoteFrame())
 		return;
-	actionList << "fileImportText";
-	actionList << "fileImportAppendText";
 	actionList << "toolsEditWithStoryEditor";
 	actionList << "insertSampleText";
 	actionList << "itemPDFIsAnnotation";

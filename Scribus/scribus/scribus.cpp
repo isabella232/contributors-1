@@ -86,7 +86,7 @@ for which a new license (GPL+exception) is in place.
 
 #include "actionmanager.h"
 #include "canvasmode.h"
-#include "canvasmode_imageimport.h"
+#include "canvasmode_importdata.h"
 #include "commonstrings.h"
 #include "desaxe/digester.h"
 #include "desaxe/saxXML.h"
@@ -738,12 +738,7 @@ void ScribusMainWindow::initMenuBar()
 	scrMenuMgr->addMenuItem(scrActions["fileRevert"], "File", false);
 	scrMenuMgr->addMenuItem(scrActions["fileCollect"], "File", false);
 	scrMenuMgr->addMenuSeparator("File");
-	scrMenuMgr->createMenu("FileImport", tr("&Import"), "File");
-	scrMenuMgr->addMenuItem(scrActions["fileImportText"], "FileImport", false);
-// 	scrMenuMgr->addMenuItem(scrActions["fileImportText2"], "FileImport", false);
-	scrMenuMgr->addMenuItem(scrActions["fileImportAppendText"], "FileImport", false);
-	scrMenuMgr->addMenuItem(scrActions["fileImportImage"], "FileImport", false);
-	scrMenuMgr->addMenuItem(scrActions["fileImportVector"], "FileImport", true);
+	scrMenuMgr->addMenuItem(scrActions["fileImport"], "File", true);
 
 	scrMenuMgr->createMenu("FileExport", tr("&Export"), "File");
 	scrMenuMgr->addMenuItem(scrActions["fileExportText"], "FileExport", false);
@@ -1476,7 +1471,7 @@ void ScribusMainWindow::keyPressEvent(QKeyEvent *k)
 				case modeEditWeldPoint:
 				case modeEyeDropper:
 				case modeImportObject:
-				case modeImportImage:
+				case modeImportData:
 				case modePanning:
 					view->requestMode(modeNormal);
 					break;
@@ -2660,7 +2655,6 @@ void ScribusMainWindow::HaveNewDoc()
 	connect(view, SIGNAL(CutItem()), this, SLOT(slotEditCut()), Qt::UniqueConnection);
 	connect(view, SIGNAL(LoadPic()), this, SLOT(slotGetContent()), Qt::UniqueConnection);
 	connect(view, SIGNAL(StatusPic()), this, SLOT(StatusPic()), Qt::UniqueConnection);
-	connect(view, SIGNAL(AppendText()), this, SLOT(slotFileAppend()), Qt::UniqueConnection);
 	connect(view, SIGNAL(AnnotProps()), this, SLOT(ModifyAnnot()), Qt::UniqueConnection);
 	connect(view, SIGNAL(LoadElem(QString, double ,double, bool, bool, ScribusDoc *, ScribusView*)), this, SLOT(slotElemRead(QString, double, double, bool, bool, ScribusDoc *, ScribusView*)), Qt::UniqueConnection);
 	connect(view, SIGNAL(AddBM(PageItem *)), this, SLOT(AddBookMark(PageItem *)), Qt::UniqueConnection);
@@ -2807,10 +2801,6 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 	switch (SelectedType)
 	{
 	case -1: // None
-		scrActions["fileImportText"]->setEnabled(false);
-		scrActions["fileImportText2"]->setEnabled(false);
-		scrActions["fileImportImage"]->setEnabled(false);
-		scrActions["fileImportAppendText"]->setEnabled(false);
 		scrActions["fileExportText"]->setEnabled(false);
 		scrActions["itemDuplicate"]->setEnabled(false);
 		scrActions["itemMulDuplicate"]->setEnabled(false);
@@ -2867,10 +2857,6 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 		propertiesPalette->setGradientEditMode(false);
 		break;
 	case PageItem::ImageFrame: //Image Frame
-		scrActions["fileImportAppendText"]->setEnabled(false);
-		scrActions["fileImportText"]->setEnabled(false);
-		scrActions["fileImportText2"]->setEnabled(false);
-		scrActions["fileImportImage"]->setEnabled(true);
 		scrActions["editCut"]->setEnabled(true);
 		scrActions["editCopy"]->setEnabled(true);
 		scrMenuMgr->setMenuEnabled("EditContents", true);
@@ -2920,10 +2906,6 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 
 		break;
 	case PageItem::TextFrame: //Text Frame
-		scrActions["fileImportText"]->setEnabled(true);
-		scrActions["fileImportText2"]->setEnabled(true);
-		scrActions["fileImportImage"]->setEnabled(false);
-		scrActions["fileImportAppendText"]->setEnabled(true);
 		scrActions["fileExportText"]->setEnabled(true);
 		scrActions["editCut"]->setEnabled(true);
 		scrActions["editCopy"]->setEnabled(true);
@@ -3039,10 +3021,6 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 		}
 		break;
 	case PageItem::PathText: //Path Text
-		scrActions["fileImportText"]->setEnabled(true);
-		scrActions["fileImportText2"]->setEnabled(true);
-		scrActions["fileImportImage"]->setEnabled(false);
-		scrActions["fileImportAppendText"]->setEnabled(true);
 		scrActions["fileExportText"]->setEnabled(true);
 		scrActions["editCut"]->setEnabled(true);
 		scrActions["editCopy"]->setEnabled(true);
@@ -3104,10 +3082,6 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 		}
 		break;
 	default:
-		scrActions["fileImportText"]->setEnabled(false);
-		scrActions["fileImportText2"]->setEnabled(false);
-		scrActions["fileImportImage"]->setEnabled(false);
-		scrActions["fileImportAppendText"]->setEnabled(false);
 		scrActions["fileExportText"]->setEnabled(false);
 		scrActions["editCut"]->setEnabled(true);
 		scrActions["editCopy"]->setEnabled(true);
@@ -3636,78 +3610,6 @@ void ScribusMainWindow::doPasteRecent(QString data)
 	}
 }
 
-void ScribusMainWindow::importVectorFile()
-{
-	QString fileName = "";
-	QStringList formats;
-	QString allFormats = tr("All Supported Formats")+" (";
-	int fmtCode = FORMATID_FIRSTUSER;
-	const FileFormat *fmt = LoadSavePlugin::getFormatById(fmtCode);
-	while (fmt != 0)
-	{
-		if (fmt->load)
-		{
-			formats.append(fmt->filter);
-			int an = fmt->filter.indexOf("(");
-			int en = fmt->filter.indexOf(")");
-			while (an != -1)
-			{
-				allFormats += fmt->filter.mid(an+1, en-an-1)+" ";
-				an = fmt->filter.indexOf("(", en);
-				en = fmt->filter.indexOf(")", an);
-			}
-		}
-		fmtCode++;
-		fmt = LoadSavePlugin::getFormatById(fmtCode);
-	}
-	allFormats += "*.sce *.SCE);;";
-	formats.append("Scribus Objects (*.sce *.SCE)");
-	qSort(formats);
-	allFormats += formats.join(";;");
-	PrefsContext* dirs = PrefsManager::instance()->prefsFile->getContext("dirs");
-	QString wdir = dirs->get("pastefile", ".");
-	CustomFDialog dia(this, wdir, tr("Open"), allFormats, fdExistingFiles);
-	if (dia.exec() == QDialog::Accepted)
-		fileName = dia.selectedFile();
-	else
-		return;
-	if (!fileName.isEmpty())
-	{
-		PrefsManager::instance()->prefsFile->getContext("dirs")->set("pastefile", fileName.left(fileName.lastIndexOf("/")));
-		QFileInfo fi(fileName);
-		QString suffix = fi.suffix().toLower();
-		if ((suffix == "sce") || (suffix == "shape"))
-		{
-			QList<QUrl> urls;
-			QMimeData* md = new QMimeData();
-			urls.append( QUrl::fromLocalFile(fileName) );
-			md->setUrls(urls);
-			QDrag* dr = new QDrag(this);
-			dr->setMimeData(md);
-			const QPixmap& dragCursor = loadIcon("DragPix.xpm");
-			dr->setPixmap(dragCursor);
-			dr->exec();
-		}
-		else
-		{
-			FileLoader *fileLoader = new FileLoader(fileName);
-			int testResult = fileLoader->testFile();
-			delete fileLoader;
-			if ((testResult != -1) && (testResult >= FORMATID_FIRSTUSER))
-			{
-				const FileFormat * fmt = LoadSavePlugin::getFormatById(testResult);
-				if( fmt )
-				{
-					doc->dontResize = true;
-					fmt->loadFile(fileName, LoadSavePlugin::lfUseCurrentPage|LoadSavePlugin::lfInteractive);
-					doc->dontResize = false;
-				}
-			}
-		}
-		requestUpdate(reqColorsUpdate | reqSymbolsUpdate | reqLineStylesUpdate | reqTextStylesUpdate);
-	}
-}
-
 void ScribusMainWindow::rebuildLayersList()
 {
 	if (HaveDoc)
@@ -3799,8 +3701,6 @@ bool ScribusMainWindow::slotPageImport()
 	bool ret = false;
 	MergeDoc *dia = new MergeDoc(this, false, doc->DocPages.count(), doc->currentPage()->pageNr() + 1);
 	UndoTransaction* activeTransaction = NULL;
-	if(UndoManager::undoEnabled())
-		activeTransaction = new UndoTransaction(undoManager->beginTransaction(Um::ImportPage, Um::IGroup, Um::ImportPage, 0, Um::ILock));
 
 	if (dia->exec())
 	{
@@ -4378,87 +4278,71 @@ bool ScribusMainWindow::postLoadDoc()
 // do with file->open for a LONG time. It's used for get text / get picture.
 void ScribusMainWindow::slotGetContent()
 {
-	if (doc->m_Selection->count() != 0)
-	{
-		PageItem *currItem = doc->m_Selection->itemAt(0);
-		if (currItem->itemType() == PageItem::ImageFrame)
-		{
-			QString formatD(FormatsManager::instance()->fileDialogFormatList(FormatsManager::IMAGESIMGFRAME));
-
-			QString docDir = ".";
-			QString prefsDocDir=prefsManager->documentDir();
-			if (!prefsDocDir.isEmpty())
-				docDir = prefsManager->prefsFile->getContext("dirs")->get("images", prefsDocDir);
-			else
-				docDir = prefsManager->prefsFile->getContext("dirs")->get("images", ".");
-
-			QStringList fileNames;
-			fileNames.clear();
-			CustomFDialog *dia = new CustomFDialog(qApp->activeWindow(), docDir, tr("Open"), formatD, fdShowPreview | fdExistingFilesI);
-			if (dia->exec() == QDialog::Accepted)
-				fileNames = dia->fileDialog->selectedFiles();
-			delete dia;
-			//QStringList fileNames = CFileDialog( docDir, tr("Open"), formatD, "", fdShowPreview | fdExistingFiles);
-			if (!fileNames.isEmpty())
-			{
-				prefsManager->prefsFile->getContext("dirs")->set("images", fileNames[0].left(fileNames[0].lastIndexOf("/")));
-				view->requestMode(modeImportImage);
-				dynamic_cast<CanvasMode_ImageImport*>(view->canvasMode())->setImageList(fileNames);
-			}
-		}
-		else if (currItem->asTextFrame())
-		{
-			gtGetText* gt = new gtGetText(doc);
-			ImportSetup impsetup=gt->run();
-			if (impsetup.runDialog)
-			{
-				if (currItem->itemText.length() != 0)
-				{
-					int t = QMessageBox::warning(this, CommonStrings::trWarning, tr("Do you really want to clear all your text?"), QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-					if (t == QMessageBox::No)
-						return;
-				}
-				gt->launchImporter(impsetup.importer, impsetup.filename, impsetup.textOnly, impsetup.encoding, false);
-			}
-			delete gt;
-			if (doc->docHyphenator->AutoCheck)
-				doc->docHyphenator->slotHyphenate(currItem);
-			for (int a = 0; a < doc->Items->count(); ++a)
-			{
-				if (doc->Items->at(a)->isBookmark)
-					bookmarkPalette->BView->ChangeText(doc->Items->at(a));
-			}
-			if (!impsetup.textOnly)
-				doc->flag_NumUpdateRequest = true;
-			view->DrawNew();
-			slotDocCh();
-			styleManager->setDoc(doc);
-			marksManager->setDoc(doc);
-			nsEditor->setDoc(doc);
-		}
-	}
-}
-
-void ScribusMainWindow::slotGetContent2() // kk2006
-{
-	if (doc->m_Selection->count() == 0)
-		return; // nothing to do, no selection
-
+	int flags = fdExistingFilesI;
+	QString docDir = ".";
+	ImportSetup impsetup;
+	QString allFormats = "";
+	QString formatD = "";
 	PageItem *currItem = doc->m_Selection->itemAt(0);
-
-	if (!currItem->asTextFrame())
-		return; // not a text frame
-
-	ScGTPluginManager::instance()->run();
-	if (doc->docHyphenator->AutoCheck)
-		doc->docHyphenator->slotHyphenate(currItem);
-	for (int a = 0; a < doc->Items->count(); ++a)
+	if(!currItem)
 	{
-		if (doc->Items->at(a)->isBookmark)
-			bookmarkPalette->BView->ChangeText(doc->Items->at(a));
+		formatD =  FormatsManager::instance()->fileDialogVectorFormatList();
+		PrefsContext* dirs = prefsManager->prefsFile->getContext("dirs");
+		docDir = dirs->get("pastefile", ".");
+		allFormats +=  " " + formatD.mid(formatD.indexOf("(")+1,formatD.indexOf(")")-(formatD.indexOf("(")+1));
 	}
-	view->DrawNew();
-	slotDocCh();
+	if (!currItem || currItem->itemType() == PageItem::ImageFrame)
+	{
+		flags |= fdShowPreview;
+		QString formatI = FormatsManager::instance()->fileDialogFormatList(FormatsManager::IMAGESIMGFRAME);
+		allFormats +=  " " + formatI.mid(formatI.indexOf("(")+1,formatI.indexOf(")")-(formatI.indexOf("(")+1));
+		if(formatD.length()!=0)
+			formatD = formatD.left(formatD.lastIndexOf(";") +1);
+		formatD +=formatI;
+		QString prefsDocDir=prefsManager->documentDir();
+		if (!prefsDocDir.isEmpty())
+			docDir = prefsManager->prefsFile->getContext("dirs")->get("images", prefsDocDir);
+		else
+			docDir = prefsManager->prefsFile->getContext("dirs")->get("images", ".");
+	}
+	if (!currItem || currItem->asTextFrame())
+	{
+		flags |= fdShowCodecs;
+		QString formatT = FormatsManager::instance()->fileDialogTextFormatList();
+		allFormats +=  " " + formatT.mid(formatT.indexOf("(")+1,formatT.indexOf(")")-(formatT.indexOf("(")+1));
+		if(formatD.length()!=0)
+			formatD = formatD.left(formatD.lastIndexOf(";") +1);
+		formatD += formatT;
+	}
+	formatD = tr("All Supported Formats") + "(" + allFormats + ");;" + formatD;
+	CustomFDialog *dia = new CustomFDialog(qApp->activeWindow(), docDir, tr("Open"), formatD, flags );
+	if (dia->exec() == QDialog::Accepted)
+		impsetup.filename = dia->fileDialog->selectedFiles();
+
+	if(flags & fdShowCodecs)
+	{
+		impsetup.encoding=dia->TxCodeM->currentText();
+		impsetup.textOnly=dia->TextOnly->isChecked();
+	}
+	else
+	{
+		QString localEn = QTextCodec::codecForLocale()->name();
+		if (localEn == "ISO-10646-UCS-2")
+			localEn = "UTF-16";
+		impsetup.encoding = localEn;
+		impsetup.textOnly = false;
+	}
+
+	if (!impsetup.filename.isEmpty())
+	{
+		if (currItem && currItem->itemType() == PageItem::ImageFrame)
+			prefsManager->prefsFile->getContext("dirs")->set("images", impsetup.filename.first().left(impsetup.filename.first().lastIndexOf("/")));
+		if(!currItem)
+			prefsManager->prefsFile->getContext("dirs")->set("pastefile", impsetup.filename.first().left(impsetup.filename.first().lastIndexOf("/")));
+		view->requestMode(modeImportData);
+		dynamic_cast<CanvasMode_ImportData*>(view->canvasMode())->setInformation(impsetup);
+	}
+	delete dia;
 }
 
 void ScribusMainWindow::slotGetClipboardImage()
@@ -4568,25 +4452,6 @@ void ScribusMainWindow::toogleInlineState()
 				scrActions["itemToggleInlineImage"]->setChecked(currItem->isImageInline());
 			}
 		}
-	}
-}
-
-void ScribusMainWindow::slotFileAppend()
-{
-	if (doc->m_Selection->count() != 0)
-	{
-		gtGetText* gt = new gtGetText(doc);
-		ImportSetup impsetup=gt->run();
-		if (impsetup.runDialog)
-		{
-			gt->launchImporter(impsetup.importer, impsetup.filename, impsetup.textOnly, impsetup.encoding, true);
-		}
-		delete gt;
-		//CB Hyphenating now emits doc changed, plus we change lang as appropriate
-		if (doc->docHyphenator->AutoCheck)
-			doc->itemSelection_DoHyphenate();
-		view->DrawNew();
-		//slotDocCh();
 	}
 }
 
@@ -4829,10 +4694,7 @@ bool ScribusMainWindow::DoFileClose()
 		scrActions["fileExportAsPDF"]->setEnabled(false);
 		scrActions["fileExportText"]->setEnabled(false);
 		scrActions["fileExportAsEPS"]->setEnabled(false);
-		scrActions["fileImportText"]->setEnabled(false);
-		scrActions["fileImportText2"]->setEnabled(false);
-		scrActions["fileImportImage"]->setEnabled(false);
-		scrActions["fileImportAppendText"]->setEnabled(false);
+		scrActions["fileImport"]->setEnabled(false);
 		//		scrMenuMgr->setMenuEnabled("Page", false);
 		scrActions["pageInsert"]->setEnabled(false);
 		scrActions["pageImport"]->setEnabled(false);
@@ -9254,7 +9116,21 @@ void ScribusMainWindow::restore(UndoState* state, bool isUndo)
 			restoreAddPage(ss, isUndo);
 		else if (ss->contains("DELETE_PAGE"))
 			restoreDeletePage(ss, isUndo);
+		else if (ss->contains("FILE_LOADER"))
+			restoreFileLoader(ss, isUndo);
 	}
+}
+
+void ScribusMainWindow::restoreFileLoader(SimpleState *state, bool isUndo)
+{
+	if(isUndo)
+	{
+		if(doc->appMode != modeImportData)
+			view->requestMode(modeImportData);
+		dynamic_cast<CanvasMode_ImportData*>(view->canvasMode())->insertImage(0,state->get("name"));
+	}
+	else
+		dynamic_cast<CanvasMode_ImportData*>(view->canvasMode())->deleteImage(state->get("name"));
 }
 
 void ScribusMainWindow::restoreDeletePage(SimpleState *state, bool isUndo)

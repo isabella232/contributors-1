@@ -34,7 +34,7 @@
 #include "canvasmode_editweldpoint.h"
 #include "canvasmode_eyedropper.h"
 #include "canvasmode_framelinks.h"
-#include "canvasmode_imageimport.h"
+#include "canvasmode_importdata.h"
 #include "canvasmode_magnifier.h"
 #include "canvasmode_measurements.h"
 #include "canvasmode_nodeedit.h"
@@ -177,8 +177,8 @@ CanvasMode* CanvasMode::createForAppMode(ScribusView* view, int appMode)
 		case modeUnlinkFrames:
 			result = new CanvasMode_FrameLinks(view);
 			break;
-		case modeImportImage:
-			result = new CanvasMode_ImageImport(view);
+		case modeImportData:
+			result = new CanvasMode_ImportData(view);
 			break;
 		case modeMagnifier:
 			result = new CanvasMode_Magnifier(view);

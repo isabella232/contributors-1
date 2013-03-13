@@ -5582,8 +5582,7 @@ int ScribusDoc::itemAddUserFrame(InsertAFrameData &iafData)
 				if (!iafData.source.isEmpty() && prevItem == NULL && QFile::exists(iafData.source))
 				{
 					gtGetText* gt = new gtGetText(this);
-					if (iafData.impsetup.runDialog)
-						gt->launchImporter(iafData.impsetup.importer, iafData.impsetup.filename, iafData.impsetup.textOnly, iafData.impsetup.encoding, true, currItem);
+					gt->launchImporter(-1, iafData.impsetup.filename.at(0), iafData.impsetup.textOnly, iafData.impsetup.encoding, true, currItem);
 					delete gt;
 				}
 				prevItem=currItem;

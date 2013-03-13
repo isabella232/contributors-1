@@ -24,6 +24,7 @@ for which a new license (GPL+exception) is in place.
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QFrame>
@@ -35,6 +36,7 @@ for which a new license (GPL+exception) is in place.
 #include <QPixmap>
 #include <QPushButton>
 #include <QTextCodec>
+#include <Qt>
 #include <QVBoxLayout>
 
 #include "customfdialog.h"
@@ -111,7 +113,7 @@ QIcon ImIconProvider::icon(const QFileInfo &fi) const
 	return QIcon();
 }
 
-FDialogPreview::FDialogPreview(QWidget *pa) : QLabel(pa)
+FDialogPreview::FDialogPreview(QWidget *pa, Qt::WindowFlags f) : QLabel(pa,f)
 {
 	setAlignment(Qt::AlignLeft | Qt::AlignTop);
 	setFixedSize( QSize( 200, 200 ) );
@@ -298,7 +300,7 @@ CustomFDialog::CustomFDialog(QWidget *parent, QString wDir, QString caption, QSt
 	vboxLayout = new QVBoxLayout(this);
 	vboxLayout->setSpacing(5);
 	vboxLayout->setMargin(10);
-    hboxLayout = new QHBoxLayout;
+	hboxLayout = new QHBoxLayout;
 	hboxLayout->setSpacing(5);
 	hboxLayout->setMargin(0);
 	fileDialog = new ScFileWidget(this);
@@ -318,7 +320,7 @@ CustomFDialog::CustomFDialog(QWidget *parent, QString wDir, QString caption, QSt
 	vboxLayout1->addWidget(pw);
 	hboxLayout->addLayout(vboxLayout1);
 	vboxLayout->addLayout(hboxLayout);
-    QHBoxLayout *hboxLayout1 = new QHBoxLayout;
+	QHBoxLayout *hboxLayout1 = new QHBoxLayout;
 	hboxLayout1->setSpacing(5);
 	hboxLayout1->setContentsMargins(9, 0, 0, 0);
 	showPreview = new QCheckBox(this);
@@ -440,6 +442,12 @@ CustomFDialog::CustomFDialog(QWidget *parent, QString wDir, QString caption, QSt
 			}
 			TxCodeM->setMinimumSize(QSize(200, 0));
 			Layout1C->addWidget(TxCodeM);
+			Layout1C->addStretch();
+			TextOnly = new QCheckBox();
+			TextOnly->setText( tr("Import &Text only"));
+			TextOnly->setToolTip( tr("Import the text without style formating"));
+			TextOnly->setChecked(false);
+			Layout1C->addWidget(TextOnly);
 			QSpacerItem* spacer2 = new QSpacerItem( 2, 2, QSizePolicy::Expanding, QSizePolicy::Minimum );
 			Layout1C->addItem( spacer2 );
 			vboxLayout->addWidget(LayoutC);
@@ -509,6 +517,11 @@ QString CustomFDialog::selectedFile()
 	if (!sel.isEmpty())
 		return QDir::fromNativeSeparators(sel[0]);
 	return QString();
+}
+
+QStringList CustomFDialog::selectedFiles()
+{
+	return fileDialog->selectedFiles();
 }
 
 void CustomFDialog::addWidgets(QWidget *widgets)

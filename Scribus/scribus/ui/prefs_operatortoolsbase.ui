@@ -89,10 +89,10 @@
             <string> %</string>
            </property>
            <property name="minimum">
-            <number>1</number>
+            <double>1.000000000000000</double>
            </property>
            <property name="maximum">
-            <number>3200</number>
+            <double>3200.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -115,7 +115,7 @@
             <string> %</string>
            </property>
            <property name="minimum">
-            <number>100</number>
+            <number>0</number>
            </property>
            <property name="maximum">
             <number>500</number>
@@ -266,8 +266,8 @@
  <customwidgets>
   <customwidget>
    <class>ScrSpinBox</class>
-   <extends>QSpinBox</extends>
-   <header location="global">ui/scrspinbox.h</header>
+   <extends>QDoubleSpinBox</extends>
+   <header>ui/scrspinbox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

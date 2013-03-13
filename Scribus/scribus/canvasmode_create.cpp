@@ -596,15 +596,8 @@ PageItem* CreateMode::doCreateNewObject(void)
 		skipOneClick = false;
 	}
 	if (!skipOneClick)
-	{
 		if ((!m_view->moveTimerElapsed()) || ((fabs(wSize) < 2.0) && (fabs(hSize) < 2.0)))
-		{
-			if (!doOneClick(createObjectPos, canvasCurrCoord))
-			{
-				return NULL;
-			}
-		}
-	}
+			!doOneClick(createObjectPos, canvasCurrCoord);
 
 	wSize = canvasCurrCoord.x() - createObjectPos.x();
 	hSize = canvasCurrCoord.y() - createObjectPos.y();
@@ -850,102 +843,78 @@ PageItem* CreateMode::doCreateNewObject(void)
 
 bool CreateMode::doOneClick(FPoint& startPoint, FPoint& endPoint)
 {
-	bool doCreate = false;
 	double xSize, ySize;
 	int  originPoint = 0;
 	
 	if (QApplication::keyboardModifiers() & Qt::ControlModifier)
 		return true;
 
-	PrefsContext* sizes = PrefsManager::instance()->prefsFile->getContext("ObjectSize");
-	bool doRemember     = sizes->getBool("Remember", true);
+	ItemToolPrefs sizes = m_doc->prefsData().itemToolPrefs;
 
 	int lmode = (createObjectMode == modeDrawLine) ? 1 : 0;
-	if (lmode == 0)
-	{
-		xSize = sizes->getDouble("defWidth", 100.0);
-		ySize = sizes->getDouble("defHeight", 100.0);
-		originPoint = sizes->getInt("Origin", 0);
-	}
-	else
-	{
-		xSize = sizes->getDouble("defLength", 100.0);
-		ySize = sizes->getDouble("defAngle", 0.0);
-		originPoint = sizes->getInt("OriginL", 0);
-	}
+	xSize = sizes.imageDefaultWidth;
+	ySize = sizes.imageDefaultHeight;
+	originPoint = sizes.imageDefaultBasePoint;
 
-//	qApp->changeOverrideCursor(QCursor(Qt::ArrowCursor));
-	OneClick *dia = new OneClick(m_view, ScribusView::tr("Enter Object Size"), m_doc->unitIndex(), xSize, ySize, doRemember, originPoint, lmode);
-	if (dia->exec())
+	qApp->changeOverrideCursor(QCursor(Qt::ArrowCursor));
+	OneClick *dia = NULL;
+	if(sizes.imageDefaultSize > 1 && !(view()->ImageAfterDraw && sizes.imageDefaultSize == 2))
 	{
-		doRemember = dia->checkRemember->isChecked();
-		if (lmode == 0)
+		dia = new OneClick(m_view, ScribusView::tr("Enter Object Size"), m_doc->unitIndex(), xSize, ySize, originPoint, lmode);
+		if (dia->exec())
 		{
 			xSize = dia->spinWidth->value() / unitGetRatioFromIndex(m_doc->unitIndex());
 			ySize = dia->spinHeight->value() / unitGetRatioFromIndex(m_doc->unitIndex());
 			originPoint = dia->RotationGroup->checkedId();
-			if (doRemember)
-			{
-				sizes->set("defWidth", xSize);
-				sizes->set("defHeight", ySize);
-				sizes->set("Origin", originPoint);
-			}
-			endPoint.setXY(startPoint.x() + xSize, startPoint.y() + ySize);
-			switch (originPoint)
-			{
-				case 0:
-					break;
-				case 1:
-					startPoint.setX(startPoint.x() - xSize);
-					endPoint.setX(endPoint.x() - xSize);
-					break;
-				case 2:
-					startPoint.setXY(startPoint.x() - xSize / 2.0, startPoint.y() - ySize / 2.0);
-					endPoint.setXY(endPoint.x() - xSize / 2.0, endPoint.y() - ySize / 2.0);
-					break;
-				case 3:
-					startPoint.setY(startPoint.y() - ySize);
-					endPoint.setY(endPoint.y() - ySize);
-					break;
-				case 4:
-					startPoint.setXY(startPoint.x() - xSize, startPoint.y() - ySize);
-					endPoint.setXY(endPoint.x() - xSize, endPoint.y() - ySize);
-					break;
-			}
 		}
-		else
-		{
-			FPoint oldStart = startPoint;
-			xSize = dia->spinWidth->value() / unitGetRatioFromIndex(m_doc->unitIndex());
-			ySize = dia->spinHeight->value();
-			originPoint = dia->RotationGroup->checkedId();
-			if (doRemember)
-			{
-				sizes->set("defLength", xSize);
-				sizes->set("defAngle", ySize);
-				sizes->set("OriginL", originPoint);
-			}
-			double angle = -ySize * M_PI / 180.0;
-			switch (originPoint)
-			{
-				case 0:
-					endPoint = FPoint(startPoint.x() + xSize * cos(angle), startPoint.y() + xSize * sin(angle));
-					break;
-				case 1:
-					startPoint = FPoint(oldStart.x() - xSize * cos(angle), oldStart.y() - xSize * sin(angle));
-					endPoint   = oldStart;
-					break;
-				case 2:
-					startPoint = FPoint(oldStart.x() - xSize / 2.0 * cos(angle), oldStart.y() - xSize / 2.0 * sin(angle));
-					endPoint   = FPoint(oldStart.x() + xSize / 2.0 * cos(angle), oldStart.y() + xSize / 2.0 * sin(angle));
-					break;
-			}
-		}
-		sizes->set("Remember", doRemember);
-		doCreate = true;
 	}
-	delete dia;
-	return doCreate;
+	if (lmode == 0)
+	{
+		endPoint.setXY(startPoint.x() + xSize, startPoint.y() + ySize);
+		switch (originPoint)
+		{
+			case 0:
+				break;
+			case 1:
+				startPoint.setX(startPoint.x() - xSize);
+				endPoint.setX(endPoint.x() - xSize);
+				break;
+			case 2:
+				startPoint.setXY(startPoint.x() - xSize / 2.0, startPoint.y() - ySize / 2.0);
+				endPoint.setXY(endPoint.x() - xSize / 2.0, endPoint.y() - ySize / 2.0);
+				break;
+			case 3:
+				startPoint.setY(startPoint.y() - ySize);
+				endPoint.setY(endPoint.y() - ySize);
+				break;
+			case 4:
+				startPoint.setXY(startPoint.x() - xSize, startPoint.y() - ySize);
+				endPoint.setXY(endPoint.x() - xSize, endPoint.y() - ySize);
+				break;
+		}
+	}
+	else
+	{
+		FPoint oldStart = startPoint;
+		double angle = -ySize * M_PI / 180.0;
+		switch (originPoint)
+		{
+			case 0:
+				endPoint = FPoint(startPoint.x() + xSize * cos(angle), startPoint.y() + xSize * sin(angle));
+				break;
+			case 1:
+				startPoint = FPoint(oldStart.x() - xSize * cos(angle), oldStart.y() - xSize * sin(angle));
+				endPoint   = oldStart;
+				break;
+			case 2:
+				startPoint = FPoint(oldStart.x() - xSize / 2.0 * cos(angle), oldStart.y() - xSize / 2.0 * sin(angle));
+				endPoint   = FPoint(oldStart.x() + xSize / 2.0 * cos(angle), oldStart.y() + xSize / 2.0 * sin(angle));
+				break;
+		}
+	}
+	if(dia)
+		delete dia;
+	return true;
 }
 
 FRect CreateMode::adjustedRect(FPoint &firstPoint, FPoint &secondPoint)

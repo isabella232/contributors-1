@@ -28,6 +28,7 @@ for which a new license (GPL+exception) is in place.
 #define GTDIALOGS_H
 
 #include <QDialog>
+#include <QCheckBox>
 
 #include "scribusapi.h"
 
@@ -55,20 +56,13 @@ class SCRIBUS_API gtDialogs
 {
 private:
 	gtFileDialog* fdia;
-	QString fileName;
-	QString encoding;
 	int importer;
 	PrefsContext* prefs;
-	QString pwd;
 public:
 	gtDialogs();
 	~gtDialogs();
-	const QString& getFileName();
-	const QString& getEncoding();
 	int getImporter();
-	bool importTextOnly();
-	bool runFileDialog(const QString& filters, const QStringList& importers);
-	bool runImporterDialog(const QStringList& importers);
+	bool runImporterDialog(const QStringList& importers, QString filename);
 };
 
 #endif // GTDIALOGS_H

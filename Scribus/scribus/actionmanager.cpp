@@ -118,15 +118,7 @@ void ActionManager::initFileMenuActions()
 	name="fileCollect";
 	scrActions->insert(name, new ScrAction("", defaultKey(name), mainWindow));
 	//File Import Menu
-	name="fileImportText";
-	scrActions->insert(name, new ScrAction("", defaultKey(name), mainWindow));
-	name="fileImportText2";
-	scrActions->insert(name, new ScrAction("", defaultKey(name), mainWindow));
-	name="fileImportAppendText";
-	scrActions->insert(name, new ScrAction("", defaultKey(name), mainWindow));
-	name="fileImportImage";
-	scrActions->insert(name, new ScrAction("", defaultKey(name), mainWindow));
-	name="fileImportVector";
+	name="fileImport";
 	scrActions->insert(name, new ScrAction("", defaultKey(name), mainWindow));
 
 	//File Export Menu
@@ -171,11 +163,7 @@ void ActionManager::initFileMenuActions()
 	connect( (*scrActions)["fileCollect"], SIGNAL(triggered()), mainWindow, SLOT(fileCollect()) );
 	connect( (*scrActions)["fileQuit"], SIGNAL(triggered()), mainWindow, SLOT(slotFileQuit()) );
 	//File Import Menu
-	connect( (*scrActions)["fileImportText"], SIGNAL(triggered()), mainWindow, SLOT(slotGetContent()) );
-	connect( (*scrActions)["fileImportText2"], SIGNAL(triggered()), mainWindow, SLOT(slotGetContent2()) );
-	connect( (*scrActions)["fileImportAppendText"], SIGNAL(triggered()), mainWindow, SLOT(slotFileAppend()) );
-	connect( (*scrActions)["fileImportImage"], SIGNAL(triggered()), mainWindow, SLOT(slotGetContent()) );
-	connect( (*scrActions)["fileImportVector"], SIGNAL(triggered()), mainWindow, SLOT(importVectorFile()) );
+	connect( (*scrActions)["fileImport"], SIGNAL(triggered()), mainWindow, SLOT(slotGetContent()) );
 	//File Export Menu
 	connect( (*scrActions)["fileExportText"], SIGNAL(triggered()), mainWindow, SLOT(SaveText()) );
 	connect( (*scrActions)["fileExportAsEPS"], SIGNAL(triggered()), mainWindow, SLOT(SaveAsEps()) );
@@ -1424,10 +1412,7 @@ void ActionManager::languageChange()
 	(*scrActions)["fileSaveAs"]->setTexts( tr("Save &As..."));
 	(*scrActions)["fileRevert"]->setTexts( tr("Re&vert to Saved"));
 	(*scrActions)["fileCollect"]->setTexts( tr("Collect for O&utput..."));
-	(*scrActions)["fileImportText"]->setTexts( tr("Get Text..."));
-	(*scrActions)["fileImportAppendText"]->setTexts( tr("Append &Text..."));
-	(*scrActions)["fileImportImage"]->setTexts( tr("Get Image..."));
-	(*scrActions)["fileImportVector"]->setTexts( tr("Get Vector File..."));
+	(*scrActions)["fileImport"]->setTexts( tr("Get File..."));
 
 	(*scrActions)["fileExportText"]->setTexts( tr("Save &Text..."));
 	(*scrActions)["fileExportAsEPS"]->setTexts( tr("Save as &EPS..."));
@@ -1766,8 +1751,7 @@ void ActionManager::createDefaultShortcuts()
 	defKeys.insert("fileClose", QKeySequence::Close);
 	defKeys.insert("fileSave", QKeySequence::Save);
 	defKeys.insert("fileSaveAs", Qt::CTRL+Qt::SHIFT+Qt::Key_S);
-	defKeys.insert("fileImportText", Qt::CTRL+Qt::Key_I);
-	defKeys.insert("fileImportImage", Qt::CTRL+Qt::Key_I);
+	defKeys.insert("fileImport", Qt::CTRL+Qt::Key_I);
 	defKeys.insert("filePrint", QKeySequence::Print);
 	defKeys.insert("fileExportAsPDF", Qt::CTRL+Qt::SHIFT+Qt::Key_P);
 	defKeys.insert("fileQuit", Qt::CTRL+Qt::Key_Q);
@@ -1926,10 +1910,7 @@ void ActionManager::createDefaultMenus()
 		<< "fileSaveAs"
 		<< "fileRevert"
 		<< "fileCollect"
-		<< "fileImportText"
-		<< "fileImportAppendText"
-		<< "fileImportImage"
-		<< "fileImportVector"
+		<< "fileImport"
 		<< "fileExportText"
 		<< "fileExportAsEPS"
 		<< "fileExportAsPDF"

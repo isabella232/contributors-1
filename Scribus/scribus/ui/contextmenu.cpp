@@ -195,13 +195,15 @@ void ContextMenu::createMenuItems_Selection()
 			addSeparator();
 			addAction(m_AP->scrActions["itemUpdateMarks"]);
 		}
-		if (m_actionList.contains("fileImportText"))
+		if (m_actionList.contains("fileImport"))
 		{
 			addSeparator();
-			addAction(m_AP->scrActions["fileImportText"]);
-			addAction(m_AP->scrActions["fileImportAppendText"]);
-			addAction(m_AP->scrActions["toolsEditWithStoryEditor"]);
-			addAction(m_AP->scrActions["insertSampleText"]);
+			addAction(m_AP->scrActions["fileImport"]);
+			if (currItem->isTextFrame())
+			{
+				addAction(m_AP->scrActions["toolsEditWithStoryEditor"]);
+				addAction(m_AP->scrActions["insertSampleText"]);
+			}
 		}
 		else //enable this for, eg, text on a path
 			if (m_actionList.contains("toolsEditWithStoryEditor"))
@@ -210,8 +212,6 @@ void ContextMenu::createMenuItems_Selection()
 				addAction(m_AP->scrActions["toolsEditWithStoryEditor"]);
 			}
 		addSeparator();
-		if (m_actionList.contains("fileImportImage"))
-			addAction(m_AP->scrActions["fileImportImage"]);
 		if (selectedItemCount==1 && currItem->asImageFrame())
 		{
 			if (QApplication::clipboard()->mimeData()->hasImage())

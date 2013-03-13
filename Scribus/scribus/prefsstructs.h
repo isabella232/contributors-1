@@ -237,6 +237,10 @@ struct ItemToolPrefs
 	bool imageAspectRatio; //! Use stored aspect ratio for the image
 	int imageLowResType; //! Preview type for an image frame
 	bool imageUseEmbeddedPath; //! Use embedded path, eg from an EPS etc.
+	int imageDefaultSize;	//! Default behaviour for oneclick event
+	double imageDefaultHeight;	//! Default height value for oneclick event
+	double imageDefaultWidth;	//! Defaut width value for oneclick event
+	double imageDefaultBasePoint;	//! Defaut basepoint for oneclick event
 	/* Calligraphic Pen Tool */
 	QString calligrapicPenFillColor; //! Default calligrapicPen fill color
 	QString calligrapicPenLineColor; //! Default calligrapicPen line color

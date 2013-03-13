@@ -232,19 +232,19 @@ void InsertAFrame::locateImageFile()
 	QString fileName("");
 	CustomFDialog dia(this, docDir, tr("Open"), formatD, fdShowPreview | fdExistingFiles);
 	if (dia.exec() == QDialog::Accepted)
-		fileName = dia.selectedFile();
+		fileName = dia.selectedFile().at(0);
 	
 	sourceImageLineEdit->setText(QDir::toNativeSeparators(fileName));
 }
 
 void InsertAFrame::locateDocFile()
 {
-	m_ImportSetup.runDialog=false;
-	gtGetText* gt = new gtGetText(m_Doc);
-	m_ImportSetup=gt->run();
-	if (m_ImportSetup.runDialog)
-		sourceDocLineEdit->setText(QDir::toNativeSeparators(m_ImportSetup.filename));
-	delete gt;
+	QString formatD(FormatsManager::instance()->fileDialogTextFormatList());
+
+	CustomFDialog *dia = new CustomFDialog(qApp->activeWindow(), ".", tr("Open"), formatD, fdShowCodecs | fdExistingFiles);
+	if (dia->exec() == QDialog::Accepted)
+		sourceDocLineEdit->setText(QDir::toNativeSeparators(dia->selectedFile()));
+	delete dia;
 }
 
 void InsertAFrame::slotCreatePageNumberRange( )

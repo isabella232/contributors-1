@@ -88,7 +88,7 @@ private:
 	double m_currentGuide;
 	bool m_haveCursor;
 	QCursor m_cursor;
-	QPoint m_xy;
+	QPointF m_xy;
 	void movePoint(QMouseEvent *m, bool mouseRelease);
 	
 	signals:

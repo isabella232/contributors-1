@@ -289,6 +289,10 @@ void PrefsManager::initDefaults()
 	appPrefs.itemToolPrefs.imageAspectRatio = true;
 	appPrefs.itemToolPrefs.imageLowResType = 1;
 	appPrefs.itemToolPrefs.imageUseEmbeddedPath = false;
+	appPrefs.itemToolPrefs.imageDefaultSize = 3;
+	appPrefs.itemToolPrefs.imageDefaultWidth = 100;
+	appPrefs.itemToolPrefs.imageDefaultHeight = 100;
+	appPrefs.itemToolPrefs.imageDefaultBasePoint = 0;
 //	appPrefs.PSize = 40;
 	appPrefs.printerPrefs.ClipMargin = false;
 	appPrefs.printerPrefs.GCRMode = false;
@@ -1503,6 +1507,10 @@ bool PrefsManager::WritePref(QString ho)
 	dcItemTools.setAttribute("ImageStrokeColorShade",appPrefs.itemToolPrefs.imageStrokeColorShade);
 	dcItemTools.setAttribute("ImageScaleX",ScCLocale::toQStringC(appPrefs.itemToolPrefs.imageScaleX));
 	dcItemTools.setAttribute("ImageScaleY",ScCLocale::toQStringC(appPrefs.itemToolPrefs.imageScaleY));
+	dcItemTools.setAttribute("ImageDefaultSize",appPrefs.itemToolPrefs.imageDefaultSize);
+	dcItemTools.setAttribute("ImageDefaultWidth",ScCLocale::toQStringC(appPrefs.itemToolPrefs.imageDefaultWidth));
+	dcItemTools.setAttribute("ImageDefaultHeight",ScCLocale::toQStringC(appPrefs.itemToolPrefs.imageDefaultHeight));
+	dcItemTools.setAttribute("ImageDefaultBasePoint",appPrefs.itemToolPrefs.imageDefaultBasePoint);
 	dcItemTools.setAttribute("PolygonCorners", appPrefs.itemToolPrefs.polyCorners);
 	dcItemTools.setAttribute("PolygonFactor", ScCLocale::toQStringC(appPrefs.itemToolPrefs.polyFactor));
 	dcItemTools.setAttribute("PolygonRotation", ScCLocale::toQStringC(appPrefs.itemToolPrefs.polyRotation));
@@ -2114,6 +2122,10 @@ bool PrefsManager::ReadPref(QString ho)
 			appPrefs.itemToolPrefs.imageStrokeColorShade = dc.attribute("ImageStrokeColorShade", "100").toInt();
 			appPrefs.itemToolPrefs.imageScaleX = ScCLocale::toDoubleC(dc.attribute("ImageScaleX"), 1.0);
 			appPrefs.itemToolPrefs.imageScaleY = ScCLocale::toDoubleC(dc.attribute("ImageScaleY"), 1.0);
+			appPrefs.itemToolPrefs.imageDefaultSize = dc.attribute("ImageDefaultSize").toInt();
+			appPrefs.itemToolPrefs.imageDefaultBasePoint = dc.attribute("ImageDefaultBasePoint").toInt();
+			appPrefs.itemToolPrefs.imageDefaultWidth = ScCLocale::toDoubleC(dc.attribute("ImageDefaultWidth"), 100.0);
+			appPrefs.itemToolPrefs.imageDefaultHeight = ScCLocale::toDoubleC(dc.attribute("ImageDefaultHeight"), 100.0);
 			appPrefs.itemToolPrefs.imageScaleType = static_cast<bool>(dc.attribute("PSCALE", "0").toInt());
 			appPrefs.itemToolPrefs.imageAspectRatio = static_cast<bool>(dc.attribute("PASPECT", "1").toInt());
 			appPrefs.itemToolPrefs.imageUseEmbeddedPath = static_cast<bool>(dc.attribute("EmbeddedPath", "0").toInt());

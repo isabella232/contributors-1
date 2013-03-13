@@ -14,8 +14,8 @@
 ***************************************************************************/
 
 
-#ifndef CANVASMODE_IMAGEIMPORT_H
-#define CANVASMODE_IMAGEIMPORT_H
+#ifndef CANVASMODE_IMPORTDATA_H
+#define CANVASMODE_IMPORTDATA_H
 
 #include <QEvent>
 #include <QMouseEvent>
@@ -24,16 +24,19 @@
 #include <QStringList>
 
 #include "canvasmode.h"
+#include "ui/customfdialog.h"
+#include "gtgettext.h"
+#include "undomanager.h"
 
 class PageItem;
 class ScribusView;
 class ScribusMainWindow;
 
-class CanvasMode_ImageImport : public CanvasMode
+class CanvasMode_ImportData : public CanvasMode
 {
 public:
-	explicit CanvasMode_ImageImport(ScribusView* view);
-	virtual ~CanvasMode_ImageImport() {}
+	explicit CanvasMode_ImportData(ScribusView* view);
+	virtual ~CanvasMode_ImportData() {}
 
 	virtual void enterEvent(QEvent *);
 	virtual void leaveEvent(QEvent *);
@@ -48,17 +51,19 @@ public:
 	virtual void mousePressEvent(QMouseEvent *m);
 	virtual void drawControls(QPainter* p);
 
-	void setImageList(QStringList l);
+	void setInformation(ImportSetup is);
+	void insertImage(int i,QString fileName);
+	void deleteImage(QString fileName);
 	void setImage(PageItem* item);
+	void setText(PageItem_TextFrame* item);
 	void updateList();
 
 private:
+	UndoTransaction *trans;
+	FDialogPreview *pw;
 	bool m_keyRepeat;
-	QString tipText;
-	QStringList imageList;
+	ImportSetup impsetup;
 	ScribusMainWindow *m_ScMW;
-	double Mx, My;
-	void newToolTip(QString name);
 };
 
-#endif // CANVASMODE_IMAGEIMPORT_H
+#endif // CANVASMODE_IMPORTDATA_H

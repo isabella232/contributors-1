@@ -289,7 +289,7 @@ enum AppMode
 	modeDrawLine,
 	modeRotation,
 	modeLinkFrames,
-	modeImportImage,
+	modeImportData,
 	modeUnlinkFrames,
 	modeDrawRegularPolygon,
 	modeDrawBezierLine,

@@ -62,7 +62,7 @@ class SCRIBUS_API FDialogPreview : public QLabel
 {
     Q_OBJECT
 public:
-	FDialogPreview(QWidget *pa);
+	FDialogPreview(QWidget *pa, Qt::WindowFlags f = 0);
 	~FDialogPreview() {};
 	void updtPix();
 	void GenPreview(QString name);
@@ -122,10 +122,12 @@ public:
 	ScFileWidget *fileDialog;
 	FDialogPreview *pw;
 	QCheckBox *showPreview;
+	QCheckBox *TextOnly;
 	QPushButton* OKButton;
 	QPushButton* CancelB;
 	void setSelection(QString );
 	QString selectedFile();
+	QStringList selectedFiles();
 	void addWidgets(QWidget *widgets);
 private slots:
 	//! \brief Go to the document home dir.
