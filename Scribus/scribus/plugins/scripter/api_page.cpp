@@ -361,6 +361,55 @@ void PageAPI::placeSXD(const QString & filename, const double x, const double y)
 	placeImage(FORMATID_SXDIMPORT, filename, x, y);
 }
 
+/**
+ * Scripter.activeDocument.activePage.newHGuide(y)
+ * y is a double
+ */
+void PageAPI::newHGuide(double y)
+{
+    /*
+	PageItem *item = (PageItem*)newItem(
+	                     PageItem::Line, PageItem::Unspecified, x, y, width, height,
+	                     ScCore->primaryMainWindow()->doc->itemToolPrefs().shapeLineWidth,
+	                     ScCore->primaryMainWindow()->doc->itemToolPrefs().shapeFillColor,
+	                     ScCore->primaryMainWindow()->doc->itemToolPrefs().shapeLineColor);
+	item->setRotation(xy2Deg(width-x, height-y));
+	item->setWidthHeight(sqrt(pow(x-width, 2.0) + pow(y-height, 2.0)), 1.0);
+	item->Sizing = false;
+	item->updateClip();
+	return new ItemAPI(item);
+    */
+
+/*
+	PyObject *l;
+	if (!PyArg_ParseTuple(args, "O", &l))
+		return NULL;
+	if(!checkHaveDocument())
+		return NULL;
+	if (!PyList_Check(l))
+	{
+		PyErr_SetString(PyExc_TypeError, QObject::tr("argument is not list: must be list of float values.","python error").toLocal8Bit().constData());
+		return NULL;
+	}
+	int i, n;
+	n = PyList_Size(l);
+	double guide;
+	ScCore->primaryMainWindow()->doc->currentPage()->guides.clearHorizontals(GuideManagerCore::Standard);
+	for (i=0; i<n; i++)
+	{
+		if (!PyArg_Parse(PyList_GetItem(l, i), "d", &guide))
+		{
+			PyErr_SetString(PyExc_TypeError, QObject::tr("argument contains non-numeric values: must be list of float values.","python error").toLocal8Bit().constData());
+			return NULL;
+		}
+		ScCore->primaryMainWindow()->doc->currentPage()->guides.addHorizontal(ValueToPoint(guide), GuideManagerCore::Standard);
+	}
+ 	Py_INCREF(Py_None);
+ 	return Py_None;
+	Py_RETURN_NONE;
+*/
+}
+
 
 /**
  *  Scripter.activeDocument.activePage.savePageAsEPS(filename)

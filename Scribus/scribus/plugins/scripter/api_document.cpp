@@ -609,7 +609,16 @@ bool DocumentAPI::itemExists(QString name)
 	return false;
 }
 
+/**
+ * @deprecated use paragraphStyles(), instead
+ */
 QList< QVariant > DocumentAPI::styles()
+{
+	qDebug() << "DocumentAPI::styles() is deprecated. Use paragraphStyles(), instead";
+    return paragraphStyles();
+}
+
+QList< QVariant > DocumentAPI::paragraphStyles()
 {
 	QList<QVariant> styleList;
 	if (!check())
