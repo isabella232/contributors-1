@@ -5,6 +5,7 @@ a copyright and/or license notice that predates the release of Scribus 1.3.2
 for which a new license (GPL+exception) is in place.
 */
 #include "api_page.h"
+#include "utils.h"
 #include "pageitem.h"
 #include "selection.h"
 #include "util_math.h"
@@ -362,54 +363,40 @@ void PageAPI::placeSXD(const QString & filename, const double x, const double y)
 }
 
 /**
- * Scripter.activeDocument.activePage.newHGuide(y)
+ * Scripter.activeDocument.activePage.addHorizontalGuide(y)
  * y is a double
  */
-void PageAPI::newHGuide(double y)
+void PageAPI::addHorizontalGuide(double y)
 {
-    /*
-	PageItem *item = (PageItem*)newItem(
-	                     PageItem::Line, PageItem::Unspecified, x, y, width, height,
-	                     ScCore->primaryMainWindow()->doc->itemToolPrefs().shapeLineWidth,
-	                     ScCore->primaryMainWindow()->doc->itemToolPrefs().shapeFillColor,
-	                     ScCore->primaryMainWindow()->doc->itemToolPrefs().shapeLineColor);
-	item->setRotation(xy2Deg(width-x, height-y));
-	item->setWidthHeight(sqrt(pow(x-width, 2.0) + pow(y-height, 2.0)), 1.0);
-	item->Sizing = false;
-	item->updateClip();
-	return new ItemAPI(item);
-    */
-
-/*
-	PyObject *l;
-	if (!PyArg_ParseTuple(args, "O", &l))
-		return NULL;
-	if(!checkHaveDocument())
-		return NULL;
-	if (!PyList_Check(l))
-	{
-		PyErr_SetString(PyExc_TypeError, QObject::tr("argument is not list: must be list of float values.","python error").toLocal8Bit().constData());
-		return NULL;
-	}
-	int i, n;
-	n = PyList_Size(l);
-	double guide;
-	ScCore->primaryMainWindow()->doc->currentPage()->guides.clearHorizontals(GuideManagerCore::Standard);
-	for (i=0; i<n; i++)
-	{
-		if (!PyArg_Parse(PyList_GetItem(l, i), "d", &guide))
-		{
-			PyErr_SetString(PyExc_TypeError, QObject::tr("argument contains non-numeric values: must be list of float values.","python error").toLocal8Bit().constData());
-			return NULL;
-		}
-		ScCore->primaryMainWindow()->doc->currentPage()->guides.addHorizontal(ValueToPoint(guide), GuideManagerCore::Standard);
-	}
- 	Py_INCREF(Py_None);
- 	return Py_None;
-	Py_RETURN_NONE;
-*/
+    ScCore->primaryMainWindow()->doc->currentPage()->guides.addHorizontal(ValueToPoint(y), GuideManagerCore::Standard);
 }
 
+/**
+ * Scripter.activeDocument.activePage.deleteHorizontal(y)
+ * y is a double
+ */
+void PageAPI::deleteHorizontalGuide(double y)
+{
+	ScCore->primaryMainWindow()->doc->currentPage()->guides.deleteHorizontal(y, GuideManagerCore::Standard);
+}
+
+/**
+ * Scripter.activeDocument.activePage.addVerticalGuide(y)
+ * y is a double
+ */
+void PageAPI::addVerticalGuide(double y)
+{
+    ScCore->primaryMainWindow()->doc->currentPage()->guides.addVertical(ValueToPoint(y), GuideManagerCore::Standard);
+}
+
+/**
+ * Scripter.activeDocument.activePage.deleteVerticalGuide(y)
+ * y is a double
+ */
+void PageAPI::deleteVerticalGuide(double y)
+{
+	ScCore->primaryMainWindow()->doc->currentPage()->guides.deleteVertical(y, GuideManagerCore::Standard);
+}
 
 /**
  *  Scripter.activeDocument.activePage.savePageAsEPS(filename)

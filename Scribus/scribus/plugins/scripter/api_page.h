@@ -35,7 +35,10 @@ public slots:
 	void placeODG(const QString & filename, const double x, const double y);
 	void placeEPS(const QString & filename, const double x, const double y);
 	void placeSXD(const QString & filename, const double x, const double y);
-    void newHGuide(double y);
+    void addHorizontalGuide(double y);
+    void deleteHorizontalGuide(double y);
+    void addVerticalGuide(double y);
+    void deleteVerticalGuide(double y);
 	void savePageAsEPS(const QString & filename);
 
 public:
