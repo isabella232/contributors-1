@@ -630,6 +630,18 @@ QList< QVariant > DocumentAPI::paragraphStyles()
 	return styleList;
 }
 
+QList< QVariant > DocumentAPI::characterStyles()
+{
+	QList<QVariant> styleList;
+	if (!check())
+		RAISE("No active document.");
+	for (int i=0; i < ScCore->primaryMainWindow()->doc->charStyles().count(); ++i)
+	{
+		styleList.append(ScCore->primaryMainWindow()->doc->charStyles()[i].name());
+	}
+	return styleList;
+}
+
 void DocumentAPI::deselectItems()
 {
 	if (!check())

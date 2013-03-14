@@ -34,6 +34,7 @@ class DocumentAPI : public QObject
     Q_PROPERTY(QList<QVariant> masterPages READ masterPages)
     Q_PROPERTY(QList<QVariant> styles READ styles)
     Q_PROPERTY(QList<QVariant> paragraphStyles READ paragraphStyles)
+    Q_PROPERTY(QList<QVariant> characterStyles READ characterStyles)
     Q_PROPERTY(int unit READ unit WRITE setUnit)
 
 public:
@@ -109,6 +110,7 @@ private:
 	QList<QVariant> colors();
 	QList<QVariant> styles();
 	QList<QVariant> paragraphStyles();
+	QList<QVariant> characterStyles();
 };
 
 
