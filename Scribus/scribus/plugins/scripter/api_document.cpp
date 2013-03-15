@@ -17,6 +17,7 @@ for which a new license (GPL+exception) is in place.
 #include "api_styleparagraph.h"
 #include "util.h"
 #include "utils.h"
+#include "fileloader.h"
 #include "pageitem_textframe.h"
 #include "undomanager.h"
 
@@ -548,11 +549,71 @@ void DocumentAPI::editMasterPage(QString name)
 	ScCore->primaryMainWindow()->view->showMasterPage(*it);
 }
 
-void DocumentAPI::loadStylesFromFile(QString name)
+void DocumentAPI::loadStylesFromFile(QString filename)
 {
+// Scripter.activeDocument.loadStylesFromFile("/home/ale/test.sla")
 	if (!check())
 		return;
-	ScCore->primaryMainWindow()->doc->loadStylesFromFile(name);
+
+    StyleSet<ParagraphStyle> *paragraph;
+    StyleSet<CharStyle> *character;
+    QHash<QString, multiLine> *line;
+
+	if (!filename.isEmpty())
+	{
+		FileLoader fl(filename);
+		if (fl.testFile() == -1)
+			return;
+		fl.readStyles(ScCore->primaryMainWindow()->doc, *paragraph);
+		fl.readCharStyles(ScCore->primaryMainWindow()->doc, *character);
+        fl.readLineStyles(line);
+		
+	}
+
+	// ScCore->primaryMainWindow()->doc->loadStylesFromFile(name, &paragraph, &character, &line);
+
+	for (int i=0; i < paragraph->count(); ++i)
+	{
+        ParagraphStyle& style((*paragraph)[i]);
+        qDebug() << "style name:" << style.name();
+        // docParagraphStyles.create(pstyle);
+    }
+
+    /*
+    foreach (QString aStyle, dia2->paragraphStyles())
+    {
+        ParagraphStyle& sty(tmpParaStyles[tmpParaStyles.find(aStyle)]);
+        if (dia2->clashRename())
+        {
+            sty.setName(pstyle->getUniqueName(sty.name()));
+            pstyle->tmpStyles()->create(sty);
+        }
+        else
+        {
+            if (pstyle->tmpStyles()->find(sty.name()) >= 0)
+                (*(pstyle->tmpStyles()))[pstyle->tmpStyles()->find(aStyle)] = sty;
+            else
+                pstyle->tmpStyles()->create(sty);
+        }
+//#7315 				selected << QPair<QString, QString>(pstyle->typeName(), sty.name());
+        if ((!m_doc->PageColors.contains(sty.charStyle().strokeColor())) && (!neededColors.contains(sty.charStyle().strokeColor())))
+            neededColors.append(sty.charStyle().strokeColor());
+        if ((!m_doc->PageColors.contains(sty.charStyle().fillColor())) && (!neededColors.contains(sty.charStyle().fillColor())))
+            neededColors.append(sty.charStyle().fillColor());
+    }
+    */
+
+
+
+
+
+
+
+
+
+
+	// ScCore->primaryMainWindow()->doc->loadStylesFromFile(name);
+	
 }
 
 QObject* DocumentAPI::createParagraphStyle(QString name)
