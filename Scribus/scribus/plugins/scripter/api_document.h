@@ -73,6 +73,7 @@ public slots:
 	
 	void loadStylesFromFile(QString name);
 	QObject* createParagraphStyle(QString name);
+	QObject* addParagraphStyle(QString name);
 
 	void moveSelectionToFront()
 	{

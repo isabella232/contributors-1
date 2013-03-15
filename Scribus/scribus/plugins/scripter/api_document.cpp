@@ -549,6 +549,8 @@ void DocumentAPI::editMasterPage(QString name)
 	ScCore->primaryMainWindow()->view->showMasterPage(*it);
 }
 
+
+
 void DocumentAPI::loadStylesFromFile(QString filename)
 {
 // Scripter.activeDocument.loadStylesFromFile("/home/ale/test.sla")
@@ -558,6 +560,8 @@ void DocumentAPI::loadStylesFromFile(QString filename)
     StyleSet<ParagraphStyle> *paragraph;
     StyleSet<CharStyle> *character;
     QHash<QString, multiLine> *line;
+
+	// ScCore->primaryMainWindow()->doc->loadStylesFromFile(name, &paragraph, &character, &line);
 
 	if (!filename.isEmpty())
 	{
@@ -570,7 +574,6 @@ void DocumentAPI::loadStylesFromFile(QString filename)
 		
 	}
 
-	// ScCore->primaryMainWindow()->doc->loadStylesFromFile(name, &paragraph, &character, &line);
 
 	for (int i=0; i < paragraph->count(); ++i)
 	{
@@ -604,21 +607,28 @@ void DocumentAPI::loadStylesFromFile(QString filename)
     */
 
 
-
-
-
-
-
-
-
-
 	// ScCore->primaryMainWindow()->doc->loadStylesFromFile(name);
 	
 }
 
+/**
+ * TODO: check if addParagraphStyle() is not enough (ale/20130315)
+ */
 QObject* DocumentAPI::createParagraphStyle(QString name)
 {
     return new StyleParagraphAPI(name);
+}
+
+QObject* DocumentAPI::addParagraphStyle(QString name)
+{
+    StyleParagraphAPI style = StyleParagraphAPI(name);
+
+	StyleSet<ParagraphStyle> styleSet;
+	styleSet.create(style.get());
+	ScCore->primaryMainWindow()->doc->redefineStyles(styleSet, false);
+	// refresh the Style Manager window.
+	ScCore->primaryMainWindow()->styleMgr()->setDoc(ScCore->primaryMainWindow()->doc);
+
 }
 
 QObject* DocumentAPI::selectItem(QString name)

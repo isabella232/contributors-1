@@ -19,6 +19,7 @@ class ParagraphStyle;
 class StyleParagraphAPI : public QObject
 {
 	Q_OBJECT
+    Q_PROPERTY(ParagraphStyle style READ get)
 
 public:
 	StyleParagraphAPI(QString name);
@@ -26,8 +27,6 @@ public:
 public slots:
     void update();
     void setAlignment(int mode);
-private:
-	ParagraphStyle style;
 };
 
 

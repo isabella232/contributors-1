@@ -14,12 +14,20 @@ for which a new license (GPL+exception) is in place.
 
 StyleParagraphAPI::StyleParagraphAPI(QString name)
 {
-	style = ParagraphStyle();
-    qDebug() << "style name:" << name;
 	style.setName(name);
+    qDebug() << "style name:" << name;
 }
 
 StyleParagraphAPI::~StyleParagraphAPI()
+{
+}
+
+/**
+ * Scripter.activeDocument.style(name).get()
+ * Property
+ * Return the ParagraphStyle Scribus structurereturn the ParagraphStyle Scribus structure
+ */
+void StyleParagraphAPI::get()
 {
 }
 
