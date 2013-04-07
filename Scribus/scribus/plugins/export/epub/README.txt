@@ -34,6 +34,24 @@ you will then be able to open the epub file with sigil (or any other epub editor
 - Plucker
   .pdb
 
-LINKS
+# Links
 
-http://extensions.services.openoffice.org/en/project/Writer2ePub
+- http://www.idpf.org/epub/30/spec/epub30-publications.html#sec-core-media-types
+- http://www.idpf.org/epub/30/spec/epub30-changes.html#sec-new-changed-audio-video
+
+- http://www.mobileread.com/forums/showthread.php?p=2224241
+
+- http://extensions.services.openoffice.org/en/project/Writer2ePub
+- https://git.gnome.org/browse/libcroco/tree/
+- https://launchpad.net/libcroco
+
+- http://qt.gitorious.org/qt/qlalr
+- http://blog.qt.digia.com/blog/2007/10/08/developer-dazetm-presents-a-closer-look-at-qlalr/
+- http://qt-quarterly.developpez.com/qq-33/qlalr/
+- http://www.qtcentre.org/threads/34726-QLALR-examples
+- http://www.qtcentre.org/threads/30707-Parse-Text-File-with-Qt
+- http://sourceforge.net/projects/htmlcxx/
+- http://stackoverflow.com/questions/366028/what-is-a-good-c-c-css-parser
+- http://htmlcxx.sourceforge.net/
+- http://sourceforge.net/projects/csstidy/?source=dlp
+- http://www.codeproject.com/Articles/20450/Simple-CSS-Parser
