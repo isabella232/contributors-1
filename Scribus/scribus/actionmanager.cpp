@@ -519,6 +519,9 @@ void ActionManager::initItemMenuActions()
 	name="itemEditWeld";
 	scrActions->insert(name, new ScrAction("", defaultKey(name), mainWindow));
 
+	name="itemClearPStyle";
+	scrActions->insert(name, new ScrAction("", defaultKey(name), mainWindow));
+
 	connect( (*scrActions)["itemDuplicate"], SIGNAL(triggered()), mainWindow, SLOT(duplicateItem()) );
 	connect( (*scrActions)["itemMulDuplicate"], SIGNAL(triggered()), mainWindow, SLOT(duplicateItemMulti()) );
 	connect( (*scrActions)["itemTransform"], SIGNAL(triggered()), mainWindow, SLOT(slotItemTransform()) );
@@ -1191,6 +1194,7 @@ void ActionManager::disconnectNewDocActions()
 	disconnect( (*scrActions)["itemRaise"], 0, 0, 0);
 	disconnect( (*scrActions)["toolsUnlinkTextFrameWithTextCopy"], 0, 0, 0 );
 	disconnect( (*scrActions)["toolsUnlinkTextFrameWithTextCut"], 0, 0, 0 );
+	disconnect( (*scrActions)["itemClearPStyle"], 0, 0, 0 );
 }
 
 void ActionManager::connectNewDocActions(ScribusDoc *currDoc)
@@ -1232,6 +1236,7 @@ void ActionManager::connectNewDocActions(ScribusDoc *currDoc)
 	connect( (*scrActions)["itemRaise"], SIGNAL(triggered()), currDoc, SLOT(itemSelection_RaiseItem()) );
 	connect( (*scrActions)["toolsUnlinkTextFrameWithTextCopy"], SIGNAL(triggered()), currDoc, SLOT(itemSelection_UnlinkTextFrameWithText()) );
 	connect( (*scrActions)["toolsUnlinkTextFrameWithTextCut"], SIGNAL(triggered()), currDoc, SLOT(itemSelection_UnlinkTextFrameWithTextCut()) );
+	connect( (*scrActions)["itemClearPStyle"], SIGNAL(triggered()), currDoc, SLOT(itemSelection_ClearParagraphStyle()) );
 }
 
 void ActionManager::disconnectNewViewActions()
@@ -1554,6 +1559,7 @@ void ActionManager::languageChange()
 	(*scrActions)["itemsUnWeld"]->setTexts( tr("Unweld items"));
 	(*scrActions)["itemWeld"]->setTexts( tr("Weld items"));
 	(*scrActions)["itemEditWeld"]->setTexts( tr("Edit weld item"));
+	(*scrActions)["itemClearPStyle"]->setTexts( tr("Clear Paragraph Style"));
 
 	//Insert Menu
 	(*scrActions)["insertFrame"]->setTexts( tr("&Frames..."));
@@ -2045,7 +2051,8 @@ void ActionManager::createDefaultMenus()
 		<< "itemWeld"
 		<< "itemEditWeld"
 		<< "toolsUnlinkTextFrameWithTextCopy"
-		<< "toolsUnlinkTextFrameWithTextCut";
+		<< "toolsUnlinkTextFrameWithTextCut"
+		<< "itemClearPStyle";
 	
 	//Insert
 	++itmenu;

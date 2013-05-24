@@ -1388,8 +1388,9 @@ public:	// Start public variables
 		};
 		QList<weldingInfo> weldList;
 
+		void expandParaSelection(bool includeEOL = false);
 		// End public variables
-
+		
 protected: // Start protected functions
 	PageItem(const PageItem & other);
 	void DrawObj_ImageFrame(ScPainter *p, double sc);

@@ -104,6 +104,7 @@ for which a new license (GPL+exception) is in place.
 #include "util.h"
 #include "util_icon.h"
 #include "util_math.h"
+#include "util_text.h"
 
 #include "colormgmt/sccolormgmtenginefactory.h"
 #include "ui/hruler.h"
@@ -7884,7 +7885,7 @@ void ScribusDoc::itemSelection_SetNamedParagraphStyle(const QString& name, Selec
 {
 	ParagraphStyle newStyle;
 	newStyle.setParent(name.isEmpty()? Style::INHERIT_PARENT : name);
-	itemSelection_ApplyParagraphStyle(newStyle, customSelection, true);
+	itemSelection_ApplyParagraphStyle(newStyle, customSelection);
 }
 
 
@@ -9282,6 +9283,61 @@ void ScribusDoc::itemSelection_ApplyParagraphStyle(const ParagraphStyle & newSty
 		else if (currItem->isTextFrame() && currItem->asTextFrame()->hasNoteFrame(NULL, true))
 			setNotesChanged(true);
 		currItem->invalidateLayout();
+	}
+	if (activeTransaction)
+	{
+		activeTransaction->commit();
+		delete activeTransaction;
+		activeTransaction = NULL;
+	}
+	changed();
+	regionsChanged()->update(QRectF());
+}
+
+void ScribusDoc::itemSelection_ClearParagraphStyle(Selection* customSelection)
+{
+	Selection* itemSelection = (customSelection!=0) ? customSelection : m_Selection;
+	assert(itemSelection!=0);
+	
+	uint selectedItemCount=itemSelection->count();
+	if (selectedItemCount == 0)
+		return;
+	UndoTransaction* activeTransaction = NULL;
+	if (UndoManager::undoEnabled() && (selectedItemCount > 1))
+		activeTransaction = new UndoTransaction(undoManager->beginTransaction(Um::SelectionGroup, Um::IGroup, Um::RemoveTextStyle, tr( "remove direct paragraph formatting" ), Um::IFont));
+	//CharStyle emptyCStyle;
+	for (uint aa = 0; aa < selectedItemCount; ++aa)
+	{
+		PageItem *currItem = itemSelection->itemAt(aa);
+		if (currItem->itemText.length() > 0)
+		{
+			//in edit mode without selection select paragraph where cursor is
+			if ((appMode == modeEdit) || (appMode == modeEditTable))
+			{
+				if (!currItem->HasSel)
+					currItem->expandParaSelection();
+			}
+			else //select whole text
+				currItem->itemText.selectAll();
+			Selection tempSelection(this, false);
+			tempSelection.addItem(currItem, true);
+			itemSelection_EraseCharStyle(&tempSelection);
+			
+			currItem->invalid = true;
+			if (currItem->asPathText())
+				currItem->updatePolyClip();
+			if (currItem->isNoteFrame())
+				currItem->asNoteFrame()->updateNotesText();
+			else if (currItem->isTextFrame() && currItem->asTextFrame()->hasNoteFrame(NULL, true))
+				setNotesChanged(true);
+		}
+		if (appMode != modeEdit)
+		{
+			if (currItem->isNoteFrame())
+				setNotesChanged(true);
+			else if (currItem->isTextFrame())
+				updateItemNotesFramesStyles(currItem, currItem->itemText.defaultStyle());
+		}
 	}
 	if (activeTransaction)
 	{

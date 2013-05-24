@@ -872,6 +872,7 @@ void ScribusMainWindow::initMenuBar()
 	scrMenuMgr->addMenuItem(scrActions["itemEditWeld"], "Weld", false);
 
 	scrMenuMgr->addMenuItem(scrActions["editMark"], "Item", false);
+	scrMenuMgr->addMenuItem(scrActions["itemClearPStyle"], "Item", false);
 
 	//Insert menu
 	scrMenuMgr->createMenu("Insert", ActionManager::defaultMenuNameEntryTranslated("Insert"));
@@ -2793,6 +2794,7 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 	scrActions["editEditRenderSource"]->setEnabled(SelectedType==PageItem::ImageFrame && currItem && (currItem->asLatexFrame()));
 #endif
 	scrActions["itemAdjustFrameHeightToText"]->setEnabled(SelectedType==PageItem::TextFrame && currItem->itemText.length() >0);
+	scrActions["itemClearPStyle"]->setEnabled(SelectedType==PageItem::TextFrame  && currItem->itemText.length() >0);
 	if (SelectedType!=PageItem::ImageFrame)
 	{
 		scrActions["itemImageIsVisible"]->setChecked(false);
@@ -2877,6 +2879,7 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 		scrActions["editCopy"]->setEnabled(true);
 		scrMenuMgr->setMenuEnabled("EditContents", true);
 		scrActions["editClearContents"]->setEnabled(true);
+		scrActions["itemClearPStyle"]->setEnabled(true);
 		scrActions["editSearchReplace"]->setEnabled(false);
 		scrActions["extrasHyphenateText"]->setEnabled(false);
 		scrActions["extrasDeHyphenateText"]->setEnabled(false);
@@ -3022,6 +3025,7 @@ void ScribusMainWindow::HaveNewSel(int SelectedType)
 			propertiesPalette->textPal->updateStyle(doc->currentStyle);
 			setStyleEffects(doc->currentStyle.charStyle().effects());
 		}
+		scrActions["itemClearPStyle"]->setEnabled(true);
 
 //		doc->docParagraphStyles[0].setLineSpacingMode(static_cast<ParagraphStyle::LineSpacingMode>(currItem->lineSpacingMode()));
 //		doc->docParagraphStyles[0].setLineSpacing(currItem->lineSpacing());
@@ -6830,7 +6834,8 @@ void ScribusMainWindow::setAppMode(int mode)
 //					return;
 //				}
 				//setTBvals before placing cursor has no effect
-				currItem->itemText.setCursorPosition(0);
+				if (currItem->isTextFrame() || currItem->isPathText())
+					currItem->itemText.setCursorPosition(0);
 				setTBvals(currItem);
 			}
 			scrActions["editPaste"]->setEnabled(false);
