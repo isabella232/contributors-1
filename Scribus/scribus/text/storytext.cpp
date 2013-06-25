@@ -437,12 +437,12 @@ void StoryText::removeChars(int pos, uint len)
 	invalidate(pos, length());
 }
 
-void StoryText::insertChars(QString txt, bool applyNeighbourStyle) //, const CharStyle & charstyle)
+void StoryText::insertChars(QString txt, bool applyNeighbourStyle)
 {
 	insertChars(d->cursorPosition, txt, applyNeighbourStyle);
 }
 
-void StoryText::insertChars(int pos, QString txt, bool applyNeighbourStyle) //, const CharStyle & charstyle)
+void StoryText::insertChars(int pos, QString txt, bool applyNeighbourStyle)
 {
 	if (pos < 0)
 		pos += length()+1;
@@ -469,13 +469,10 @@ void StoryText::insertChars(int pos, QString txt, bool applyNeighbourStyle) //, 
 		item->setContext(cStyleContext);
 		d->insert(pos + i, item);
 		d->len++;
-		if (item->ch == SpecialChars::PARSEP) {
-//			qDebug() << QString("new PARSEP %2 at %1").arg(pos).arg(paragraphStyle(pos).name());
+		if (item->ch == SpecialChars::PARSEP)
 			insertParSep(pos + i);
-		}
-		if (d->cursorPosition >= (pos + i)) {
+		if (d->cursorPosition >= (pos + i))
 			d->cursorPosition += 1;
-		}
 	}
 
 	d->len = d->count();
@@ -1186,7 +1183,7 @@ uint StoryText::nrOfParagraph(int pos) const
 {
 	uint result = 0;
 	StoryText* that = const_cast<StoryText *>(this);
-	bool lastWasPARSEP = true;
+	bool lastWasPARSEP;
 	pos = qMin(pos, that->length());
 	for (int i=0; i < pos; ++i)
 	{

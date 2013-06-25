@@ -24,8 +24,6 @@ ScText_Shared::ScText_Shared(const StyleContext* pstyles) : QList<ScText*>(),
 	pstyleContext.setDefaultStyle( & defaultStyle );
 	defaultStyle.setContext( pstyles );
 	trailingStyle.setContext( &pstyleContext );
-//		defaultStyle.charStyle().setContext( cstyles );
-//		qDebug() << QString("ScText_Shared() %1 %2 %3 %4").arg(reinterpret_cast<uint>(this)).arg(reinterpret_cast<uint>(&defaultStyle)).arg(reinterpret_cast<uint>(pstyles)).arg(reinterpret_cast<uint>(cstyles));
 }
 		
 

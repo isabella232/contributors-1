@@ -6,12 +6,6 @@
 #Require 2.4.3 for moc change detection and rpath updates for custom cairo install
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0 FATAL_ERROR)
 
-#IF(WIN32)
-#  IF (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} LESS 2.6)
-#    MESSAGE(FATAL_ERROR "Windows builds require CMake 2.6")
-#  ENDIF (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} LESS 2.6)
-#ENDIF(WIN32)
-
 #Pretty colors
 SET(CMAKE_COLOR_MAKEFILE ON)
 #Dont force verbose
@@ -34,42 +28,12 @@ INCLUDE(CheckCXXCompilerFlag)
 INCLUDE(CheckTypeSize)
 INCLUDE(TestBigEndian)
 
-#ENABLE_TESTING()
-
 #Set the custom CMake module directory where our include/lib finders are
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 ##############################################################################################################
 ########## toplevel compiler flags                                                                  ##########
 MESSAGE(STATUS "Shared Library Flags: ${CMAKE_SHARED_LIBRARY_C_FLAGS}")
-# CHECK_C_COMPILER_FLAG(" ${CMAKE_SHARED_LIBRARY_C_FLAGS}" C_HAVE_PIC)
-# CHECK_CXX_COMPILER_FLAG(" ${CMAKE_SHARED_LIBRARY_C_FLAGS}" CXX_HAVE_PIC)
-# IF (CXX_HAVE_PIC AND C_HAVE_PIC)
-#     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_SHARED_LIBRARY_C_FLAGS}")
-#     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_SHARED_LIBRARY_C_FLAGS}")
-# ELSE (CXX_HAVE_PIC AND C_HAVE_PIC)
-#     MESSAGE(FATAL_ERROR "Shared library support is missing")
-# ENDIF (CXX_HAVE_PIC AND C_HAVE_PIC)
-
-# SET(CMAKE_SHARED_MODULE_LINK_FLAGS "${CMAKE_SHARED_MODULE_LINK_FLAGS} -export-dynamic")
-# SET(CMAKE_SHARED_MODULE_LINK_CXX_FLAGS "${CMAKE_SHARED_MODULE_LINK_CXX_FLAGS} -export-dynamic")
-# SET(CMAKE_SHARED_LIBRARY_C_FLAGS "${CMAKE_SHARED_LIBRARY_C_FLAGS} -export-dynamic")
-# SET(CMAKE_SHARED_LIBRARY_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -export-dynamic")
-# MESSAGE(STATUS ${CMAKE_SHARED_MODULE_LINK_FLAGS})
-# MESSAGE(STATUS ${CMAKE_SHARED_MODULE_LINK_CXX_FLAGS})
-# MESSAGE(STATUS ${CMAKE_SHARED_LIBRARY_C_FLAGS})
-# MESSAGE(STATUS ${CMAKE_SHARED_LIBRARY_CXX_FLAGS})
-# MESSAGE(STATUS ${CMAKE_CXX_CREATE_SHARED_MODULE})
-# MESSAGE(STATUS ${CMAKE_CXX_CREATE_SHARED_LIBRARY})
-
-#IMPORT FROM COMMANDLINE
-# SET with cmake -DWANT_CAIRO=1, etc
-# MESSAGE(STATUS ${WANT_CAIRO})
-# MESSAGE(STATUS ${WANT_LIBART})
-# MESSAGE(STATUS ${WANT_DEBUG})
-
-# SET(WANT_CAIRO 0)
-# SET(WANT_LIBART 1)
 
 #Project Setup
 PROJECT(scribus)
@@ -341,7 +305,6 @@ SET(MIMELNKDIR "share/mimelnk/application/")
 
 #Convert our simpler command line option to the CMake style
 #None, Debug, Release, .. or custom ones
-# SET(WANT_DEBUG 1)
 IF(WANT_DEBUG)
   SET(CMAKE_BUILD_TYPE Debug)
 ENDIF(WANT_DEBUG)
@@ -543,12 +506,6 @@ ELSE(USE_QT5)
 		MESSAGE(FATAL_ERROR "QtWebKit not found")
 	ENDIF(QT_QTWEBKIT_FOUND)
 
-	IF (QT_VERSION_MAJOR EQUAL 4 AND QT_VERSION_MINOR EQUAL 4 AND QT_VERSION_PATCH EQUAL 0)
-		MESSAGE(STATUS "Warning: Qt 4.4.0 has some bugs relating to decimal notation and line drawing. Please refer to Scribus bug 6999 and 7187 for information and to check if this may affect your use. Please use 4.4.1+ on release for your platform/distribution.")
-	ENDIF (QT_VERSION_MAJOR EQUAL 4 AND QT_VERSION_MINOR EQUAL 4 AND QT_VERSION_PATCH EQUAL 0)
-	IF (QT_VERSION_MAJOR EQUAL 4 AND QT_VERSION_MINOR EQUAL 3)
-		MESSAGE(STATUS "Warning: Some versions of Qt 4.3.x have a bug influencing layout in the Scribus Properties Palette (refer to Scribus bug 7107). Please upgrade to Qt 4.4.1+ on release (4.4.0 has a decimal notation bug)")
-	ENDIF (QT_VERSION_MAJOR EQUAL 4 AND QT_VERSION_MINOR EQUAL 3)
 	IF (WANT_QT3SUPPORT)
 		MESSAGE(STATUS "Building with Qt3 Support")
 	ELSE (WANT_QT3SUPPORT)
@@ -662,11 +619,6 @@ IF(WANT_PRIVATE_CAIRO)
   MESSAGE("We no longer support the private cairo library as the latest public release is more up to date, setting WANT_SYSTEM_CAIRO=1")
   SET(WANT_SYSTEM_CAIRO 1)
   SET(WANT_PRIVATE_CAIRO 0)
-  #MESSAGE("Using private CAIRO Library")
-  #SET(RENDER_LIB "CAIRO_PRIVATE" CACHE TYPE STRING)
-  #SET(HAVE_CAIRO 1)
-  #SET(HAVE_PRIVATE_CAIRO 1)
-  #SET( CAIRO_FOUND "YES" )
 ENDIF(WANT_PRIVATE_CAIRO)
 IF(NOT WANT_PRIVATE_CAIRO)
   IF(RENDER_LIB)
@@ -778,19 +730,6 @@ ELSE(NOT WIN32)
   SET(FONTCONFIG_INCLUDE_DIR)
 ENDIF(NOT WIN32)
 #>>FontConfig
-
-#<<ASPELL for Speelling support
-#OPTION(WITH_ASPELL "Enable support for spell checking" ON)
-#IF (WITH_ASPELL)
-#  FIND_PACKAGE(ASPELL)
-#  IF (ASPELL_FOUND)
-#	MESSAGE("ASpell Found OK")
-#	SET(HAVE_ASPELL 1)
-#  ELSE (ASPELL_FOUND)
-#	MESSAGE("ASpell or its developer libraries NOT found - Disabling support for spell checking")
-#  ENDIF (ASPELL_FOUND)
-#ENDIF (WITH_ASPELL)
-#>>ASPELL for Speelling support
 
 #<<HUNSPELL for Speelling support
 OPTION(WANT_HUNSPELL "Enable support for spell checking with hunspell" ON)
@@ -992,13 +931,6 @@ INSTALL(FILES
   vnd.scribus.desktop
   DESTINATION ${MIMELNKDIR}
 )
-
-## PL We may not need this anymore
-#Install the desktop file
-## INSTALL(FILES
- # scribus.desktop
- # #DESTINATION ${DESKTOPDIR}
-#)
 
 #If building an Apple bundle, install these specific files
 IF(APPLEBUNDLE)
