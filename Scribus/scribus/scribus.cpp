@@ -50,6 +50,7 @@ for which a new license (GPL+exception) is in place.
 #include <QMouseEvent>
 #include <QPixmap>
 #include <QProgressBar>
+#include <QQuickView>
 #include <QRegExp>
 #include <QStyleFactory>
 #include <QTableWidget>
@@ -361,9 +362,9 @@ int ScribusMainWindow::initScMW(bool primaryMainWindow)
 //	initKeyboardShortcuts();
 	initMenuBar();
 	initToolBars();
- 	ScCore->pluginManager->setupPluginActions(this);
+	ScCore->pluginManager->setupPluginActions(this);
 	ScCore->pluginManager->enableOnlyStartupPluginActions(this);
- 	ScCore->pluginManager->languageChange();
+	ScCore->pluginManager->languageChange();
 	if (primaryMainWindow)
 		ScCore->setSplashStatus( tr("Applying User Shortcuts") );
 	prefsManager->applyLoadedShortCuts();
@@ -533,11 +534,7 @@ void ScribusMainWindow::initKeyboardShortcuts()
 	{
 		if ((ScrAction*)(it.value())!=NULL)
 		{
-#ifdef USE_QT5
 			QString accelerator = it.value()->shortcut().toString();
-#else
-			QString accelerator = it.value()->shortcut();
-#endif
 			prefsManager->setKeyEntry(it.key(), it.value()->cleanMenuText(), accelerator,0);
 		}
 		//else
@@ -1050,6 +1047,7 @@ void ScribusMainWindow::initMenuBar()
 	scrMenuMgr->addMenuItem(scrActions["extrasGenerateTableOfContents"], "Extras", false);
 	scrMenuMgr->addMenuItem(scrActions["extrasUpdateDocument"], "Extras", false);
 	scrMenuMgr->addMenuItem(scrActions["itemUpdateMarks"], "Extras", true);
+	scrMenuMgr->addMenuItem(scrActions["extrasTestQTQuick2_1"], "Extras", true);
 	connect(scrMenuMgr->getLocalPopupMenu("Extras"), SIGNAL(aboutToShow()), this, SLOT(extrasMenuAboutToShow()));
 
 	//Window menu
@@ -1060,7 +1058,7 @@ void ScribusMainWindow::initMenuBar()
 	//Help menu
 	scrMenuMgr->createMenu("Help", ActionManager::defaultMenuNameEntryTranslated("Help"));
 	scrMenuMgr->addMenuItem(scrActions["helpManual"], "Help", true);
-	scrMenuMgr->addMenuItem(scrActions["helpManual2"], "Help", true);
+	//scrMenuMgr->addMenuItem(scrActions["helpManual2"], "Help", true);
 	scrMenuMgr->addMenuSeparator("Help");
 	scrMenuMgr->addMenuItem(scrActions["helpTooltips"], "Help", true);
 	scrMenuMgr->addMenuSeparator("Help");
@@ -1334,13 +1332,8 @@ bool ScribusMainWindow::eventFilter( QObject* /*o*/, QEvent *e )
 			keyMod |= Qt::ALT;
 
 		QKeySequence currKeySeq = QKeySequence(k->key() | keyMod);
-#ifdef USE_QT5
 		if (QString(currKeySeq.toString()).isNull())
 			return false;
-#else
-		if (QString(currKeySeq).isNull())
-			return false;
-#endif
 		retVal=true;
 		//Palette actions
 		if (currKeySeq == scrActions["specialToggleAllPalettes"]->shortcut())
@@ -3545,6 +3538,8 @@ void ScribusMainWindow::rebuildRecentPasteMenu()
 
 void ScribusMainWindow::pasteFromScrapbook(QString fn)
 {
+	view->dragX = 0;
+	view->dragY = 0;
 	doPasteRecent(scrapbookPalette->activeBView->objectMap[fn].Data);
 }
 
@@ -3609,7 +3604,7 @@ void ScribusMainWindow::doPasteRecent(QString data)
 			doc->SnapGuides = false;
 			doc->SnapElement = false;
 			if ((view->dragX == 0) && (view->dragY == 0))
-				slotElemRead(data, doc->currentPage()->xOffset(), doc->currentPage()->yOffset(), true, false, doc, view);
+				slotElemRead(data, doc->currentPage()->xOffset(), doc->currentPage()->yOffset(), true, true, doc, view);
 			else
 				slotElemRead(data, view->dragX, view->dragY, true, false, doc, view);
 			doc->SnapGrid = savedAlignGrid;
@@ -8646,6 +8641,11 @@ void ScribusMainWindow::RestoreBookMarks()
 	bookmarkPalette->BView->rebuildTree();
 }
 
+QStringList ScribusMainWindow::scrapbookNames()
+{
+	return scrapbookPalette->getOpenScrapbooksNames();
+}
+
 //CB-->Doc, stop _storing_ bookmarks in the palette
 void ScribusMainWindow::StoreBookmarks()
 {
@@ -9453,12 +9453,12 @@ QString ScribusMainWindow::CFileDialog(QString wDir, QString caption, QString fi
 		dia->setExtension(f.suffix());
 		dia->setZipExtension(f.suffix() + ".gz");
 		dia->setSelection(defNa);
-		if (docom != NULL)
+		if (docom != NULL && dia->SaveZip != NULL)
 			dia->SaveZip->setChecked(*docom);
 	}
 	if (optionFlags & fdDirectoriesOnly)
 	{
-		if (docom != NULL)
+		if (docom != NULL && dia->SaveZip != NULL)
 			dia->SaveZip->setChecked(*docom);
 		if (doFont != NULL)
 			dia->WithFonts->setChecked(*doFont);
@@ -9479,7 +9479,7 @@ QString ScribusMainWindow::CFileDialog(QString wDir, QString caption, QString fi
 		}
 		else
 		{
-			if (docom != NULL)
+			if (docom != NULL && dia->SaveZip != NULL)
 				*docom = dia->SaveZip->isChecked();
 			if (doFont != NULL)
 				*doFont = dia->WithFonts->isChecked();
@@ -11581,4 +11581,25 @@ void ScribusMainWindow::setPreviewToolbar()
 	scrMenuMgr->setMenuEnabled("Page", !doc->drawAsPreview);
 	scrMenuMgr->setMenuEnabled("Extras", !doc->drawAsPreview);
 	HaveNewSel(-1);
+}
+
+#include <QHBoxLayout>
+void ScribusMainWindow::testQTQuick2_1()
+{
+	/*
+	qDebug()<<"Testing Qt Quick 2.0";
+
+	QQuickView qqv;
+
+
+	QDialog d(this);
+	QHBoxLayout *layout = new QHBoxLayout(&d);
+	QWidget *container = createWindowContainer(&qqv, this);
+	d.setMinimumSize(300, 200);
+	d.setMaximumSize(300, 200);
+	d.setFocusPolicy(Qt::TabFocus);
+	qqv.setSource(QUrl::fromLocalFile("//Users/craig/scribus/PostTrunk/trunkqt5/Scribus/scribus/ui/qtq_test1.qml"));
+	layout->addWidget(container);
+	d.exec();
+	*/
 }

@@ -264,6 +264,7 @@ ScribusDoc::ScribusDoc() : UndoObject( tr("Document")), Observable<ScribusDoc>(N
 	DoDrawing(true),
 	OpenNodes(),
 	CurTimer(0),
+	pageErrors(),
 	docLayerErrors(),
 	docItemErrors(),
 	masterItemErrors(),
@@ -379,6 +380,7 @@ ScribusDoc::ScribusDoc(const QString& docName, int unitindex, const PageSize& pa
 	DoDrawing(true),
 	OpenNodes(),
 	CurTimer(0),
+	pageErrors(),
 	docLayerErrors(),
 	docItemErrors(),
 	masterItemErrors(),
@@ -15417,6 +15419,8 @@ void ScribusDoc::removeFromGroup(PageItem* item)
 void ScribusDoc::resizeGroupToContents(PageItem* group)
 {
 	PageItem_Group* currItem = group->asGroupFrame();
+	if (currItem == NULL)
+		return;
 	QPainterPath input1 = currItem->PoLine.toQPainterPath(true);
 	input1.translate(currItem->xPos(), currItem->yPos());
 	if (currItem->fillEvenOdd())
@@ -16849,6 +16853,16 @@ void ScribusDoc::checkItemForFrames(PageItem *it, int fIndex)
 		it->itemText.removeChars(deleteList[a], 1);
 	}
 	it->invalid = true;
+}
+
+bool ScribusDoc::hasPreflightErrors()
+{
+	return (
+			(pageErrors.count() != 0) ||
+			(docItemErrors.count() != 0) ||
+			(masterItemErrors.count() != 0) ||
+			(docLayerErrors.count() != 0)
+			);
 }
 
 void ScribusDoc::itemResizeToMargin(PageItem* item, int direction)
@@ -18526,7 +18540,7 @@ bool ScribusDoc::validateNSet(NotesStyle NS, QString newName)
 
 	if (!errStr.isEmpty() && ScCore->usingGUI())
 	{
-		QMessageBox::warning(this->scMW(), QObject::tr("Unaceptable settings for note style"), "<qt>"+ errStr +"</qt>", QMessageBox::Ok, QMessageBox::Abort | QMessageBox::Default);
+		QMessageBox::warning(this->scMW(), QObject::tr("Unacceptable settings for note style"), "<qt>"+ errStr +"</qt>", QMessageBox::Ok, QMessageBox::Abort | QMessageBox::Default);
 		return false;
 	}
 	return true;

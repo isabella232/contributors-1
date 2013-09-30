@@ -450,7 +450,12 @@ void Scribus150Format::writeCheckerProfiles(ScXmlStreamWriter & docu)
 		docu.writeAttribute("checkRasterPDF", static_cast<int>(itcp.value().checkRasterPDF));
 		docu.writeAttribute("checkForGIF", static_cast<int>(itcp.value().checkForGIF));
 		docu.writeAttribute("ignoreOffLayers", static_cast<int>(itcp.value().ignoreOffLayers));
-		//docu.writeEndElement();
+		docu.writeAttribute("checkNotCMYKOrSpot", static_cast<int>(itcp.value().checkNotCMYKOrSpot));
+		docu.writeAttribute("checkDeviceColorsAndOutputIntent", static_cast<int>(itcp.value().checkDeviceColorsAndOutputIntent));
+		docu.writeAttribute("checkFontNotEmbedded", static_cast<int>(itcp.value().checkFontNotEmbedded));
+		docu.writeAttribute("checkFontIsOpenType", static_cast<int>(itcp.value().checkFontIsOpenType));
+		docu.writeAttribute("checkAppliedMasterDifferentSide", static_cast<int>(itcp.value().checkAppliedMasterDifferentSide));
+		docu.writeAttribute("checkEmptyTextFrames", static_cast<int>(itcp.value().checkEmptyTextFrames));
 	}
 }
 
@@ -1067,6 +1072,7 @@ void Scribus150Format::writePdfOptions(ScXmlStreamWriter & docu)
 	docu.writeAttribute("Compress", static_cast<int>(m_Doc->pdfOptions().Compress));
 	docu.writeAttribute("CMethod", m_Doc->pdfOptions().CompressMethod);
 	docu.writeAttribute("Quality", m_Doc->pdfOptions().Quality);
+	docu.writeAttribute("EmbedPDF", static_cast<int>(m_Doc->pdfOptions().embedPDF));
 	docu.writeAttribute("MirrorH", static_cast<int>(m_Doc->pdfOptions().MirrorH));
 	docu.writeAttribute("MirrorV", static_cast<int>(m_Doc->pdfOptions().MirrorV));
 	docu.writeAttribute("Clip", static_cast<int>(m_Doc->pdfOptions().doClip));

@@ -35,9 +35,7 @@ for which a new license (GPL+exception) is in place.
 
 #include "util_ghostscript.h"
 #include "util_icon.h"
-#ifndef USE_QT5
-	#include "upgradechecker.h"
-#endif
+#include "upgradechecker.h"
 #include "langmgr.h"
 
 
@@ -114,8 +112,8 @@ About::About( QWidget* parent, AboutMode diaMode ) : QDialog( parent )
 	buildID = new QLabel( tab );
 	buildID->setAlignment(Qt::AlignCenter);
 	buildID->setTextInteractionFlags(Qt::TextSelectableByMouse);
-	QString BUILD_DAY = "27";
-	QString BUILD_MONTH = CommonStrings::may;
+	QString BUILD_DAY = "03";
+	QString BUILD_MONTH = CommonStrings::september;
 	QString BUILD_YEAR = "2013";
 	QString BUILD_TIME = "";
 	QString BUILD_TZ = "";
@@ -149,13 +147,8 @@ About::About( QWidget* parent, AboutMode diaMode ) : QDialog( parent )
 	bu += "*";
 #endif
 	bu += "-";
-#ifdef HAVE_PRIVATE_CAIRO
-	bu += "PC";
-	bu += cairo_version_string();
-#else
 	bu += "C";
 	bu += cairo_version_string();
-#endif
 
 // Some more information if we are not on a 32bit little endian Unix machine
 #if defined(Q_OS_WIN)
@@ -296,6 +289,8 @@ QString About::trAuthorTitle(QString title)
 		result = tr("OS/2&#174;/eComStation&#8482; Port:");
 	else if ( title == "Windows&#174; Port:" )
 		result = tr("Windows&#174; Port:");
+	else if ( title == "Haiku Port:" )
+		result = tr("Haiku Port:");
 	else if ( title == "Contributions from:" )
 		result = tr("Contributions from:");
 	else if ( title == "Official Documentation:" )
@@ -640,13 +635,11 @@ void About::setVisible (bool visible)
 void About::runUpdateCheck()
 {
 	textView5->clear();
-#ifndef USE_QT5
 	UpgradeCheckerGUI uc(textView5);
 	disconnect( checkForUpdateButton, SIGNAL( clicked() ), this, SLOT( runUpdateCheck() ) );
-	connect(checkForUpdateButton, SIGNAL( clicked() ), &uc, SLOT( abort() ));
-	checkForUpdateButton->setText( tr("Abort Update Check") );
+	//connect(checkForUpdateButton, SIGNAL( clicked() ), &uc, SLOT( abort() ));
+	//checkForUpdateButton->setText( tr("Abort Update Check") );
 	uc.fetch();
-	checkForUpdateButton->setText( tr("Check for Updates") );
+	//checkForUpdateButton->setText( tr("Check for Updates") );
 	connect( checkForUpdateButton, SIGNAL( clicked() ), this, SLOT( runUpdateCheck() ) );
-#endif
 }

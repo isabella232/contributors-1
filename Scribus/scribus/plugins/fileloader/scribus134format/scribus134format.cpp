@@ -1116,6 +1116,12 @@ bool Scribus134Format::readCheckProfile(ScribusDoc* doc, ScXmlStreamAttributes& 
 	checkerSettings.checkForGIF       = attrs.valueAsBool("checkForGIF", true);
 	checkerSettings.ignoreOffLayers   = attrs.valueAsBool("ignoreOffLayers", false);
 	checkerSettings.checkOffConflictLayers = attrs.valueAsBool("checkOffConflictLayers", false);
+	checkerSettings.checkNotCMYKOrSpot     = attrs.valueAsBool("checkNotCMYKOrSpot", false);
+	checkerSettings.checkDeviceColorsAndOutputIntent = attrs.valueAsBool("checkDeviceColorsAndOutputIntent", false);
+	checkerSettings.checkFontNotEmbedded = attrs.valueAsBool("checkFontNotEmbedded", false);
+	checkerSettings.checkFontIsOpenType  = attrs.valueAsBool("checkFontIsOpenType", false);
+	checkerSettings.checkAppliedMasterDifferentSide = attrs.valueAsBool("checkAppliedMasterDifferentSide", true);
+	checkerSettings.checkEmptyTextFrames     = attrs.valueAsBool("checkEmptyTextFrames", true);
 	doc->set1CheckerProfile(profileName, checkerSettings);
 	return true;
 }
@@ -1505,6 +1511,7 @@ bool Scribus134Format::readPDFOptions(ScribusDoc* doc, ScXmlStreamReader& reader
 	doc->pdfOptions().CompressMethod = (PDFOptions::PDFCompression)attrs.valueAsInt("CMethod", 0);
 	doc->pdfOptions().Quality    = attrs.valueAsInt("Quality", 0);
 	doc->pdfOptions().RecalcPic  = attrs.valueAsBool("RecalcPic");
+	doc->pdfOptions().embedPDF   = attrs.valueAsBool("EmbedPDF", false);
 	doc->pdfOptions().Bookmarks  = attrs.valueAsBool("Bookmarks");
 	doc->pdfOptions().MirrorH    = attrs.valueAsBool("MirrorH", false);
 	doc->pdfOptions().MirrorV    = attrs.valueAsBool("MirrorV", false);

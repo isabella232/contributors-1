@@ -1578,7 +1578,7 @@ bool PDFLibCore::PDF_Begin_Doc(const QString& fn, SCFonts &AllFonts, QMap<QStrin
 				{
 					PutDoc(QString::number(*git)+" ["+QString::number(static_cast<int>(face.glyphWidth(*git)* 1000))+"] " );
 					QString tmp, tmp2;
-					tmp.sprintf("%02X", *git);
+					tmp.sprintf("%04X", *git);
 					tmp2.sprintf("%04X", gl.value(*git).first.unicode());
 					toUnicodeMap += QString("<%1> <%2>\n").arg(tmp).arg((tmp2));
 					toUnicodeMapCounter++;
@@ -4521,12 +4521,10 @@ QString PDFLibCore::HandleBrushPattern(PageItem* ite, QPainterPath &path, const 
 	{
 		double currPerc = path.percentAtLength(xpos);
 		double currAngle = path.angleAtPercent(currPerc);
-#if QT_VERSION  >= 0x040400
 		if (currAngle <= 180.0)
 			currAngle *= -1.0;
 		else
 			currAngle = 360.0 - currAngle;
-#endif
 		QPointF currPoint = path.pointAtPercent(currPerc);
 		tmp += "q\n";
 		QTransform base;
