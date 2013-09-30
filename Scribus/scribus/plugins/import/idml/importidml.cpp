@@ -553,6 +553,7 @@ bool IdmlPlug::convert(QString fn)
 						firstLayer = false;
 					}
 				}
+				parseFontsXMLNode(docElem);
 				parseGraphicsXMLNode(docElem);
 				parseStylesXMLNode(docElem);
 				parsePreferencesXMLNode(docElem);
@@ -582,6 +583,14 @@ bool IdmlPlug::convert(QString fn)
 						}
 						layerTranslate.insert(layerSelf, layerName);
 						firstLayer = false;
+					}
+					if (dpg.tagName() == "idPkg:Fonts")
+					{
+						if (!parseFontsXML(dpg))
+						{
+							retVal = false;
+							break;
+						}
 					}
 					if (dpg.tagName() == "idPkg:Graphic")
 					{
@@ -672,6 +681,54 @@ bool IdmlPlug::convert(QString fn)
 	return retVal;
 }
 
+bool IdmlPlug::parseFontsXML(const QDomElement& grElem)
+{
+	QDomElement grNode;
+	QDomDocument grMapDom;
+	if (grElem.hasAttribute("src"))
+	{
+		QByteArray f2;
+		loadRawText(fun->getFile(grElem.attribute("src")), f2);
+		if(grMapDom.setContent(f2))
+			grNode = grMapDom.documentElement();
+		else
+			return false;
+	}
+	else
+	{
+		if (grElem.hasChildNodes())
+			grNode = grElem;
+		else
+			return false;
+	}
+	parseFontsXMLNode(grNode);
+	return true;
+}
+
+void IdmlPlug::parseFontsXMLNode(const QDomElement& grNode)
+{
+	for (QDomNode n = grNode.firstChild(); !n.isNull(); n = n.nextSibling() )
+	{
+		QDomElement e = n.toElement();
+		if (e.tagName() == "FontFamily")
+		{
+			QString family = e.attribute("Name");
+			QMap<QString, QString> styleMap;
+			for(QDomNode gr = e.firstChild(); !gr.isNull(); gr = gr.nextSibling() )
+			{
+				QDomElement grs = gr.toElement();
+				if (grs.tagName() == "Font")
+				{
+					QString styleName = grs.attribute("FontStyleName").remove("$ID/");
+					QString postName = grs.attribute("PostScriptName").remove("$ID/");
+					styleMap.insert(styleName, postName);
+				}
+			}
+			fontTranslateMap.insert(family, styleMap);
+		}
+	}
+}
+
 bool IdmlPlug::parseGraphicsXML(const QDomElement& grElem)
 {
 	QDomElement grNode;
@@ -697,7 +754,7 @@ bool IdmlPlug::parseGraphicsXML(const QDomElement& grElem)
 }
 
 void IdmlPlug::parseGraphicsXMLNode(const QDomElement& grNode)
-	{
+{
 	for (QDomNode n = grNode.firstChild(); !n.isNull(); n = n.nextSibling() )
 	{
 		QDomElement e = n.toElement();
@@ -1116,6 +1173,14 @@ void IdmlPlug::parseParagraphStyle(const QDomElement& styleElem)
 					QString parentStyle = i.text().remove("$ID/");
 					if (styleTranslate.contains(parentStyle))
 						parentStyle = styleTranslate[parentStyle];
+					else
+					{
+						QString pSty = parentStyle.remove("ParagraphStyle/");
+						if (styleParents.contains(pSty))
+							styleParents[pSty].append(newStyle.name());
+						else
+							styleParents.insert(pSty, QStringList() << newStyle.name());
+					}
 					if (m_Doc->styleExists(parentStyle))
 						newStyle.setParent(parentStyle);
 				}
@@ -1131,6 +1196,56 @@ void IdmlPlug::parseParagraphStyle(const QDomElement& styleElem)
 						}
 					}
 				}
+				else if (i.tagName() == "TabList")
+				{
+					QList<ParagraphStyle::TabRecord> tbs;
+					newStyle.resetTabValues();
+					for(QDomNode tabl = i.firstChild(); !tabl.isNull(); tabl = tabl.nextSibling() )
+					{
+						QDomElement ta = tabl.toElement();
+						if (ta.tagName() == "ListItem")
+						{
+							ParagraphStyle::TabRecord tb;
+							for(QDomNode tal = ta.firstChild(); !tal.isNull(); tal = tal.nextSibling() )
+							{
+								QDomElement tab = tal.toElement();
+								QString tabVal = tab.text();
+								if (tab.tagName() == "Alignment")
+								{
+									tb.tabType = 0;
+									if (tabVal == "LeftAlign")
+										tb.tabType = 0;
+									else if (tabVal == "CenterAlign")
+										tb.tabType = 4;
+									else if (tabVal == "RightAlign")
+										tb.tabType = 1;
+									else if (tabVal == "Spreadsheet")
+										tb.tabType = 3;
+								}
+								else if (tab.tagName() == "Position")
+								{
+									tb.tabPosition = tabVal.toDouble();
+								}
+								else if (tab.tagName() == "Leader")
+								{
+									tb.tabFillChar = tabVal.isEmpty() ? QChar() : tabVal[0];
+								}
+								else if (tab.tagName() == "AlignmentCharacter")
+								{
+									if (tb.tabType == 3)
+									{
+										if (tabVal.startsWith(","))
+											tb.tabType = 4;
+									}
+								}
+							}
+							tbs.append(tb);
+
+						}
+					}
+					if (tbs.count() > 0)
+						newStyle.setTabValues(tbs);
+				}
 			}
 		}
 	}
@@ -1143,6 +1258,18 @@ void IdmlPlug::parseParagraphStyle(const QDomElement& styleElem)
 	tmp.create(newStyle);
 	m_Doc->redefineStyles(tmp, false);
 	styleTranslate.insert(styleElem.attribute("Self").remove("$ID/"), styleElem.attribute("Name").remove("$ID/"));
+	if (styleParents.contains(newStyle.name()))
+	{
+		QStringList desList = styleParents[newStyle.name()];
+		for (int a = 0; a < desList.count(); a++)
+		{
+			ParagraphStyle old = m_Doc->paragraphStyle(desList[a]);
+			old.setParent(newStyle.name());
+			StyleSet<ParagraphStyle>tmp2;
+			tmp2.create(old);
+			m_Doc->redefineStyles(tmp2, false);
+		}
+	}
 }
 
 bool IdmlPlug::parsePreferencesXML(const QDomElement& prElem)
@@ -1516,6 +1643,7 @@ QList<PageItem*> IdmlPlug::parseItemXML(const QDomElement& itElem, QTransform pT
 	int TextColumnCount = def_TextColumnCount;
 	double TextColumnGutter = def_TextColumnGutter;
 	double TextColumnFixedWidth = def_TextColumnFixedWidth;
+	QString imageFit = "None";
 	PageItem::TextFlowMode textFlow = def_TextFlow;
 	if (itElem.hasAttribute("AppliedObjectStyle"))
 	{
@@ -1792,6 +1920,11 @@ QList<PageItem*> IdmlPlug::parseItemXML(const QDomElement& itElem, QTransform pT
 			{
 				GElements.append(el.at(ec));
 			}
+		}
+		else if (ite.tagName() == "FrameFittingOption")
+		{
+			if (ite.hasAttribute("FittingOnEmptyFrame"))
+				imageFit = ite.attribute("FittingOnEmptyFrame");
 		}
 		else if (ite.tagName() == "TransparencySetting")
 		{
@@ -2290,12 +2423,21 @@ QList<PageItem*> IdmlPlug::parseItemXML(const QDomElement& itElem, QTransform pT
 							tempFile->close();
 							item->isInlineImage = true;
 							item->isTempFile = true;
-							item->ScaleType   = true;
 							item->AspectRatio = true;
+							if (imageFit == "None")
+								item->ScaleType   = true;
+							else if (imageFit == "ContentToFrame")
+								item->ScaleType   = false;
+							else if (imageFit == "Proportionally")
+							{
+								item->ScaleType   = false;
+								item->AspectRatio = false;
+							}
 							m_Doc->loadPict(fileName, item);
 							item->setImageXYOffset(dxi - grOffset.x(), dyi - grOffset.y());
 							item->setImageXYScale(scXi / item->pixm.imgInfo.xres * 72, scYi / item->pixm.imgInfo.xres * 72);
 							item->setImageRotation(-roti);
+							item->AdjustPictScale();
 						}
 					}
 					delete tempFile;
@@ -2309,13 +2451,29 @@ QList<PageItem*> IdmlPlug::parseItemXML(const QDomElement& itElem, QTransform pT
 					if (fi.exists())
 						fileName = url.toLocalFile().toLocal8Bit();
 					else
+					{
 						fileName = fi.fileName().toLocal8Bit();
-					item->ScaleType   = true;
+						fileName.prepend("./Links/");
+						QFileInfo fi2(fileName);
+						if (!fi2.exists())
+							fileName = fi.fileName().toLocal8Bit();
+					}
 					item->AspectRatio = true;
+					if (imageFit == "None")
+						item->ScaleType   = true;
+					else if (imageFit == "ContentToFrame")
+						item->ScaleType   = false;
+					else if (imageFit == "Proportionally")
+					{
+						item->ScaleType   = false;
+						item->AspectRatio = false;
+					}
 					m_Doc->loadPict(QUrl::fromPercentEncoding(fileName), item);
 					item->setImageXYScale(scXi / item->pixm.imgInfo.xres * 72, scYi / item->pixm.imgInfo.xres * 72);
 					item->setImageXYOffset((dxi - grOffset.x()) / item->imageXScale(), (dyi - grOffset.y()) / item->imageYScale());
 					item->setImageRotation(-roti);
+					if (imageFit != "None")
+						item->AdjustPictScale();
 				}
 			}
 			GElements.append(m_Doc->Items->takeAt(z));
@@ -2905,38 +3063,44 @@ void IdmlPlug::resolveObjectStyle(ObjectStyle &nstyle, QString baseStyleName)
 
 QString IdmlPlug::constructFontName(QString fontBaseName, QString fontStyle)
 {
-	QString fontName;
-	if ((!fontBaseName.isEmpty()) && (!fontStyle.isEmpty()))
+	QString fontName = PrefsManager::instance()->appPrefs.itemToolPrefs.textFont;
+	if (fontTranslateMap.contains(fontBaseName))
 	{
-		fontName = fontBaseName + " " + fontStyle;
-		bool found = false;
-		QString family = fontName;
-		SCFontsIterator it(PrefsManager::instance()->appPrefs.fontPrefs.AvailFonts);
-		for ( ; it.hasNext(); it.next())
+		QMap<QString, QString> styleMap = fontTranslateMap[fontBaseName];
+		if (styleMap.contains(fontStyle))
 		{
-			if ((fontBaseName == it.current().family()) && (fontStyle == it.current().style()))
-				found = true;
-		}
-		if (found)
-			fontName = family;
-		else
-		{
-			if (importerFlags & LoadSavePlugin::lfCreateThumbnail)
-				fontName = PrefsManager::instance()->appPrefs.itemToolPrefs.textFont;
-			else
+			QString postName = styleMap[fontStyle];
+			bool found = false;
+			SCFontsIterator it(PrefsManager::instance()->appPrefs.fontPrefs.AvailFonts);
+			for ( ; it.hasNext(); it.next())
 			{
-				if (!PrefsManager::instance()->appPrefs.fontPrefs.GFontSub.contains(family))
+				if (it.current().psName() == postName)
 				{
-					qApp->changeOverrideCursor(QCursor(Qt::ArrowCursor));
-					MissingFont *dia = new MissingFont(0, family, m_Doc);
-					dia->exec();
-					fontName = dia->getReplacementFont();
-					delete dia;
-					qApp->changeOverrideCursor(QCursor(Qt::WaitCursor));
-					PrefsManager::instance()->appPrefs.fontPrefs.GFontSub[family] = fontName;
+					fontName = it.current().scName();
+					found = true;
+					break;
 				}
+			}
+			if (!found)
+			{
+				if (importerFlags & LoadSavePlugin::lfCreateThumbnail)
+					fontName = PrefsManager::instance()->appPrefs.itemToolPrefs.textFont;
 				else
-					fontName = PrefsManager::instance()->appPrefs.fontPrefs.GFontSub[family];
+				{
+					QString family = fontBaseName + " " + fontStyle;
+					if (!PrefsManager::instance()->appPrefs.fontPrefs.GFontSub.contains(family))
+					{
+						qApp->changeOverrideCursor(QCursor(Qt::ArrowCursor));
+						MissingFont *dia = new MissingFont(0, family, m_Doc);
+						dia->exec();
+						fontName = dia->getReplacementFont();
+						delete dia;
+						qApp->changeOverrideCursor(QCursor(Qt::WaitCursor));
+						PrefsManager::instance()->appPrefs.fontPrefs.GFontSub[family] = fontName;
+					}
+					else
+						fontName = PrefsManager::instance()->appPrefs.fontPrefs.GFontSub[family];
+				}
 			}
 		}
 	}

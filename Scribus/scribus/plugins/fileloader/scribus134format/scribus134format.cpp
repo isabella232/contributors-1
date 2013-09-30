@@ -103,7 +103,6 @@ void Scribus134Format::registerFormats()
 	fmt.save = false;
 	fmt.colorReading = true;
 	fmt.filter = fmt.trName + " (*.sla *.SLA *.sla.gz *.SLA.GZ *.scd *.SCD *.scd.gz *.SCD.GZ)";
-	fmt.nameMatch = QRegExp("\\.(sla|scd)(\\.gz)?", Qt::CaseInsensitive);
 	fmt.mimeTypes = QStringList();
 	fmt.mimeTypes.append("application/x-scribus");
 	fmt.fileExtensions = QStringList() << "sla" << "sla.gz" << "scd" << "scd.gz";
@@ -578,6 +577,14 @@ bool Scribus134Format::loadFile(const QString & fileName, const FileFormat & /* 
 		layerToSetActive = nl->ID;
 	}
 	m_Doc->setActiveLayer(layerToSetActive);
+	if (!EffVal.isEmpty())
+	{
+		for (int pdoE = 0; pdoE < EffVal.count(); ++pdoE)
+		{
+			if (pdoE < m_Doc->Pages->count())
+				m_Doc->Pages->at(pdoE)->PresentVals = EffVal[pdoE];
+		}
+	}
 
 	// reestablish textframe links
 	if (itemNext.count() != 0)
@@ -1590,7 +1597,7 @@ bool Scribus134Format::readPDFOptions(ScribusDoc* doc, ScXmlStreamReader& reader
 			ef.Dm = attrs.valueAsInt("Dm");
 			ef.M  = attrs.valueAsInt("M");
 			ef.Di = attrs.valueAsInt("Di");
-			doc->pdfOptions().PresentVals.append(ef);
+			EffVal.append(ef);
 		}
 	}
 	return !reader.hasError();
@@ -1872,6 +1879,7 @@ bool Scribus134Format::readObject(ScribusDoc* doc, ScXmlStreamReader& reader, It
 	if (tagName == "FRAMEOBJECT")
 	{
 		doc->addToInlineFrames(doc->Items->takeAt(doc->Items->indexOf(newItem)));
+		newItem->LayerID = doc->firstLayerID();
 	}
 
 	info.item     = newItem;
@@ -2960,6 +2968,10 @@ PageItem* Scribus134Format::pasteItem(ScribusDoc *doc, ScXmlStreamAttributes& at
 			currItem->GrStartY = attrs.valueAsDouble("GRSTARTY", 0.0);
 			currItem->GrEndX   = attrs.valueAsDouble("GRENDX", currItem->width());
 			currItem->GrEndY   = attrs.valueAsDouble("GRENDY", 0.0);
+			currItem->GrFocalX = currItem->GrStartX;
+			currItem->GrFocalY = currItem->GrStartY;
+			currItem->GrScale  = 1.0;
+			currItem->GrSkew  = 0.0;
 			GrColor = attrs.valueAsString("GRCOLOR","");
 			if (!GrColor.isEmpty())
 			{
@@ -3301,6 +3313,7 @@ bool Scribus134Format::loadPage(const QString & fileName, int pageNumber, bool M
 				if (tagName == "FRAMEOBJECT")
 				{
 					FrameItems.append(m_Doc->Items->takeAt(m_Doc->Items->indexOf(newItem)));
+					newItem->LayerID = m_Doc->firstLayerID();
 				}
 			}
 		}

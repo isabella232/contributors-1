@@ -2137,22 +2137,20 @@ ScribusDoc *ScribusMainWindow::doFileNew(double width, double height, double top
 void ScribusMainWindow::newFileFromTemplate()
 {
 	nftdialog* nftdia = new nftdialog(this, ScCore->getGuiLanguage());
-	if (nftdia->exec())
+	if (nftdia->exec() && nftdia->isTemplateSelected())
 	{
-		if (nftdia->nftGui->currentDocumentTemplate)
+		qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+		nfttemplate* currentTemplate = nftdia->currentTemplate();
+		if (loadDoc(QDir::cleanPath(currentTemplate->file)))
 		{
-			qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
-			if (loadDoc(QDir::cleanPath(nftdia->nftGui->currentDocumentTemplate->file)))
-			{
-				doc->hasName = false;
-				UndoManager::instance()->renameStack(nftdia->nftGui->currentDocumentTemplate->name);
-				doc->DocName = nftdia->nftGui->currentDocumentTemplate->name;
-				updateActiveWindowCaption(QObject::tr("Document Template: ") + nftdia->nftGui->currentDocumentTemplate->name);
-				QDir::setCurrent(PrefsManager::instance()->documentDir());
-				removeRecent(QDir::cleanPath(nftdia->nftGui->currentDocumentTemplate->file));
-			}
-			qApp->restoreOverrideCursor();
+			doc->hasName = false;
+			UndoManager::instance()->renameStack(currentTemplate->name);
+			doc->DocName = currentTemplate->name;
+			updateActiveWindowCaption(QObject::tr("Document Template: ") + currentTemplate->name);
+			QDir::setCurrent(PrefsManager::instance()->documentDir());
+			removeRecent(QDir::cleanPath(currentTemplate->file));
 		}
+		qApp->restoreOverrideCursor();
 	}
 	delete nftdia;
 }
@@ -3562,13 +3560,13 @@ void ScribusMainWindow::doPasteRecent(QString data)
 		QFileInfo fi(data);
 		QString formatD(FormatsManager::instance()->extensionListForFormat(FormatsManager::RASTORIMAGES, 1));
 		QStringList rasterFiles = formatD.split("|");
-		QStringList vectorFiles = LoadSavePlugin::getExtensionsForPreview(FORMATID_ODGIMPORT);
+		QStringList vectorFiles = LoadSavePlugin::getExtensionsForPreview(FORMATID_FIRSTUSER);
 		if (vectorFiles.contains(fi.suffix().toLower()))
 		{
 			FileLoader *fileLoader = new FileLoader(data);
 			int testResult = fileLoader->testFile();
 			delete fileLoader;
-			if ((testResult != -1) && (testResult >= FORMATID_ODGIMPORT))
+			if ((testResult != -1) && (testResult >= FORMATID_FIRSTUSER))
 			{
 				const FileFormat * fmt = LoadSavePlugin::getFormatById(testResult);
 				if( fmt )
@@ -3647,7 +3645,7 @@ void ScribusMainWindow::importVectorFile()
 	QString fileName = "";
 	QStringList formats;
 	QString allFormats = tr("All Supported Formats")+" (";
-	int fmtCode = FORMATID_ODGIMPORT;
+	int fmtCode = FORMATID_FIRSTUSER;
 	const FileFormat *fmt = LoadSavePlugin::getFormatById(fmtCode);
 	while (fmt != 0)
 	{
@@ -3699,7 +3697,7 @@ void ScribusMainWindow::importVectorFile()
 			FileLoader *fileLoader = new FileLoader(fileName);
 			int testResult = fileLoader->testFile();
 			delete fileLoader;
-			if ((testResult != -1) && (testResult >= FORMATID_ODGIMPORT))
+			if ((testResult != -1) && (testResult >= FORMATID_FIRSTUSER))
 			{
 				const FileFormat * fmt = LoadSavePlugin::getFormatById(testResult);
 				if( fmt )
@@ -4044,10 +4042,16 @@ bool ScribusMainWindow::loadDoc(QString fileName)
 		if (docProfileDir.exists())
 			ScCore->getCMSProfilesDir(fi.absolutePath()+"/profiles", false, false);
 
-		QDir docFontDir(fi.absolutePath() + "/fonts");
 		prefsManager->appPrefs.fontPrefs.AvailFonts.AddScalableFonts(fi.absolutePath()+"/", FName);
+		QDir docFontDir(fi.absolutePath() + "/fonts");
 		if (docFontDir.exists())
 			prefsManager->appPrefs.fontPrefs.AvailFonts.AddScalableFonts(fi.absolutePath()+"/fonts", FName);
+		QDir docFontDir2(fi.absolutePath() + "/Fonts");
+		if (docFontDir2.exists())
+			prefsManager->appPrefs.fontPrefs.AvailFonts.AddScalableFonts(fi.absolutePath()+"/Fonts", FName);
+		QDir docFontDir3(fi.absolutePath() + "/Document fonts");
+		if (docFontDir3.exists())
+			prefsManager->appPrefs.fontPrefs.AvailFonts.AddScalableFonts(fi.absolutePath()+"/Document fonts", FName);
 		prefsManager->appPrefs.fontPrefs.AvailFonts.updateFontMap();
 
 		doc=new ScribusDoc();
@@ -4099,7 +4103,6 @@ bool ScribusMainWindow::loadDoc(QString fileName)
 				newActWin(ActWinOld->getSubWin());
 			return false;
 		}
-		inlinePalette->setDoc(doc);
 		symbolPalette->setDoc(doc);
 		outlinePalette->setDoc(doc);
 		fileLoader->informReplacementFonts();
@@ -4301,6 +4304,7 @@ bool ScribusMainWindow::loadDoc(QString fileName)
 		/*qDebug("Time elapsed: %d ms", t.elapsed());*/
 		doc->RePos = false;
 		doc->setModified(false);
+		inlinePalette->setDoc(doc);
 		updateRecent(FName);
 		mainWindowStatusLabel->setText( tr("Ready"));
 		ret = true;
@@ -8467,7 +8471,7 @@ void ScribusMainWindow::doSaveAsPDF()
 		doc->pdfOptions().SubsetList = tmpEm;
 	}
 	MarginStruct optBleeds(doc->pdfOptions().bleeds);
-	PDFExportDialog dia(this, doc->DocName, ReallyUsed, view, doc->pdfOptions(), doc->pdfOptions().PresentVals, ScCore->PDFXProfiles, prefsManager->appPrefs.fontPrefs.AvailFonts, doc->unitRatio(), ScCore->PrinterProfiles);
+	PDFExportDialog dia(this, doc->DocName, ReallyUsed, view, doc->pdfOptions(), ScCore->PDFXProfiles, prefsManager->appPrefs.fontPrefs.AvailFonts, ScCore->PrinterProfiles);
 	if (dia.exec())
 	{
 		qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -9737,6 +9741,8 @@ void ScribusMainWindow::ImageEffects()
 
 QString ScribusMainWindow::fileCollect(bool compress, bool withFonts, const bool withProfiles, const QString& )
 {
+	if ((doc->hasName) && doc->DocName.endsWith(".gz"))
+		compress=true;
 	CollectForOutput_UI c(this, doc, QString::null, withFonts, withProfiles, compress);
 	QString newFileName;
 	QString errorMsg=c.collect(newFileName);
@@ -10130,7 +10136,7 @@ void ScribusMainWindow::dragEnterEvent ( QDragEnterEvent* e)
 				FileLoader *fileLoader = new FileLoader(url.path());
 				int testResult = fileLoader->testFile();
 				delete fileLoader;
-				if ((testResult != -1) && (testResult >= FORMATID_ODGIMPORT))
+				if ((testResult != -1) && (testResult >= FORMATID_FIRSTUSER))
 				{
 					accepted = true;
 					break;
@@ -10198,7 +10204,7 @@ void ScribusMainWindow::dropEvent ( QDropEvent * e)
 				FileLoader *fileLoader = new FileLoader(url.path());
 				int testResult = fileLoader->testFile();
 				delete fileLoader;
-				if ((testResult != -1) && (testResult >= FORMATID_ODGIMPORT))
+				if ((testResult != -1) && (testResult >= FORMATID_FIRSTUSER))
 				{
 					QFileInfo fi(url.path());
 					if ( fi.exists() )

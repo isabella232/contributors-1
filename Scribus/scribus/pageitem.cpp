@@ -879,18 +879,19 @@ void PageItem::setXYPos(const double newXPos, const double newYPos, bool drawing
 	checkChanges();
 }
 
-int PageItem::level()
+int PageItem::level() const
 {
+	PageItem* thisItem = const_cast<PageItem*>(this);
 	if (Parent == NULL)
 	{
 		if (m_Doc)
 		{
 			QList<PageItem*>* items = OnMasterPage.isEmpty() ? &m_Doc->DocItems : &m_Doc->MasterItems;
-			return (items->indexOf(this) + 1);
+			return (items->indexOf(thisItem) + 1);
 		}
 		return 0;
 	}
-	return (Parent->asGroupFrame()->groupItemList.indexOf(this) + 1);
+	return (Parent->asGroupFrame()->groupItemList.indexOf(thisItem) + 1);
 }
 
 void PageItem::moveBy(const double dX, const double dY, bool drawingOnly)
@@ -1195,7 +1196,7 @@ bool PageItem::testLinkCandidate(PageItem* nxt)
 {
 	if (this->nextInChain() )
 		return false;
-	if (nxt->prevInChain() )
+	if (!nxt || nxt->prevInChain() )
 		return false;
 	for (PageItem* ff=nxt; ff; ff=ff->nextInChain())
 	{
@@ -2234,7 +2235,7 @@ QImage PageItem::DrawObj_toImage(double maxSize)
 	double sc = maxSize / qMax(igWidth, igHeight);
 	bool savedFlag = m_Doc->guidesPrefs().framesShown;
 	m_Doc->guidesPrefs().framesShown = false;
-	QImage retImg = QImage(qRound(igWidth * sc), qRound(igHeight * sc), QImage::Format_ARGB32_Premultiplied);
+	QImage retImg = QImage(qMax(qRound(igWidth * sc), 1), qMax(qRound(igHeight * sc), 1), QImage::Format_ARGB32_Premultiplied);
 	retImg.fill( qRgba(0, 0, 0, 0) );
 	ScPainter *painter = new ScPainter(&retImg, retImg.width(), retImg.height(), 1, 0);
 	painter->setZoomFactor(sc);
@@ -8208,6 +8209,8 @@ void PageItem::getNamedResources(ResourceCollection& lists) const
 		lists.collectColor(fillColor());
 	else if ((GrType < 8) || (GrType == 10))
 	{
+		if ((!gradientVal.isEmpty()) && (m_Doc->docGradients.contains(gradientVal)))
+			lists.collectGradient(gradientVal);
 		QList<VColorStop*> cstops = fill_gradient.colorStops();
 		for (uint cst = 0; cst < fill_gradient.Stops(); ++cst)
 		{
@@ -8246,6 +8249,8 @@ void PageItem::getNamedResources(ResourceCollection& lists) const
 		lists.collectColor(lineColor());
 	else if (GrTypeStroke < 8)
 	{
+		if ((!gradientStrokeVal.isEmpty()) && (m_Doc->docGradients.contains(gradientStrokeVal)))
+			lists.collectGradient(gradientStrokeVal);
 		QList<VColorStop*> cstops = stroke_gradient.colorStops();
 		for (uint cst = 0; cst < stroke_gradient.Stops(); ++cst)
 		{
@@ -9427,12 +9432,12 @@ void PageItem::AdjustPictScale()
 		return;
 	if (OrigW == 0 || OrigH == 0)
 		return;
-//	LocalX = 0;
-//	LocalY = 0;
-//	LocalRot = 0;
 	double xs = m_width / static_cast<double>(OrigW);
 	double ys = m_height / static_cast<double>(OrigH);
-	if (m_imageRotation != 0.0)
+	double imgXOffs = m_imageXOffset;
+	double imgYOffs = m_imageYOffset; 
+	double imageRot = fmod(m_imageRotation, 360);
+	if (imageRot != 0.0)
 	{
 		QRectF br = QRectF(0, 0, OrigW, OrigH);
 		QTransform m;
@@ -9487,6 +9492,11 @@ void PageItem::AdjustPictScale()
 			LocalY = (Height - static_cast<double>(OrigH) * LocalScY) / LocalScY;
 			break;
 	}*/
+	if (m_Doc && m_Doc->isLoading())
+	{
+		m_imageXOffset = imgXOffs;
+		m_imageYOffset = imgYOffs;
+	}
 	if (imageClip.size() != 0)
 	{
 		imageClip = pixm.imgInfo.PDSpathData[pixm.imgInfo.usedPath].copy();
@@ -10514,3 +10524,9 @@ void PageItem::expandParaSelection(bool includeEOL)
 	HasSel = true;
 }
 
+bool compareItemLevel(const PageItem* item1, const PageItem* item2)
+{
+	int level1 = item1->level();
+	int level2 = item2->level();
+	return (level1 < level2);
+}
