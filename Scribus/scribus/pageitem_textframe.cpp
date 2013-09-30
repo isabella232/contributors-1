@@ -1612,9 +1612,9 @@ void PageItem_TextFrame::layout()
 				opticalMargins = style.opticalMargins();
 			CharStyle charStyle = ((hl->ch != SpecialChars::PARSEP) ? itemText.charStyle(a) : style.charStyle());
 			chstr = ExpandToken(a);
-			int chstrLen = chstr.length();
 			if (chstr.isEmpty())
 				chstr = SpecialChars::ZWNBSPACE;
+			int chstrLen = chstr.length();
 
 			curStat = SpecialChars::getCJKAttr(hl->ch);
 
@@ -1650,6 +1650,37 @@ void PageItem_TextFrame::layout()
 			style.setLineSpacing (calculateLineSpacing (style, this));
 			FlopBaseline = (current.startOfCol && firstLineOffset() == FLOPBaselineGrid);
 
+			const ScFace font = charStyle.font();
+
+			
+			//change characters and/or scaling/offset due to typographic effects
+			int chst = charStyle.effects() & 1919;
+			if (chst != ScStyle_Default)
+			{
+				if (chst & ScStyle_Superscript)
+				{
+					double asce = font.ascent(charStyle.fontSize() / 10.0);
+					offset -= asce * m_Doc->typographicPrefs().valueSuperScript / 100.0;
+					scaleV *= qMax(m_Doc->typographicPrefs().scalingSuperScript / 100.0, 10.0 / charStyle.fontSize());
+					scaleH *= qMax(m_Doc->typographicPrefs().scalingSuperScript / 100.0, 10.0 / charStyle.fontSize());
+				}
+				else if (chst & ScStyle_Subscript)
+				{
+					double asce = font.ascent(charStyle.fontSize() / 10.0);
+					offset += asce * m_Doc->typographicPrefs().valueSubScript / 100.0;
+					scaleV *= qMax(m_Doc->typographicPrefs().scalingSubScript / 100.0, 10.0 / charStyle.fontSize());
+					scaleH *= qMax(m_Doc->typographicPrefs().scalingSubScript / 100.0, 10.0 / charStyle.fontSize());
+				}
+				if ((chst & ScStyle_AllCaps) || (chst & ScStyle_SmallCaps))
+					chstr = chstr.toUpper();
+				if (chst & ScStyle_SmallCaps)
+				{
+					double smallcapsScale = m_Doc->typographicPrefs().valueSmallCaps / 100.0;
+					scaleV *=smallcapsScale;
+					scaleH *= smallcapsScale;
+				}
+			}
+
 			// find out about par gap and dropcap
 			if (a == firstInFrame())
 			{
@@ -1665,8 +1696,6 @@ void PageItem_TextFrame::layout()
 						DropCmode = false;
 				}
 			}
-
-			const ScFace font = charStyle.font();
 
 			{  // local block for 'fl'
 				StyleFlag fl = hl->effects();
